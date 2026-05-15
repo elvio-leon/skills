@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id        String     @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  notes     String?
+  status    String     @default("lead")
+  stage     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  projects  Project[]
+  invoices  Invoice[]
+  proposals Proposal[]
+  quotes    Quote[]
+  timeLogs  TimeLog[]
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  status      String    @default("in_corso")
+  startDate   DateTime?
+  endDate     DateTime?
+  budget      Float?
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  timeLogs    TimeLog[]
+}
+
+model TimeLog {
+  id          String   @id @default(cuid())
+  date        DateTime
+  hours       Float
+  description String?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  number    String        @unique
+  clientId  String
+  client    Client        @relation(fields: [clientId], references: [id])
+  status    String        @default("bozza")
+  issueDate DateTime      @default(now())
+  dueDate   DateTime?
+  subtotal  Float         @default(0)
+  tax       Float         @default(22)
+  total     Float         @default(0)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+  total       Float
+}
+
+model Proposal {
+  id         String    @id @default(cuid())
+  title      String
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id])
+  status     String    @default("bozza")
+  amount     Float?
+  expiryDate DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Quote {
+  id        String      @id @default(cuid())
+  title     String
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id])
+  status    String      @default("bozza")
+  notes     String?
+  subtotal  Float       @default(0)
+  tax       Float       @default(22)
+  total     Float       @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     QuoteItem[]
+}
+
+model QuoteItem {
+  id          String @id @default(cuid())
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float  @default(1)
+  unitPrice   Float
+  total       Float
+}
