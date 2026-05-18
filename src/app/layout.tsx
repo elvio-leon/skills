@@ -4,6 +4,8 @@ import "./globals.css"
 import { SessionProvider } from "next-auth/react"
 import { auth } from "@/auth"
 import { Sidebar } from "@/components/Sidebar"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 
 const geist = Geist({ subsets: ["latin"] })
 
@@ -13,8 +15,20 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
-  const isLoginPage = false // middleware handles redirects
+  const headersList = await headers()
+  const pathname = headersList.get("x-pathname") ?? "/"
+  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/api/auth")
+
+  let session = null
+  try {
+    session = await auth()
+  } catch {
+    // auth() can fail if secrets are misconfigured — fail safe
+  }
+
+  if (!session && !isPublic) {
+    redirect("/login")
+  }
 
   return (
     <html lang="it" className="h-full">
