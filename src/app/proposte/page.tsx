@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getProposals } from "@/lib/actions/proposals"
 import { getClients } from "@/lib/actions/clients"
 import { ProposteClient } from "./ProposteClient"
