@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getTimeLogs } from "@/lib/actions/timelogs"
 import { getClients } from "@/lib/actions/clients"
 import { getProjects } from "@/lib/actions/projects"
