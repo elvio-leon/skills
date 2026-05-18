@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getQuotes } from "@/lib/actions/quotes"
 import { getClients } from "@/lib/actions/clients"
 import { PreventiviClient } from "./PreventiviClient"

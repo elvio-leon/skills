@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getInvoices, getNextInvoiceNumber } from "@/lib/actions/invoices"
 import { getClients } from "@/lib/actions/clients"
 import { FattureClient } from "./FattureClient"
