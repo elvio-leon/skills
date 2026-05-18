@@ -60,30 +60,16 @@ model TimeLog {
 }
 
 model Invoice {
-  id        String        @id @default(cuid())
-  number    String        @unique
-  clientId  String
-  client    Client        @relation(fields: [clientId], references: [id])
-  status    String        @default("bozza")
-  issueDate DateTime      @default(now())
-  dueDate   DateTime?
-  subtotal  Float         @default(0)
-  tax       Float         @default(22)
-  total     Float         @default(0)
-  notes     String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  items     InvoiceItem[]
-}
-
-model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
   description String
-  quantity    Float   @default(1)
-  unitPrice   Float
-  total       Float
+  amount      Float     @default(0)
+  dueDate     DateTime?
+  status      String    @default("da_fatturare")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Proposal {
@@ -100,18 +86,20 @@ model Proposal {
 }
 
 model Quote {
-  id        String      @id @default(cuid())
-  title     String
-  clientId  String
-  client    Client      @relation(fields: [clientId], references: [id])
-  status    String      @default("bozza")
-  notes     String?
-  subtotal  Float       @default(0)
-  tax       Float       @default(22)
-  total     Float       @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  items     QuoteItem[]
+  id          String      @id @default(cuid())
+  title       String
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  status      String      @default("bozza")
+  notes       String?
+  subtotal    Float       @default(0)
+  tax         Float       @default(22)
+  total       Float       @default(0)
+  pdfData     Bytes?
+  pdfFileName String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       QuoteItem[]
 }
 
 model QuoteItem {

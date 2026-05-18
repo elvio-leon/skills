@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache"
 
 export async function getQuotes() {
   return prisma.quote.findMany({
-    include: { client: true, items: true },
+    select: {
+      id: true, title: true, clientId: true, status: true, notes: true,
+      subtotal: true, tax: true, total: true, pdfFileName: true,
+      createdAt: true, updatedAt: true,
+      client: true,
+      items: true,
+    },
     orderBy: { createdAt: "desc" },
   })
 }

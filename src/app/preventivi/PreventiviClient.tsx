@@ -18,6 +18,7 @@ type Quote = {
   subtotal: number
   tax: number
   total: number
+  pdfFileName: string | null
   items: QuoteItem[]
   createdAt: Date
 }
@@ -237,6 +238,58 @@ function QuoteDetail({ quote }: { quote: Quote }) {
   )
 }
 
+function PdfSection({ quote }: { quote: Quote }) {
+  const [uploading, setUploading] = useState(false)
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const fd = new FormData()
+    fd.append("pdf", file)
+    await fetch(`/api/preventivi/${quote.id}/pdf`, { method: "POST", body: fd })
+    setUploading(false)
+    window.location.reload()
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
+      {quote.pdfFileName ? (
+        <>
+          <a
+            href={`/api/preventivi/${quote.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 truncate"
+            title={quote.pdfFileName}
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="truncate max-w-[120px]">{quote.pdfFileName}</span>
+          </a>
+          <label className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer ml-auto shrink-0">
+            {uploading ? "..." : "Sostituisci"}
+            <input type="file" accept="application/pdf" className="hidden" onChange={handleUpload} />
+          </label>
+        </>
+      ) : (
+        <label className="text-xs text-indigo-500 hover:text-indigo-700 cursor-pointer font-medium flex items-center gap-1">
+          {uploading ? "Caricamento..." : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Carica PDF
+            </>
+          )}
+          <input type="file" accept="application/pdf" className="hidden" onChange={handleUpload} disabled={uploading} />
+        </label>
+      )}
+    </div>
+  )
+}
+
 export function PreventiviClient({ quotes, clients }: { quotes: Quote[]; clients: Client[] }) {
   const [showCreate, setShowCreate] = useState(false)
   const [editItem, setEditItem] = useState<Quote | null>(null)
@@ -323,6 +376,7 @@ export function PreventiviClient({ quotes, clients }: { quotes: Quote[]; clients
                 <span className="text-xs text-gray-400">{q.items.length} voci</span>
                 <span className="text-lg font-bold text-gray-900">{formatCurrency(q.total)}</span>
               </div>
+              <PdfSection quote={q} />
             </div>
           )
         })}
