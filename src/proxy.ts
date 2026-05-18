@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { cookies } from "next/headers"
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
