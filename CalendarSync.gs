@@ -287,10 +287,10 @@ function fetchOriginalEvents(calId, start, end) {
       return false;
     }
 
-    // ── Google Meet filter ────────────────────────────────────────────────────
-    // Only mirror events that have an active Google Meet link.
+    // ── Video call filter ─────────────────────────────────────────────────────
+    // Only mirror events that have an active video call link (Meet, Zoom, Teams).
     // Work blocks, focus time, and other personal slots are intentionally excluded.
-    if (!event.hangoutLink) {
+    if (!hasVideoCall(event)) {
       return false;
     }
 
@@ -551,6 +551,35 @@ function cleanupStaleEntries(syncMap, foundOriginals, windowStart, windowEnd) {
   if (keysToDelete.length > 0) {
     Logger.log(`[CLEANUP] Removed ${keysToDelete.length} stale map entry/entries.`);
   }
+}
+
+// ─── VIDEO CALL DETECTION ────────────────────────────────────────────────────
+
+/**
+ * Returns true if the event has a video call link from a supported provider:
+ *   – Google Meet  : event.hangoutLink is present
+ *   – Zoom         : a conferenceData entry point URI contains "zoom.us"
+ *   – Microsoft Teams: a conferenceData entry point URI contains "teams.microsoft.com"
+ *                      or "teams.live.com"
+ *
+ * Checking entry point URIs is more reliable than conferenceSolution.name,
+ * which can vary by locale or third-party integration label.
+ *
+ * @param {Object} event  Calendar API event object
+ * @returns {boolean}
+ */
+function hasVideoCall(event) {
+  // Google Meet
+  if (event.hangoutLink) return true;
+
+  // Zoom or Teams via conferenceData entry points
+  const entryPoints = ((event.conferenceData || {}).entryPoints) || [];
+  return entryPoints.some(ep => {
+    const uri = (ep.uri || '').toLowerCase();
+    return uri.includes('zoom.us') ||
+           uri.includes('teams.microsoft.com') ||
+           uri.includes('teams.live.com');
+  });
 }
 
 // ─── MAP HELPERS ─────────────────────────────────────────────────────────────
