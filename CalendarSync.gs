@@ -287,10 +287,10 @@ function fetchOriginalEvents(calId, start, end) {
       return false;
     }
 
-    // ── Video call filter ─────────────────────────────────────────────────────
-    // Only mirror events that have an active video call link (Meet, Zoom, Teams).
+    // ── Syncable event filter ─────────────────────────────────────────────────
+    // Only mirror video calls (Meet, Zoom, Teams) and out-of-office events.
     // Work blocks, focus time, and other personal slots are intentionally excluded.
-    if (!hasVideoCall(event)) {
+    if (!isSyncableEvent(event)) {
       return false;
     }
 
@@ -553,14 +553,19 @@ function cleanupStaleEntries(syncMap, foundOriginals, windowStart, windowEnd) {
   }
 }
 
-// ─── VIDEO CALL DETECTION ────────────────────────────────────────────────────
+// ─── SYNCABLE EVENT DETECTION ────────────────────────────────────────────────
 
 /**
- * Returns true if the event has a video call link from a supported provider:
- *   – Google Meet  : event.hangoutLink is present
- *   – Zoom         : a conferenceData entry point URI contains "zoom.us"
- *   – Microsoft Teams: a conferenceData entry point URI contains "teams.microsoft.com"
- *                      or "teams.live.com"
+ * Returns true if the event should be mirrored to the other calendars.
+ *
+ * Mirrored:
+ *   – Google Meet call  : event.hangoutLink is present
+ *   – Zoom call         : conferenceData entry point URI contains "zoom.us"
+ *   – Microsoft Teams   : conferenceData entry point URI contains
+ *                         "teams.microsoft.com" or "teams.live.com"
+ *   – Out of office     : event.eventType === 'outOfOffice'
+ *
+ * NOT mirrored: work blocks, focus time, regular personal events.
  *
  * Checking entry point URIs is more reliable than conferenceSolution.name,
  * which can vary by locale or third-party integration label.
@@ -568,7 +573,10 @@ function cleanupStaleEntries(syncMap, foundOriginals, windowStart, windowEnd) {
  * @param {Object} event  Calendar API event object
  * @returns {boolean}
  */
-function hasVideoCall(event) {
+function isSyncableEvent(event) {
+  // Out of office
+  if (event.eventType === 'outOfOffice') return true;
+
   // Google Meet
   if (event.hangoutLink) return true;
 
