@@ -287,6 +287,13 @@ function fetchOriginalEvents(calId, start, end) {
       return false;
     }
 
+    // ── Google Meet filter ────────────────────────────────────────────────────
+    // Only mirror events that have an active Google Meet link.
+    // Work blocks, focus time, and other personal slots are intentionally excluded.
+    if (!event.hangoutLink) {
+      return false;
+    }
+
     return true;
   });
 }
