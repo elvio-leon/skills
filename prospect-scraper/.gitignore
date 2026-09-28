@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# dati locali e log
+data/
+logs/
+*.db
+*.db-wal
+*.db-shm
+
+# export
+*.csv
+*.xlsx

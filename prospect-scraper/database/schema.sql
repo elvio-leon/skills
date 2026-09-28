@@ -1,0 +1,62 @@
+PRAGMA journal_mode = WAL;
+
+CREATE TABLE IF NOT EXISTS prospects (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    dedup_key      TEXT NOT NULL UNIQUE,   -- "d:<dominio>" oppure "n:<nome>|<città>"
+    company_name   TEXT,
+    domain         TEXT,
+    website        TEXT,
+    category       TEXT,
+    country        TEXT,
+    region         TEXT,
+    city           TEXT,
+    address        TEXT,
+    postal_code    TEXT,
+    vat_id         TEXT,
+    phone          TEXT,
+    phones         TEXT,
+    phone_raw      TEXT,
+    email          TEXT,
+    emails         TEXT,
+    linkedin       TEXT,
+    instagram      TEXT,
+    facebook       TEXT,
+    youtube        TEXT,
+    twitter        TEXT,
+    page_title     TEXT,
+    description    TEXT,
+    source         TEXT,
+    source_url     TEXT,
+    search_query   TEXT,
+    status         TEXT,
+    error_message  TEXT,
+    raw_data       TEXT,                   -- JSON con dati raccolti ma non mappati
+    first_seen     TEXT,
+    last_seen      TEXT,
+    enriched_at    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_prospects_domain ON prospects(domain);
+CREATE INDEX IF NOT EXISTS idx_prospects_status ON prospects(status);
+
+CREATE TABLE IF NOT EXISTS runs (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at   TEXT,
+    finished_at  TEXT,
+    mode         TEXT,
+    category     TEXT,
+    keyword      TEXT,
+    location     TEXT,
+    max_results  INTEGER,
+    providers    TEXT,
+    n_found      INTEGER,
+    n_unique     INTEGER,
+    n_enriched   INTEGER,
+    n_failed     INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS run_prospects (
+    run_id       INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+    prospect_id  INTEGER NOT NULL REFERENCES prospects(id) ON DELETE CASCADE,
+    PRIMARY KEY (run_id, prospect_id)
+);
