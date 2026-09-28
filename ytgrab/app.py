@@ -21,22 +21,77 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-# Le app lanciate dal Finder hanno un PATH minimale: aggiungi Homebrew.
-for _p in ("/opt/homebrew/bin", "/usr/local/bin"):
-    if os.path.isdir(_p) and _p not in os.environ.get("PATH", "").split(":"):
-        os.environ["PATH"] = _p + ":" + os.environ.get("PATH", "")
-
-import yt_dlp  # noqa: E402
-from yt_dlp.utils import download_range_func  # noqa: E402
-
 APP_NAME = "YTGrab"
-HERE = Path(__file__).resolve().parent
+FROZEN = getattr(sys, "frozen", False)
+# Nell'app impacchettata (PyInstaller) i file stanno in sys._MEIPASS.
+HERE = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 WEB_DIR = HERE / "web"
 if sys.platform == "darwin":
     CONFIG_DIR = Path.home() / "Library" / "Application Support" / APP_NAME
 else:
     CONFIG_DIR = Path.home() / ".config" / APP_NAME.lower()
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
+# Copia aggiornata di yt-dlp scaricata da "Aggiorna yt-dlp" (solo app impacchettata).
+USER_LIB = CONFIG_DIR / "pylib"
+
+
+def _bundled_bin_dirs():
+    # ffmpeg, ffprobe e deno inclusi nell'app: YTGrab.app/Contents/MacOS/bin
+    exe = Path(sys.executable).resolve()
+    return [exe.parent / "bin", HERE / "bin"] if FROZEN else [HERE / "bin"]
+
+
+# Le app lanciate dal Finder hanno un PATH minimale: aggiungi i binari inclusi e Homebrew.
+for _p in [*map(str, _bundled_bin_dirs()), "/opt/homebrew/bin", "/usr/local/bin"][::-1]:
+    if os.path.isdir(_p) and _p not in os.environ.get("PATH", "").split(":"):
+        os.environ["PATH"] = _p + ":" + os.environ.get("PATH", "")
+
+
+def _version_tuple(v):
+    try:
+        return tuple(int(x) for x in str(v).strip().split("."))
+    except ValueError:
+        return ()
+
+
+def _user_lib_version():
+    try:
+        text = (USER_LIB / "yt_dlp" / "version.py").read_text()
+        return text.split("__version__ = ")[1].split("\n")[0].strip("'\" ")
+    except (OSError, IndexError):
+        return ""
+
+
+def _bundled_version():
+    try:
+        return (HERE / "ytdlp_version.txt").read_text().strip()
+    except OSError:
+        return ""
+
+
+def _import_ytdlp():
+    # Usa la copia aggiornata solo se più recente di quella inclusa nell'app;
+    # se è rotta, torna a quella inclusa.
+    use_user = FROZEN and _version_tuple(_user_lib_version()) > _version_tuple(_bundled_version())
+    if use_user:
+        sys.path.insert(0, str(USER_LIB))
+    try:
+        import yt_dlp as mod
+        import yt_dlp.utils  # noqa: F401
+        return mod
+    except Exception:  # noqa: BLE001
+        if not use_user:
+            raise
+        sys.path.remove(str(USER_LIB))
+        for name in [m for m in sys.modules if m.split(".")[0] in ("yt_dlp", "yt_dlp_ejs")]:
+            del sys.modules[name]
+        import yt_dlp as mod
+        return mod
+
+
+yt_dlp = _import_ytdlp()
+from yt_dlp.utils import download_range_func  # noqa: E402
+
 DEFAULT_PORT = 47811
 
 DEFAULT_SETTINGS = {
@@ -312,14 +367,50 @@ def choose_folder(current):
 
 
 def update_ytdlp():
-    r = subprocess.run([sys.executable, "-m", "pip", "install", "-U", "--quiet",
-                        "yt-dlp[default]"], capture_output=True, text=True)
-    return (r.stdout + r.stderr).strip()[-600:] or "ok"
+    if not FROZEN:
+        r = subprocess.run([sys.executable, "-m", "pip", "install", "-U", "--quiet",
+                            "yt-dlp[default]"], capture_output=True, text=True)
+        return (r.stdout + r.stderr).strip()[-600:] or "ok"
+    # App impacchettata: niente pip. Scarica le wheel da PyPI e le estrae in USER_LIB.
+    import ssl
+    import tempfile
+    import urllib.request
+    import zipfile
+    import certifi
+
+    ctx = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE") or certifi.where())
+
+    def fetch(url):
+        with urllib.request.urlopen(url, context=ctx, timeout=60) as r:
+            return r.read()
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = Path(tempfile.mkdtemp(prefix="ytgrab-upd-", dir=CONFIG_DIR))
+    try:
+        version = ""
+        for pkg in ("yt-dlp", "yt-dlp-ejs"):
+            meta = json.loads(fetch(f"https://pypi.org/pypi/{pkg}/json"))
+            wheel = next(u for u in meta["urls"]
+                         if u["packagetype"] == "bdist_wheel" and u["filename"].endswith("-none-any.whl"))
+            whl = tmp / wheel["filename"]
+            whl.write_bytes(fetch(wheel["url"]))
+            with zipfile.ZipFile(whl) as z:
+                z.extractall(tmp / "lib")
+            whl.unlink()
+            if pkg == "yt-dlp":
+                version = meta["info"]["version"]
+        if USER_LIB.exists():
+            shutil.rmtree(USER_LIB)
+        (tmp / "lib").rename(USER_LIB)
+        return f"yt-dlp {version}"
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def doctor():
     return {
         "yt_dlp": yt_dlp.version.__version__,
+        "frozen": bool(FROZEN),
         "ffmpeg": bool(shutil.which("ffmpeg")),
         "js_runtime": ", ".join(js_runtimes() or {}) or None,
         "python": sys.version.split()[0],
@@ -460,7 +551,8 @@ def main():
         return
     webview.create_window(APP_NAME, url, width=1360, height=860,
                           min_size=(980, 640), background_color="#0e0f12")
-    webview.start()
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    webview.start(private_mode=False, storage_path=str(CONFIG_DIR / "webview"))
 
 
 if __name__ == "__main__":
