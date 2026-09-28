@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>YTGrab</title>
+<style>
+  :root {
+    --bg: #0e0f12; --panel: #16181d; --panel2: #1d2026; --line: #2a2e36;
+    --text: #e8eaee; --dim: #8b919c; --accent: #ff3b3b; --accent2: #ffb020;
+    --seg: #3ea6ff; --ok: #3ecf8e; --err: #ff5c5c;
+    --r: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    display: grid; grid-template-columns: 340px 1fr 300px; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  input, select, button { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  kbd {
+    font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 1px 5px;
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; color: var(--dim);
+  }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---------- sidebar ricerca */
+  #side { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  #searchForm { padding: 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; }
+  #q {
+    flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 9px 11px; outline: none; -webkit-user-select: text; user-select: text;
+  }
+  #q:focus { border-color: var(--seg); }
+  #results { flex: 1; overflow-y: auto; padding: 6px; }
+  .res {
+    display: grid; grid-template-columns: 136px 1fr; gap: 10px; padding: 6px; border-radius: var(--r);
+    cursor: pointer; position: relative;
+  }
+  .res:hover { background: var(--panel); }
+  .res.active { background: var(--panel2); outline: 1px solid var(--line); }
+  .res img { width: 136px; height: 76px; object-fit: cover; border-radius: 6px; background: var(--panel2); display: block; }
+  .res .dur {
+    position: absolute; left: 100px; top: 62px; background: rgba(0,0,0,.8); border-radius: 3px;
+    padding: 0 4px; font-size: 11px;
+  }
+  .res .t { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .res .m { color: var(--dim); font-size: 12px; margin-top: 3px; }
+  .res .quick {
+    position: absolute; right: 6px; bottom: 6px; opacity: 0; border: 0; border-radius: 5px;
+    background: var(--panel2); padding: 2px 7px; font-size: 12px;
+  }
+  .res:hover .quick { opacity: 1; }
+  .res .quick:hover { background: var(--accent); }
+  .empty { color: var(--dim); padding: 24px 16px; text-align: center; }
+
+  /* ---------- centro player */
+  #main { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 14px; gap: 12px; overflow-y: auto; }
+  #stage { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 62vh; background: #000; border-radius: var(--r); overflow: hidden; }
+  #player, #stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #shield { position: absolute; inset: 0; cursor: pointer; }
+  #placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); text-align: center; }
+  #vtitle { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #vsub { color: var(--dim); font-size: 12px; }
+
+  #transport { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: #3a404b; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.io { font-weight: 700; min-width: 40px; }
+  .btn.io.in { color: var(--accent2); }
+  .btn.io.out { color: var(--seg); }
+  #time { color: var(--dim); min-width: 150px; }
+
+  #bar { position: relative; height: 34px; cursor: pointer; }
+  #track { position: absolute; left: 0; right: 0; top: 13px; height: 8px; background: var(--panel2); border-radius: 4px; }
+  #played { position: absolute; left: 0; top: 13px; height: 8px; background: #50555f; border-radius: 4px; width: 0; }
+  .segbox { position: absolute; top: 8px; height: 18px; background: rgba(62,166,255,.35); border: 1px solid var(--seg); border-radius: 3px; }
+  #pendingIn { position: absolute; top: 4px; width: 2px; height: 26px; background: var(--accent2); display: none; }
+  #pendingFill { position: absolute; top: 8px; height: 18px; background: rgba(255,176,32,.2); display: none; }
+  #head { position: absolute; top: 2px; width: 2px; height: 30px; background: #fff; border-radius: 1px; transform: translateX(-1px); }
+  #hover { position: absolute; top: -18px; transform: translateX(-50%); font-size: 11px; background: #000; padding: 1px 5px; border-radius: 3px; display: none; }
+
+  #segs { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
+  #segsHead { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  #segsHead .ttl { font-weight: 600; flex: 1; }
+  #manual { width: 150px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; outline: none; -webkit-user-select: text; user-select: text; }
+  #segList { max-height: 190px; overflow-y: auto; }
+  .seg { display: grid; grid-template-columns: 26px 1fr auto auto; gap: 10px; align-items: center; padding: 6px 10px; border-top: 1px solid var(--line); }
+  .seg:first-child { border-top: 0; }
+  .seg .n { color: var(--seg); font-weight: 700; }
+  .seg .x { background: none; border: 0; color: var(--dim); font-size: 15px; }
+  .seg .x:hover { color: var(--err); }
+  .seg .play { background: none; border: 0; color: var(--dim); }
+  .seg .play:hover { color: var(--text); }
+  .hint { color: var(--dim); padding: 10px; font-size: 12px; }
+  #keys { color: var(--dim); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+
+  /* ---------- colonna destra */
+  #right { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  #opts { padding: 14px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--line); }
+  .lbl { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+  .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
+  .seg3 button { background: none; border: 0; border-radius: 5px; padding: 6px 2px; color: var(--dim); font-size: 12px; }
+  .seg3 button.on { background: #343944; color: var(--text); font-weight: 600; }
+  select { width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; color: var(--dim); font-size: 12px; cursor: pointer; }
+  .check input { margin: 2px 0 0; }
+  #dl { width: 100%; padding: 10px; font-size: 14px; }
+  #dl:disabled { opacity: .45; cursor: default; }
+
+  #queueHead { display: flex; align-items: center; padding: 10px 14px 6px; gap: 8px; }
+  #queueHead .ttl { font-weight: 600; flex: 1; }
+  .link { background: none; border: 0; color: var(--dim); font-size: 12px; padding: 0; }
+  .link:hover { color: var(--text); }
+  #queue { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
+  .job { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; margin-bottom: 8px; }
+  .job .t { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .job .s { color: var(--dim); font-size: 11px; display: flex; justify-content: space-between; gap: 8px; margin-top: 3px; }
+  .job .pb { height: 4px; background: var(--panel2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .job .pb i { display: block; height: 100%; background: var(--seg); width: 0; transition: width .3s; }
+  .job.done .pb i { background: var(--ok); }
+  .job.error .pb i { background: var(--err); width: 100% !important; }
+  .job .err { color: var(--err); font-size: 11px; margin-top: 4px; -webkit-user-select: text; user-select: text; word-break: break-word; }
+  .job .acts { margin-top: 5px; display: flex; gap: 10px; }
+
+  #foot { border-top: 1px solid var(--line); padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+  #folder { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+  #warn { color: var(--accent2); font-size: 12px; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--text); border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #2b303a; padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #2c3038; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<aside id="side">
+  <form id="searchForm">
+    <input id="q" placeholder="Cerca su YouTube o incolla un link…  ( / )" autocomplete="off" spellcheck="false">
+  </form>
+  <div id="results"><div class="empty">Cerca un video per iniziare.<br><br><kbd>/</kbd> per cercare · <kbd>↑</kbd><kbd>↓</kbd> per scorrere i risultati</div></div>
+</aside>
+
+<main id="main">
+  <div id="stage">
+    <div id="placeholder">Nessun video caricato</div>
+    <div id="player"></div>
+    <div id="shield" title="Click: play/pausa"></div>
+  </div>
+  <div>
+    <div id="vtitle">—</div>
+    <div id="vsub"></div>
+  </div>
+
+  <div id="transport">
+    <button class="btn" id="playBtn" title="Play/Pausa (Spazio)">▶︎</button>
+    <span id="time" class="mono">0:00.0 / 0:00</span>
+    <span style="flex:1"></span>
+    <button class="btn io in" id="inBtn" title="Punto IN (I)">I</button>
+    <button class="btn io out" id="outBtn" title="Punto OUT (O)">O</button>
+  </div>
+  <div id="bar">
+    <div id="track"></div>
+    <div id="played"></div>
+    <div id="segLayer"></div>
+    <div id="pendingFill"></div>
+    <div id="pendingIn"></div>
+    <div id="head"></div>
+    <div id="hover" class="mono"></div>
+  </div>
+
+  <section id="segs">
+    <div id="segsHead">
+      <span class="ttl">Spezzoni <span id="segCount" style="color:var(--dim);font-weight:400"></span></span>
+      <input id="manual" placeholder="1:20-1:45  ↵" spellcheck="false" title="Aggiungi a mano: inizio-fine">
+      <button class="link" id="clearSegs">Svuota</button>
+    </div>
+    <div id="segList"><div class="hint">Nessuno spezzone: verrà scaricato il video intero. Premi <kbd>I</kbd> e <kbd>O</kbd> per segnare inizio e fine (anche più volte).</div></div>
+  </section>
+
+  <div id="keys">
+    <span><kbd>Spazio</kbd>/<kbd>K</kbd> play</span>
+    <span><kbd>J</kbd><kbd>L</kbd> ±10s</span>
+    <span><kbd>←</kbd><kbd>→</kbd> ±5s (<kbd>⇧</kbd> 1s)</span>
+    <span><kbd>,</kbd><kbd>.</kbd> frame</span>
+    <span><kbd>I</kbd><kbd>O</kbd> in/out</span>
+    <span><kbd>⌫</kbd> togli ultimo</span>
+    <span><kbd>Esc</kbd> annulla IN</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> modalità</span>
+    <span><kbd>D</kbd> scarica</span>
+  </div>
+</main>
+
+<aside id="right">
+  <div id="opts">
+    <div>
+      <div class="lbl">Scarica</div>
+      <div class="seg3" id="modeSel">
+        <button data-v="av">Video+Audio</button>
+        <button data-v="v">Solo video</button>
+        <button data-v="a">Solo audio</button>
+      </div>
+    </div>
+    <div id="videoOpts">
+      <div class="lbl">Qualità</div>
+      <select id="quality">
+        <option value="davinci">H.264 · pronto per DaVinci (≤1080p, istantaneo)</option>
+        <option value="hevc">Massima → HEVC .mov (4K, ricodifica HW)</option>
+        <option value="original">Massima originale (VP9/AV1)</option>
+      </select>
+      <div class="row2" style="margin-top:8px">
+        <div>
+          <div class="lbl">Risoluzione max</div>
+          <select id="maxh">
+            <option value="2160">2160p</option><option value="1440">1440p</option>
+            <option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+    </div>
+    <div id="audioOpts" style="display:none">
+      <div class="lbl">Formato audio</div>
+      <select id="afmt">
+        <option value="m4a">M4A (AAC, originale)</option>
+        <option value="wav">WAV (non compresso)</option>
+        <option value="mp3">MP3</option>
+      </select>
+    </div>
+    <label class="check"><input type="checkbox" id="precise"> <span>Taglio preciso al frame<br><span style="font-size:11px">ricodifica gli spezzoni, più lento</span></span></label>
+    <button class="btn primary" id="dl" disabled>Scarica</button>
+  </div>
+
+  <div id="queueHead">
+    <span class="ttl">Download</span>
+    <button class="link" id="clearJobs">Pulisci completati</button>
+  </div>
+  <div id="queue"><div class="empty" style="padding:12px">Nessun download.</div></div>
+
+  <div id="foot">
+    <div id="warn"></div>
+    <div id="folder" class="mono" title=""></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="link" id="openFolder">Apri cartella</button>
+      <button class="link" id="chooseFolder">Cambia…</button>
+      <button class="link" id="updBtn">Aggiorna yt-dlp</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="color:var(--dim)">Cookie</span>
+      <select id="cookies" style="flex:1;padding:3px 6px" title="Usa i cookie del browser se YouTube chiede di confermare che non sei un bot">
+        <option value="">nessuno</option><option value="safari">Safari</option><option value="chrome">Chrome</option>
+        <option value="firefox">Firefox</option><option value="brave">Brave</option><option value="edge">Edge</option>
+      </select>
+    </div>
+  </div>
+</aside>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = async (path, body) => {
+  const r = await fetch(path, body === undefined ? {} : {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function fmt(t, dec = false) {
+  if (t == null || isNaN(t)) return '–';
+  t = Math.max(0, t);
+  const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  const ss = dec ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+function parseTime(s) {
+  s = s.trim().replace(',', '.');
+  if (!s) return NaN;
+  return s.split(':').reduce((acc, p) => acc * 60 + parseFloat(p), 0);
+}
+function toast(msg, ms = 1800) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* ---------------- stato */
+const S = {
+  settings: {}, results: [], sel: -1, video: null,
+  player: null, ready: false, duration: 0, segs: [], pendingIn: null,
+};
+
+/* ---------------- impostazioni */
+async function loadSettings() {
+  S.settings = await api('/api/settings');
+  setMode(S.settings.mode, false);
+  $('#quality').value = S.settings.quality;
+  $('#maxh').value = String(S.settings.max_height);
+  $('#afmt').value = S.settings.audio_format;
+  $('#precise').checked = !!S.settings.precise_cuts;
+  $('#cookies').value = S.settings.cookies_browser || '';
+  showFolder();
+}
+function showFolder() { $('#folder').textContent = S.settings.download_dir; $('#folder').title = S.settings.download_dir; }
+async function saveSetting(patch) { S.settings = await api('/api/settings', patch); }
+function setMode(m, save = true) {
+  S.settings.mode = m;
+  document.querySelectorAll('#modeSel button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  $('#videoOpts').style.display = m === 'a' ? 'none' : '';
+  $('#audioOpts').style.display = m === 'a' ? '' : 'none';
+  updateDlBtn();
+  if (save) saveSetting({mode: m});
+}
+$('#modeSel').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.v); };
+$('#quality').onchange = e => {
+  saveSetting({quality: e.target.value});
+  if (e.target.value === 'davinci' && +$('#maxh').value > 1080) { $('#maxh').value = '1080'; saveSetting({max_height: 1080}); }
+  if (e.target.value !== 'davinci' && +$('#maxh').value < 2160) { $('#maxh').value = '2160'; saveSetting({max_height: 2160}); }
+};
+$('#maxh').onchange = e => saveSetting({max_height: +e.target.value});
+$('#afmt').onchange = e => saveSetting({audio_format: e.target.value});
+$('#precise').onchange = e => saveSetting({precise_cuts: e.target.checked});
+$('#cookies').onchange = e => saveSetting({cookies_browser: e.target.value});
+$('#openFolder').onclick = () => api('/api/reveal', {});
+$('#chooseFolder').onclick = async () => { S.settings = await api('/api/choose-folder', {}); showFolder(); };
+$('#updBtn').onclick = async () => {
+  const b = $('#updBtn'); b.innerHTML = '<span class="spin"></span> aggiorno…';
+  try { await api('/api/update', {}); toast('yt-dlp aggiornato — riavvia l\'app'); }
+  catch (e) { toast('Errore: ' + e.message, 4000); }
+  b.textContent = 'Aggiorna yt-dlp'; doctor();
+};
+async function doctor() {
+  const d = await api('/api/doctor');
+  const w = [];
+  if (!d.ffmpeg) w.push('ffmpeg non trovato: <code>brew install ffmpeg</code>');
+  if (!d.js_runtime) w.push('Runtime JS mancante: <code>brew install deno</code>');
+  $('#warn').innerHTML = w.join('<br>');
+  $('#updBtn').title = 'yt-dlp ' + d.yt_dlp;
+}
+
+/* ---------------- ricerca */
+$('#searchForm').onsubmit = async e => {
+  e.preventDefault();
+  const q = $('#q').value.trim();
+  if (!q) return;
+  $('#results').innerHTML = '<div class="empty"><span class="spin"></span> Cerco…</div>';
+  try {
+    const {results} = await api('/api/search?q=' + encodeURIComponent(q));
+    S.results = results; S.sel = -1;
+    renderResults();
+    if (results.length === 1 || /^(https?:\/\/|www\.|youtu)/.test(q)) selectResult(0);
+    $('#q').blur();
+  } catch (err) {
+    $('#results').innerHTML = `<div class="empty" style="color:var(--err)">${esc(err.message)}</div>`;
+  }
+};
+function renderResults() {
+  if (!S.results.length) { $('#results').innerHTML = '<div class="empty">Nessun risultato.</div>'; return; }
+  $('#results').innerHTML = S.results.map((r, i) => `
+    <div class="res${i === S.sel ? ' active' : ''}" data-i="${i}">
+      <img loading="lazy" src="${esc(r.thumb)}" alt="">
+      ${r.duration ? `<span class="dur mono">${fmt(r.duration)}</span>` : ''}
+      <div>
+        <div class="t">${esc(r.title)}</div>
+        <div class="m">${esc(r.channel)}${r.views ? ' · ' + Intl.NumberFormat('it', {notation: 'compact'}).format(r.views) + ' visual.' : ''}</div>
+      </div>
+      <button class="quick" data-q="${i}" title="Scarica subito con le opzioni attuali">⬇︎</button>
+    </div>`).join('');
+}
+$('#results').onclick = e => {
+  const q = e.target.closest('.quick');
+  if (q) { e.stopPropagation(); download(S.results[+q.dataset.q], []); return; }
+  const r = e.target.closest('.res');
+  if (r) selectResult(+r.dataset.i);
+};
+function selectResult(i) {
+  if (i < 0 || i >= S.results.length) return;
+  S.sel = i;
+  document.querySelectorAll('.res').forEach(el => el.classList.toggle('active', +el.dataset.i === i));
+  document.querySelector(`.res[data-i="${i}"]`)?.scrollIntoView({block: 'nearest'});
+  loadVideo(S.results[i]);
+}
+
+/* ---------------- player (YouTube IFrame API) */
+let ytReady = null;
+function ensureYT() {
+  if (!ytReady) ytReady = new Promise(res => {
+    window.onYouTubeIframeAPIReady = res;
+    const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  });
+  return ytReady;
+}
+async function loadVideo(v) {
+  S.video = v; S.segs = []; S.pendingIn = null; S.duration = v.duration || 0;
+  $('#vtitle').textContent = v.title;
+  $('#vsub').textContent = [v.channel, v.duration ? fmt(v.duration) : ''].filter(Boolean).join(' · ');
+  $('#placeholder').textContent = 'Carico…';
+  renderSegs(); updateDlBtn();
+  await ensureYT();
+  if (S.player && S.ready) { S.player.loadVideoById(v.id); return; }
+  if (S.player) return;
+  S.player = new YT.Player('player', {
+    videoId: v.id,
+    playerVars: { autoplay: 1, controls: 0, disablekb: 1, rel: 0, modestbranding: 1, playsinline: 1,
+                  iv_load_policy: 3, origin: location.origin },
+    events: {
+      onReady: () => { S.ready = true; $('#placeholder').textContent = ''; },
+      onStateChange: e => { $('#playBtn').textContent = e.data === 1 ? '❚❚' : '▶︎'; $('#placeholder').textContent = ''; },
+      onError: e => {
+        const msg = {2: 'ID non valido', 5: 'errore HTML5', 100: 'video non trovato',
+                     101: 'incorporamento disabilitato', 150: 'incorporamento disabilitato', 153: 'incorporamento bloccato'}[e.data] || 'errore ' + e.data;
+        toast(`Anteprima non disponibile (${msg}). Puoi comunque scaricarlo o aggiungere spezzoni a mano.`, 5000);
+      },
+    },
+  });
+}
+const P = {
+  t: () => (S.ready && S.player.getCurrentTime?.()) || 0,
+  d: () => (S.ready && S.player.getDuration?.()) || S.duration || 0,
+  seek(t) { if (!S.ready) return; S.player.seekTo(Math.max(0, Math.min(t, P.d() - 0.05)), true); tick(); },
+  toggle() {
+    if (!S.ready) return;
+    S.player.getPlayerState() === 1 ? S.player.pauseVideo() : S.player.playVideo();
+  },
+};
+$('#shield').onclick = () => P.toggle();
+$('#playBtn').onclick = () => P.toggle();
+
+/* ---------------- timeline */
+const bar = $('#bar');
+const pct = t => (P.d() ? (t / P.d()) * 100 : 0) + '%';
+function tick() {
+  const t = P.t(), d = P.d();
+  if (d) S.duration = d;
+  $('#time').textContent = `${fmt(t, true)} / ${fmt(d)}`;
+  $('#head').style.left = pct(t);
+  $('#played').style.width = pct(t);
+  if (S.pendingIn != null) {
+    const a = Math.min(S.pendingIn, t), b = Math.max(S.pendingIn, t);
+    Object.assign($('#pendingFill').style, {display: 'block', left: pct(a), width: `calc(${pct(b)} - ${pct(a)})`});
+    Object.assign($('#pendingIn').style, {display: 'block', left: pct(S.pendingIn)});
+  } else {
+    $('#pendingFill').style.display = $('#pendingIn').style.display = 'none';
+  }
+}
+setInterval(tick, 100);
+function barTime(e) {
+  const r = bar.getBoundingClientRect();
+  return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * P.d();
+}
+let dragging = false;
+bar.onmousedown = e => { dragging = true; P.seek(barTime(e)); };
+window.addEventListener('mouseup', () => dragging = false);
+bar.onmousemove = e => {
+  const h = $('#hover'); h.style.display = 'block';
+  h.style.left = ((e.clientX - bar.getBoundingClientRect().left)) + 'px';
+  h.textContent = fmt(barTime(e));
+};
+window.addEventListener('mousemove', e => { if (dragging) P.seek(barTime(e)); });
+bar.onmouseleave = () => $('#hover').style.display = 'none';
+
+/* ---------------- spezzoni I/O */
+function markIn() {
+  if (!S.video) return;
+  S.pendingIn = P.t(); tick(); toast('IN ' + fmt(S.pendingIn, true), 900);
+}
+function markOut() {
+  if (!S.video) return;
+  const t = P.t();
+  let a = S.pendingIn ?? (S.segs.length ? S.segs[S.segs.length - 1][1] : 0);
+  let b = t;
+  if (b < a) [a, b] = [b, a];
+  if (b - a < 0.3) { toast('Spezzone troppo corto'); return; }
+  addSeg(a, b);
+  S.pendingIn = null; tick();
+}
+function addSeg(a, b) {
+  S.segs.push([+a.toFixed(2), +b.toFixed(2)]);
+  S.segs.sort((x, y) => x[0] - y[0]);
+  renderSegs(); updateDlBtn();
+}
+function renderSegs() {
+  $('#segCount').textContent = S.segs.length ? `(${S.segs.length} · ${fmt(S.segs.reduce((s, [a, b]) => s + b - a, 0))})` : '';
+  $('#segLayer').innerHTML = S.segs.map(([a, b]) =>
+    `<div class="segbox" style="left:${pct(a)};width:calc(${pct(b)} - ${pct(a)})"></div>`).join('');
+  $('#segList').innerHTML = S.segs.length ? S.segs.map(([a, b], i) => `
+    <div class="seg">
+      <span class="n">${i + 1}</span>
+      <span class="mono">${fmt(a, true)} → ${fmt(b, true)} <span style="color:var(--dim)">· ${fmt(b - a, true)}</span></span>
+      <button class="play" data-p="${i}" title="Vai all'inizio">▶︎</button>
+      <button class="x" data-x="${i}" title="Rimuovi">✕</button>
+    </div>`).join('')
+    : '<div class="hint">Nessuno spezzone: verrà scaricato il video intero. Premi <kbd>I</kbd> e <kbd>O</kbd> per segnare inizio e fine (anche più volte).</div>';
+}
+$('#segList').onclick = e => {
+  const p = e.target.closest('[data-p]'), x = e.target.closest('[data-x]');
+  if (p) { P.seek(S.segs[+p.dataset.p][0]); S.player?.playVideo(); }
+  if (x) { S.segs.splice(+x.dataset.x, 1); renderSegs(); updateDlBtn(); }
+};
+$('#clearSegs').onclick = () => { S.segs = []; S.pendingIn = null; renderSegs(); updateDlBtn(); };
+$('#inBtn').onclick = markIn;
+$('#outBtn').onclick = markOut;
+$('#manual').onkeydown = e => {
+  if (e.key !== 'Enter') return;
+  const [a, b] = e.target.value.split(/\s*[-–>]+\s*/).map(parseTime);
+  if (isNaN(a) || isNaN(b) || b <= a) { toast('Formato: 1:20-1:45'); return; }
+  addSeg(a, b); e.target.value = ''; e.target.blur();
+};
+// Ridisegna i box quando arriva la durata reale del video.
+setInterval(() => { if (S.segs.length) renderSegs.lastD !== P.d() && (renderSegs.lastD = P.d(), renderSegs()); }, 1000);
+
+/* ---------------- download */
+function updateDlBtn() {
+  const b = $('#dl');
+  b.disabled = !S.video;
+  const what = {av: '', v: ' (solo video)', a: ' (solo audio)'}[S.settings.mode] || '';
+  b.textContent = S.segs.length ? `Scarica ${S.segs.length} spezzon${S.segs.length > 1 ? 'i' : 'e'}${what}` : `Scarica video intero${what}`;
+}
+async function download(v, segs) {
+  if (!v) return;
+  try {
+    await api('/api/download', {
+      id: v.id, url: v.url, title: v.title, thumb: v.thumb, sections: segs,
+      mode: S.settings.mode, quality: $('#quality').value, max_height: +$('#maxh').value,
+      audio_format: $('#afmt').value, precise_cuts: $('#precise').checked,
+    });
+    toast('Aggiunto ai download');
+    pollJobs();
+  } catch (e) { toast('Errore: ' + e.message, 4000); }
+}
+$('#dl').onclick = () => download(S.video, S.segs);
+
+let pollT;
+async function pollJobs() {
+  clearTimeout(pollT);
+  let active = false;
+  try {
+    const {jobs} = await api('/api/jobs');
+    active = jobs.some(j => j.state === 'queued' || j.state === 'running');
+    $('#queue').innerHTML = jobs.length ? jobs.map(j => `
+      <div class="job ${j.state}">
+        <div class="t" title="${esc(j.title)}">${esc(j.title)}</div>
+        <div class="s"><span>${esc(j.status)}${j.sections.length ? ` · ${j.sections.length} spezz.` : ''}</span>
+          <span class="mono">${j.state === 'running' ? `${j.progress}% ${esc(j.speed)} ${j.eta ? '· ' + esc(j.eta) : ''}` : ''}</span></div>
+        <div class="pb"><i style="width:${j.progress}%"></i></div>
+        ${j.error ? `<div class="err">${esc(j.error)}</div>` : ''}
+        ${j.files.length ? `<div class="acts"><button class="link" data-f="${esc(j.files[j.files.length - 1])}">Mostra nel Finder${j.files.length > 1 ? ` (${j.files.length} file)` : ''}</button></div>` : ''}
+      </div>`).join('') : '<div class="empty" style="padding:12px">Nessun download.</div>';
+  } catch (e) { /* server riavviato */ }
+  pollT = setTimeout(pollJobs, active ? 600 : 4000);
+}
+$('#queue').onclick = e => { const b = e.target.closest('[data-f]'); if (b) api('/api/reveal', {path: b.dataset.f}); };
+$('#clearJobs').onclick = async () => { await api('/api/clear', {}); pollJobs(); };
+
+/* ---------------- tastiera */
+window.addEventListener('keydown', e => {
+  const typing = e.target.matches('input, select, textarea');
+  if (e.key === 'Escape' && typing) { e.target.blur(); return; }
+  if (typing) {
+    if (e.target === $('#q') && (e.key === 'ArrowDown')) { e.preventDefault(); $('#q').blur(); selectResult(Math.max(0, S.sel)); }
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const fps = 1 / 30;
+  switch (e.key) {
+    case '/': e.preventDefault(); $('#q').focus(); $('#q').select(); break;
+    case ' ': case 'k': case 'K': e.preventDefault(); P.toggle(); break;
+    case 'j': case 'J': P.seek(P.t() - 10); break;
+    case 'l': case 'L': P.seek(P.t() + 10); break;
+    case 'ArrowLeft': e.preventDefault(); P.seek(P.t() - (e.shiftKey ? 1 : 5)); break;
+    case 'ArrowRight': e.preventDefault(); P.seek(P.t() + (e.shiftKey ? 1 : 5)); break;
+    case ',': S.player?.pauseVideo(); P.seek(P.t() - fps); break;
+    case '.': S.player?.pauseVideo(); P.seek(P.t() + fps); break;
+    case 'i': case 'I': markIn(); break;
+    case 'o': case 'O': markOut(); break;
+    case 'Escape': S.pendingIn = null; tick(); break;
+    case 'Backspace': case 'Delete': case 'x': case 'X':
+      if (S.segs.length) { S.segs.pop(); renderSegs(); updateDlBtn(); } break;
+    case '1': setMode('av'); break;
+    case '2': setMode('v'); break;
+    case '3': setMode('a'); break;
+    case 'd': case 'D': if (S.video) download(S.video, S.segs); break;
+    case 'ArrowDown': e.preventDefault(); selectResult(S.sel + 1); break;
+    case 'ArrowUp': e.preventDefault(); selectResult(S.sel - 1); break;
+    case 'Home': P.seek(0); break;
+    default: return;
+  }
+});
+// Se il focus finisce dentro l'iframe di YouTube, riprendilo per non perdere le scorciatoie.
+window.addEventListener('blur', () => setTimeout(() => {
+  if (document.activeElement?.tagName === 'IFRAME') document.activeElement.blur();
+}, 0));
+
+loadSettings().then(pollJobs);
+doctor();
+ensureYT();
+</script>
+</body>
+</html>
