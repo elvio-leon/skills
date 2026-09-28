@@ -8,6 +8,7 @@ installato, l'interfaccia si apre nel browser predefinito).
 
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -244,6 +245,8 @@ def run_job(job):
     job.state, job.status = "running", "avvio…"
     s = load_settings()
     req = job.req
+    if req.get("sections") and not req.get("_ytdlp_ranges"):
+        return run_sections_job(job, s)
     mode = req.get("mode", s["mode"])
     quality = req.get("quality", s["quality"])
     max_h = req.get("max_height", s["max_height"])
@@ -338,6 +341,264 @@ def run_job(job):
         job.state, job.status, job.error = "error", "errore", msg[:400]
     finally:
         shutil.rmtree(out_dir / ".ytgrab-tmp", ignore_errors=True)
+
+
+# ---------------------------------------------------------------- spezzoni
+
+# YouTube interrompe le richieste HTTP troppo lunghe dei client non-browser: se
+# ffmpeg legge direttamente da googlevideo, dopo qualche MB la connessione cade
+# ("ffmpeg exited with code 251"). ffmpeg legge quindi da questo proxy locale,
+# che scarica da YouTube solo i byte richiesti, a blocchi da 10 MB, come fa yt-dlp.
+PROXY = {}
+PROXY_LOCK = threading.Lock()
+CHUNK = 10 * 1024 * 1024
+SERVER_PORT = [None]
+
+
+def proxy_register(ydl, fmt):
+    token = uuid.uuid4().hex
+    with PROXY_LOCK:
+        PROXY[token] = {"ydl": ydl, "url": fmt["url"],
+                        "headers": dict(fmt.get("http_headers") or {}),
+                        "total": fmt.get("filesize")}
+    return f"http://127.0.0.1:{SERVER_PORT[0]}/proxy/{token}", token
+
+
+def proxy_unregister(token):
+    with PROXY_LOCK:
+        PROXY.pop(token, None)
+
+
+def _open(entry, start, end):
+    """Apre una richiesta per i byte [start, end] al server originale (con retry)."""
+    from yt_dlp.networking import Request
+    headers = {**entry["headers"], "Range": f"bytes={start}-{end}"}
+    for attempt in range(3):
+        try:
+            return entry["ydl"].urlopen(Request(entry["url"], headers=headers))
+        except Exception:  # noqa: BLE001
+            if attempt == 2:
+                raise
+            time.sleep(0.5 * (attempt + 1))
+
+
+def _copy(resp, wfile, skip=0):
+    """Copia la risposta verso ffmpeg a piccoli pezzi: se ffmpeg chiude, ci fermiamo subito."""
+    sent = 0
+    while True:
+        buf = resp.read(64 * 1024)
+        if not buf:
+            return sent
+        if skip:
+            cut = min(skip, len(buf))
+            buf, skip = buf[cut:], skip - cut
+            if not buf:
+                continue
+        wfile.write(buf)
+        sent += len(buf)
+
+
+def proxy_serve(handler, token):
+    entry = PROXY.get(token)
+    if not entry:
+        return handler._send(404, {"error": "not found"})
+    m = re.match(r"bytes=(\d+)-(\d*)", handler.headers.get("Range") or "")
+    start = int(m.group(1)) if m else 0
+    req_end = int(m.group(2)) if m and m.group(2) else None
+    total = entry["total"]
+    if total is not None and start >= total:
+        handler.send_response(416)
+        handler.send_header("Content-Range", f"bytes */{total}")
+        handler.send_header("Content-Length", "0")
+        handler.end_headers()
+        return
+    chunk_end = start + CHUNK - 1 if req_end is None else min(start + CHUNK - 1, req_end)
+    try:
+        resp = _open(entry, start, chunk_end)
+    except Exception as exc:  # noqa: BLE001
+        return handler._send(502, {"error": str(exc)[:300]})
+    try:
+        cr = re.search(r"/(\d+)", resp.headers.get("Content-Range") or "")
+        if cr:
+            total = int(cr.group(1))
+        elif total is None:
+            total = start + int(resp.headers.get("Content-Length") or 0)
+        entry["total"] = total
+        last = total - 1 if req_end is None else min(req_end, total - 1)
+
+        handler.send_response(206 if m else 200)
+        handler.send_header("Content-Type", "application/octet-stream")
+        handler.send_header("Accept-Ranges", "bytes")
+        if m:
+            handler.send_header("Content-Range", f"bytes {start}-{last}/{total}")
+        handler.send_header("Content-Length", str(last - start + 1))
+        handler.end_headers()
+        # Buffer piccolo: quando ffmpeg salta altrove non restano MB già scaricati e inutili.
+        handler.connection.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 128 * 1024)
+
+        # Se il server ignora il Range (200) scartiamo i byte iniziali.
+        pos = start + _copy(resp, handler.wfile, skip=start if resp.status == 200 else 0)
+        resp.close()
+        while pos <= last and PROXY.get(token) is entry:
+            resp = _open(entry, pos, min(pos + CHUNK - 1, last))
+            got = _copy(resp, handler.wfile)
+            resp.close()
+            if not got:
+                break
+            pos += got
+    except (BrokenPipeError, ConnectionResetError):
+        pass  # ffmpeg ha letto quello che gli serviva e ha chiuso
+    except Exception:  # noqa: BLE001
+        pass  # errore a monte: ffmpeg vedrà la connessione chiusa e lo riporterà
+    finally:
+        try:
+            resp.close()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _hms(t):
+    t = int(t)
+    return f"{t // 3600:02d}h{t % 3600 // 60:02d}m{t % 60:02d}s"
+
+
+def _encoder_args(mode, quality, precise, audio_fmt):
+    """Codec e contenitore per ffmpeg: (argomenti, estensione)."""
+    mac = sys.platform == "darwin"
+    if mode == "a":
+        return {
+            "wav": (["-c:a", "pcm_s16le"], "wav"),
+            "mp3": (["-c:a", "libmp3lame", "-q:a", "0"], "mp3"),
+        }.get(audio_fmt, (["-c:a", "copy"], "m4a"))
+    if quality == "hevc":
+        v = (["-c:v", "hevc_videotoolbox", "-q:v", "65"] if mac
+             else ["-c:v", "libx265", "-crf", "20", "-preset", "fast"])
+        return v + ["-tag:v", "hvc1", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k"], "mov"
+    if precise:
+        v = (["-c:v", "h264_videotoolbox", "-q:v", "70"] if mac
+             else ["-c:v", "libx264", "-crf", "17", "-preset", "veryfast"])
+        return v + ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k"], "mp4"
+    return ["-c", "copy"], "mp4"
+
+
+def run_sections_job(job, s):
+    req = job.req
+    mode = req.get("mode", s["mode"])
+    quality = req.get("quality", s["quality"])
+    precise = bool(req.get("precise_cuts", s["precise_cuts"]))
+    audio_fmt = req.get("audio_format") or s.get("audio_format") or "m4a"
+    sections = [(float(a), float(b)) for a, b in req["sections"] if float(b) > float(a)]
+    job.section_total = len(sections)
+    out_dir = Path(os.path.expanduser(s["download_dir"]))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    url = req.get("url") or f"https://www.youtube.com/watch?v={req['id']}"
+
+    opts = base_opts(s)
+    opts.update({"format": build_format(mode, quality, req.get("max_height", s["max_height"])),
+                 "noplaylist": True})
+    tokens = []
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            job.status = "analisi…"
+            info = ydl.extract_info(url, download=False)
+            fmts = info.get("requested_formats") or [info]
+            if any(not re.match(r"https?://", f.get("url") or "") for f in fmts):
+                # Formato non HTTP (es. HLS): lascia fare a yt-dlp.
+                req = {**req}
+                job.req = req
+                return _run_ranges_with_ytdlp(job, s, sections)
+            job.title = info.get("title") or job.title
+            inputs = []
+            for f in fmts:
+                purl, tok = proxy_register(ydl, f)
+                tokens.append(tok)
+                inputs.append((purl, f))
+
+            args_codec, ext = _encoder_args(mode, quality, precise, audio_fmt)
+            ffmpeg = shutil.which("ffmpeg") or "ffmpeg"
+            base = yt_dlp.utils.sanitize_filename(info.get("title") or info["id"])[:90].strip()
+            suffix = {"a": " (audio)", "v": " (video)"}.get(mode, "")
+
+            for i, (a, b) in enumerate(sections):
+                job.section_idx = i
+                job.status = f"spezzone {i + 1}/{len(sections)}"
+                dur = b - a
+                out = out_dir / f"{base} [{info['id']}]_{_hms(a)}-{_hms(b)}{suffix}.{ext}"
+                n = 2
+                while out.exists():
+                    out = out.with_name(f"{out.stem} ({n}){out.suffix}")
+                    n += 1
+                tmp = out.with_name(f".{out.stem}.part.{ext}")
+
+                cmd = [ffmpeg, "-hide_banner", "-nostdin", "-y", "-loglevel", "error",
+                       "-progress", "pipe:1", "-nostats"]
+                for purl, _ in inputs:
+                    cmd += ["-recv_buffer_size", "131072",
+                            "-ss", f"{a:.3f}", "-t", f"{dur:.3f}", "-i", purl]
+                if len(inputs) == 2:
+                    maps = {"av": ["-map", "0:v:0", "-map", "1:a:0"],
+                            "v": ["-map", "0:v:0"], "a": ["-map", "1:a:0"]}[mode]
+                else:
+                    maps = {"av": ["-map", "0:v:0?", "-map", "0:a:0?"],
+                            "v": ["-map", "0:v:0"], "a": ["-map", "0:a:0"]}[mode]
+                cmd += maps + args_codec
+                if ext in ("mp4", "mov", "m4a"):
+                    cmd += ["-movflags", "+faststart"]
+                cmd += [str(tmp)]
+
+                err = _run_ffmpeg(cmd, job, i, len(sections), dur)
+                if err:
+                    tmp.unlink(missing_ok=True)
+                    raise RuntimeError(f"spezzone {i + 1}: {err}")
+                tmp.rename(out)
+                job.files.append(str(out))
+        job.state, job.status, job.progress = "done", "completato", 100.0
+        job.speed = job.eta = ""
+    except Exception as exc:  # noqa: BLE001
+        job.state, job.status = "error", "errore"
+        job.error = str(exc).replace("ERROR: ", "")[:600]
+    finally:
+        for tok in tokens:
+            proxy_unregister(tok)
+
+
+def _run_ffmpeg(cmd, job, idx, count, dur):
+    """Esegue ffmpeg aggiornando l'avanzamento. Ritorna il messaggio d'errore o None."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    err_lines = []
+
+    def read_err():
+        for line in proc.stderr:
+            err_lines.append(line.rstrip())
+            del err_lines[:-15]
+
+    t = threading.Thread(target=read_err, daemon=True)
+    t.start()
+    started = time.time()
+    for line in proc.stdout:
+        if line.startswith("out_time_us=") or line.startswith("out_time_ms="):
+            try:
+                done = max(0, int(line.split("=")[1])) / 1e6
+            except ValueError:
+                continue
+            frac = min(1.0, done / dur) if dur else 0
+            job.progress = max(job.progress, min(99.0, (idx + frac) / count * 100))
+            el = time.time() - started
+            if frac > 0.02 and el > 1:
+                rem = el / frac * (1 - frac)
+                job.eta = f"{int(rem) // 60}:{int(rem) % 60:02d}"
+            job.speed = f"{done / el:.1f}×" if el > 0.5 else ""
+    proc.wait()
+    t.join(timeout=2)
+    if proc.returncode != 0:
+        detail = " | ".join(line for line in err_lines if line.strip())[-500:]
+        return f"ffmpeg exited with code {proc.returncode}" + (f": {detail}" if detail else "")
+    return None
+
+
+def _run_ranges_with_ytdlp(job, s, sections):
+    job.req = {**job.req, "_ytdlp_ranges": True}
+    return run_job(job)
 
 
 def enqueue(req):
@@ -451,6 +712,8 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         try:
+            if u.path.startswith("/proxy/"):
+                return proxy_serve(self, u.path.rsplit("/", 1)[-1])
             if u.path in ("/", "/index.html"):
                 return self._send(200, (WEB_DIR / "index.html").read_bytes(),
                                   "text/html; charset=utf-8")
@@ -530,6 +793,7 @@ def main():
         return
 
     srv = make_server()
+    SERVER_PORT[0] = srv.server_address[1]
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     print(f"{APP_NAME} in ascolto su {url}", flush=True)
