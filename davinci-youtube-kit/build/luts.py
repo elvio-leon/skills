@@ -121,12 +121,12 @@ LOOK_FUNCS = {
 }
 
 
-def cube_text(key: str, title: str) -> str:
+def cube_text(key: str, title: str, funcs=None) -> str:
     x = np.linspace(0, 1, SIZE)
     # .cube order: red changes fastest, then green, then blue.
     b, g, r = np.meshgrid(x, x, x, indexing="ij")
     grid = np.stack([r, g, b], -1).reshape(-1, 3)
-    out = np.clip(LOOK_FUNCS[key](grid.copy()), 0, 1)
+    out = np.clip((funcs or LOOK_FUNCS)[key](grid.copy()), 0, 1)
     lines = [f'TITLE "{title}"', f"LUT_3D_SIZE {SIZE}", "DOMAIN_MIN 0.0 0.0 0.0",
              "DOMAIN_MAX 1.0 1.0 1.0"]
     lines += [f"{v[0]:.6f} {v[1]:.6f} {v[2]:.6f}" for v in out]

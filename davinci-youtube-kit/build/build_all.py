@@ -31,7 +31,7 @@ from templates import CATALOG, LOOKS  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 PACK = "YouTube Kit"
-TEMPLATES = ROOT / "Templates" / "Edit"
+DIST = ROOT / "dist"
 CATEGORY_COLORS = {"Titles": (230, 57, 70), "Transitions": (69, 123, 157),
                    "Effects": (42, 157, 143), "Generators": (244, 162, 97)}
 
@@ -41,6 +41,7 @@ CATEGORY_COLORS = {"Titles": (230, 57, 70), "Transitions": (69, 123, 157),
 # --------------------------------------------------------------------------- #
 MOCK_ENV = r"""
 local M = {}
+if math.atan2 == nil then math.atan2 = function(y, x) return math.atan(y, x) end end
 function M.run(code, tools, t, rstart, rend)
   local function Point(x, y) return {X = x, Y = y, _point = true} end
   local function Text(s) return {Value = s, _text = true} end
@@ -183,13 +184,19 @@ def font(size, bold=True):
     return ImageFont.load_default()
 
 
-def make_icon(path, label, category):
+def make_icon(path, label, category, theme=None, prefix="YTK"):
     w, h = 208, 116
-    img = Image.new("RGB", (w, h), (24, 24, 28))
+    bg = theme["bg"] if theme else (24, 24, 28)
+    fg = theme["fg"] if theme else (245, 245, 245)
+    col = theme["accent"] if theme else CATEGORY_COLORS[category]
+    img = Image.new("RGB", (w, h), bg)
     d = ImageDraw.Draw(img)
-    col = CATEGORY_COLORS[category]
-    d.rectangle([0, 0, w, 10], fill=col)
-    d.text((8, 16), "YTK", font=font(14), fill=col)
+    if theme:
+        d.line([(8, 102), (70, 102)], fill=col, width=3)
+        d.ellipse([4, 98, 12, 106], fill=col)
+    else:
+        d.rectangle([0, 0, w, 10], fill=col)
+    d.text((8, 14), prefix, font=font(14), fill=col)
     words, lines, cur = label.split(), [], ""
     for wd in words:
         if len(cur + " " + wd) > 14 and cur:
@@ -198,10 +205,10 @@ def make_icon(path, label, category):
         else:
             cur = (cur + " " + wd).strip()
     lines.append(cur)
-    y = 40 if len(lines) < 3 else 34
+    y = 36 if len(lines) < 3 else 32
     for ln in lines[:3]:
-        d.text((8, y), ln, font=font(20), fill=(245, 245, 245))
-        y += 25
+        d.text((8, y), ln, font=font(20), fill=fg)
+        y += 23
     img.save(path)
 
 
@@ -218,93 +225,112 @@ WHERE = {
 }
 
 
-def write_catalog():
-    L = ["# Catalogo YouTube Kit", "",
+def write_catalog(pk):
+    root, pre = pk["root"], pk["prefix"]
+    L = [f"# Catalogo {pk['name']}", "",
          "_File generato automaticamente da `build/build_all.py`._", ""]
     for cat, (it, where, how) in WHERE.items():
-        L += [f"## {it}", "", f"**Dove lo trovi:** {where}  ", f"**Come si usa:** {how}", "",
-              "| Nome | Cosa fa |", "|---|---|"]
-        L += [f"| {label} | {desc} |" for c, label, _, desc in CATALOG if c == cat]
+        items = [(label, desc) for c, label, _, desc in pk["catalog"] if c == cat]
+        if not items:
+            continue
+        L += [f"## {it}", "", f"**Dove lo trovi:** {where} (cartella *{pk['name']}*)  ",
+              f"**Come si usa:** {how}", "", "| Nome | Cosa fa |", "|---|---|"]
+        L += [f"| {label} | {desc} |" for label, desc in items]
         L.append("")
     L += ["## Effetti sonori (cartella `SFX/`)", "",
           "Trascina il file `.wav` dal Media Pool su una traccia audio (A2, A3...).", "",
           "| File | Categoria | Quando usarlo |", "|---|---|---|"]
-    L += [f"| `{cat}/{name}.wav` | {cat} | {desc} |" for cat, name, _, desc in sfx.SOUNDS]
+    L += [f"| `{cat}/{name}.wav` | {cat} | {desc} |" for cat, name, _, desc in pk["sounds"]]
     L += ["", "## LUT colore (cartella `LUT/`)", "",
-          "Gli stessi look sono disponibili anche come **effetti trascinabili** (`YTK Look ...`).", "",
+          f"Gli stessi look sono disponibili anche come **effetti trascinabili** (`{pre} Look ...`).", "",
           "| File | Look |", "|---|---|"]
-    L += [f"| `YTK_{k}.cube` | {label}: {desc} |" for k, label, desc in LOOKS]
-    (ROOT / "CATALOGO.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+    L += [f"| `{pre}_{k}.cube` | {label}: {desc} |" for k, label, desc in pk["looks"]]
+    (root / "CATALOGO.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+
+
+def build_pack(pk, lua, runner):
+    root, pre, name = pk["root"], pk["prefix"], pk["name"]
+    templates = root / "Templates" / "Edit"
+    print(f"== {name}")
+    for d in (root / "Templates", root / "LUT", root / "SFX"):
+        if d.exists():
+            shutil.rmtree(d)
+
+    # LUTs (also copied next to the look effects, read via "Setting:" path)
+    (root / "LUT").mkdir(parents=True)
+    fx_dir = templates / "Effects" / name
+    fx_dir.mkdir(parents=True)
+    for key, label, _ in pk["looks"]:
+        text = luts.cube_text(key, label, pk["look_funcs"])
+        (root / "LUT" / f"{pre}_{key}.cube").write_text(text)
+        (fx_dir / f"{pre}_{key}.cube").write_text(text)
+    print(f"LUT: {len(pk['looks'])}")
+
+    count = {}
+    for category, label, builder, _desc in pk["catalog"]:
+        macro = builder()
+        validate(macro, lua, runner)
+        text = macro.render()
+        validate_lua_syntax(lua, text, label)
+        folder = templates / category / name
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{label}.setting").write_text(text, encoding="utf-8")
+        make_icon(folder / f"{label}.png", label.replace(pre + " ", ""), category, pk["theme"], pre)
+        count[category] = count.get(category, 0) + 1
+    print("Template:", count)
+
+    for cat, sname, fn, _desc in pk["sounds"]:
+        folder = root / "SFX" / cat
+        folder.mkdir(parents=True, exist_ok=True)
+        sfx.write_wav(folder / f"{sname}.wav", fn())
+    print(f"SFX: {len(pk['sounds'])}")
+
+    write_catalog(pk)
+
+    DIST.mkdir(exist_ok=True)
+    drfx = DIST / f"{pk['dist']}.drfx"
+    with zipfile.ZipFile(drfx, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(templates.rglob("*")):
+            if f.is_file():
+                z.write(f, Path("Edit") / f.relative_to(templates))
+    print(f"DRFX: {drfx.relative_to(ROOT)} ({drfx.stat().st_size // 1024} KB)")
+
+    full = DIST / f"{pk['dist']}-completo.zip"
+    top = Path(pk["dist"])
+    with zipfile.ZipFile(full, "w", zipfile.ZIP_DEFLATED) as z:
+        for sub in ("Templates", "LUT", "SFX"):
+            for f in sorted((root / sub).rglob("*")):
+                if f.is_file():
+                    z.write(f, top / f.relative_to(root))
+        for extra in ("README.md", "CATALOGO.md"):
+            if (root / extra).exists():
+                z.write(root / extra, top / extra)
+        for inst in ("installa_windows.bat", "installa_mac.command"):
+            z.write(ROOT / inst, top / inst)
+        z.write(drfx, top / drfx.name)
+    print(f"ZIP: {full.relative_to(ROOT)} ({full.stat().st_size // 1024} KB)")
 
 
 def main():
     import lupa
 
+    import ldf
+
     lua = lupa.LuaRuntime(unpack_returned_tuples=True)
     runner = lua.execute(MOCK_ENV)
-
-    if TEMPLATES.exists():
-        shutil.rmtree(TEMPLATES)
-    for d in ("LUT", "SFX", "dist"):
-        if (ROOT / d).exists():
-            shutil.rmtree(ROOT / d)
-
-    # LUTs -----------------------------------------------------------------
-    (ROOT / "LUT").mkdir(parents=True)
-    fx_dir = TEMPLATES / "Effects" / PACK
-    fx_dir.mkdir(parents=True)
-    for key, label, _ in LOOKS:
-        text = luts.cube_text(key, label)
-        (ROOT / "LUT" / f"YTK_{key}.cube").write_text(text)
-        (fx_dir / f"YTK_{key}.cube").write_text(text)
-    print(f"LUT: {len(LOOKS)}")
-
-    # Fusion templates ------------------------------------------------------
-    count = {}
-    for category, label, builder, _desc in CATALOG:
-        macro = builder()
-        validate(macro, lua, runner)
-        text = macro.render()
-        validate_lua_syntax(lua, text, label)
-        folder = TEMPLATES / category / PACK
-        folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"{label}.setting").write_text(text, encoding="utf-8")
-        make_icon(folder / f"{label}.png", label.replace("YTK ", ""), category)
-        count[category] = count.get(category, 0) + 1
-    print("Template:", count)
-
-    # SFX -------------------------------------------------------------------
-    n = 0
-    for cat, name, fn, _desc in sfx.SOUNDS:
-        folder = ROOT / "SFX" / cat
-        folder.mkdir(parents=True, exist_ok=True)
-        sfx.write_wav(folder / f"{name}.wav", fn())
-        n += 1
-    print(f"SFX: {n}")
-
-    write_catalog()
-
-    # DRFX bundle -----------------------------------------------------------
-    (ROOT / "dist").mkdir()
-    drfx = ROOT / "dist" / "YouTubeKit.drfx"
-    with zipfile.ZipFile(drfx, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in sorted(TEMPLATES.rglob("*")):
-            if f.is_file():
-                z.write(f, Path("Edit") / f.relative_to(TEMPLATES))
-    print(f"DRFX: {drfx.relative_to(ROOT)} ({drfx.stat().st_size // 1024} KB)")
-
-    # Everything in one zip for easy download ------------------------------
-    full = ROOT / "dist" / "YouTubeKit-completo.zip"
-    with zipfile.ZipFile(full, "w", zipfile.ZIP_DEFLATED) as z:
-        for sub in ("Templates", "LUT", "SFX"):
-            for f in sorted((ROOT / sub).rglob("*")):
-                if f.is_file():
-                    z.write(f, Path("YouTubeKit") / f.relative_to(ROOT))
-        for name in ("README.md", "CATALOGO.md", "installa_windows.bat", "installa_mac.command"):
-            if (ROOT / name).exists():
-                z.write(ROOT / name, Path("YouTubeKit") / name)
-        z.write(drfx, Path("YouTubeKit") / drfx.name)
-    print(f"ZIP: {full.relative_to(ROOT)} ({full.stat().st_size // 1024} KB)")
+    only = sys.argv[1:]
+    if DIST.exists() and not only:
+        shutil.rmtree(DIST)
+    packs = [
+        dict(name=PACK, prefix="YTK", root=ROOT, catalog=CATALOG, looks=LOOKS, look_funcs=luts.LOOK_FUNCS,
+             sounds=sfx.SOUNDS, dist="YouTubeKit", theme=None),
+        dict(name=ldf.PACK, prefix=ldf.PREFIX, root=ROOT / "linea-di-fondo", catalog=ldf.CATALOG,
+             looks=ldf.LOOKS, look_funcs=ldf.LOOK_FUNCS, sounds=ldf.SOUNDS, dist="LineaDiFondo",
+             theme=dict(bg=(24, 58, 47), fg=(245, 239, 230), accent=(181, 50, 60))),
+    ]
+    for pk in packs:
+        if not only or pk["dist"] in only:
+            build_pack(pk, lua, runner)
 
 
 if __name__ == "__main__":

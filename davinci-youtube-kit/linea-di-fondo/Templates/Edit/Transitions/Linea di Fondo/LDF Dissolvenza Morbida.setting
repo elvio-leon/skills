@@ -1,0 +1,112 @@
+{
+	Tools = ordered() {
+		LDF_DissolvenzaMorbida = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "ClipA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "ClipB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Push",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Dissolvenza",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				ClipA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = "1+Ctrl.Push*Ctrl.Mix",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				ClipB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = "1+Ctrl.Push*(1-Ctrl.Mix)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Dissolvenza = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ClipA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "ClipB",
+							Source = "Output",
+						},
+						Mix = Input {
+							Expression = "((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Push = Input { Value = 0.03, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+					UserControls = ordered() {
+						Push = {
+							LINKS_Name = "Leggero avvicinamento",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.03,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_DissolvenzaMorbida"
+}

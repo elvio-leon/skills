@@ -1,0 +1,81 @@
+{
+	Tools = ordered() {
+		LDF_MovimentoDocumentario = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Mode",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pivot",
+					Name = "Punto di zoom",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local p=((min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))<0.5 and 4*(min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))^3 or 1-((-2*(min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))+2)^3)/2)\nlocal a=Amount\nif Mode==0 then return 1+a*p end\nif Mode==1 then return 1+a*(1-p) end\nreturn 1+a",
+						},
+						Center = Input {
+							Expression = ":local p=((min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))<0.5 and 4*(min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))^3 or 1-((-2*(min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1))+2)^3)/2)\nlocal a=Amount/2\nif Mode==2 then return Point(0.5+a-2*a*p, 0.5) end\nif Mode==3 then return Point(0.5-a+2*a*p, 0.5) end\nif Mode==4 then return Point(0.5, 0.5+a-2*a*p) end\nif Mode==5 then return Point(0.5, 0.5-a+2*a*p) end\nreturn Point(0.5, 0.5)",
+						},
+						Edges = Input { Value = 3, },
+						Mode = Input { Value = 0, },
+						Amount = Input { Value = 0.06, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Mode = {
+							{ CCS_AddString = "Avvicina" },
+							{ CCS_AddString = "Allontana" },
+							{ CCS_AddString = "Verso destra" },
+							{ CCS_AddString = "Verso sinistra" },
+							{ CCS_AddString = "Verso l'alto" },
+							{ CCS_AddString = "Verso il basso" },
+							LINKS_Name = "Movimento",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 5,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Amount = {
+							LINKS_Name = "Ampiezza",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.06,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_MovimentoDocumentario"
+}

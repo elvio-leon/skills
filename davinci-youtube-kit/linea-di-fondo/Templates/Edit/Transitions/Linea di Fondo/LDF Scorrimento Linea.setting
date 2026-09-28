@@ -1,0 +1,176 @@
+{
+	Tools = ordered() {
+		LDF_ScorrimentoLinea = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "ClipA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "ClipB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Rev",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Thick",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Uscita",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				ClipA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5-iif(Ctrl.Rev>0.5,-1,1)*((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2), 0.5)",
+						},
+						Edges = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				ClipB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5+iif(Ctrl.Rev>0.5,-1,1)*(1-((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)), 0.5)",
+						},
+						Edges = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Spinta = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ClipA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "ClipB",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				LineaMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5+iif(Ctrl.Rev>0.5,-1,1)*(0.5-((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)), 0.5)",
+						},
+						Width = Input {
+							Expression = "Ctrl.Thick/ClipA.Input.OriginalWidth",
+						},
+						Height = Input { Value = 1.1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Linea = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "LineaMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Uscita = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Spinta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea",
+							Source = "Output",
+						},
+						Blend = Input {
+							Expression = "iif(Ctrl.Mix>0.001 and Ctrl.Mix<0.999,1,0)",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Rev = Input { Value = 0, },
+						Thick = Input { Value = 4, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+					UserControls = ordered() {
+						Rev = {
+							LINKS_Name = "Inverti direzione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Thick = {
+							LINKS_Name = "Spessore linea (pixel)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 4,
+							INP_MinScale = 0,
+							INP_MaxScale = 16,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_ScorrimentoLinea"
+}

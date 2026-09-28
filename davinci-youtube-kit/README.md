@@ -15,6 +15,8 @@ Tutto è pensato per il flusso "**trascino e funziona**": metti l'elemento in ti
 
 L'elenco completo con la descrizione di ogni elemento è in **[CATALOGO.md](CATALOGO.md)**.
 
+> **Pacchetto su misura "Linea di Fondo"**: titoli, transizioni ed effetti costruiti sull'identità del canale sono nella cartella [`linea-di-fondo/`](linea-di-fondo/README.md) (installer: [`dist/LineaDiFondo.drfx`](dist/LineaDiFondo.drfx)).
+
 ---
 
 ## 1. Installazione

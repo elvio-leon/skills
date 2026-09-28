@@ -1,0 +1,85 @@
+{
+	Tools = ordered() {
+		LDF_SfondoVerde = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftRed",
+					Name = "Colore",
+					ControlGroup = 1,
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Texture carta",
+					Default = 0.03,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Colore = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.094, },
+						TopLeftGreen = Input { Value = 0.227, },
+						TopLeftBlue = Input { Value = 0.184, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Fine = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 8, },
+						XScale = Input { Value = 90, },
+						Contrast = Input { Value = 1.4, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Colore",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Fine",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Multiply" }, },
+						Blend = Input { Value = 0.03, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_SfondoVerde"
+}

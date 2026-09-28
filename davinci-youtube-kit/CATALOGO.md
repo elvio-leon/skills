@@ -4,7 +4,7 @@ _File generato automaticamente da `build/build_all.py`._
 
 ## Titoli
 
-**Dove lo trovi:** Effects Library → Toolbox → Titles → Fusion Titles  
+**Dove lo trovi:** Effects Library → Toolbox → Titles → Fusion Titles (cartella *YouTube Kit*)  
 **Come si usa:** Trascinalo su una traccia video **sopra** la clip (es. V2).
 
 | Nome | Cosa fa |
@@ -23,7 +23,7 @@ _File generato automaticamente da `build/build_all.py`._
 
 ## Transizioni
 
-**Dove lo trovi:** Effects Library → Toolbox → Video Transitions → Fusion Transitions  
+**Dove lo trovi:** Effects Library → Toolbox → Video Transitions → Fusion Transitions (cartella *YouTube Kit*)  
 **Come si usa:** Trascinala sul **punto di taglio** tra due clip.
 
 | Nome | Cosa fa |
@@ -42,7 +42,7 @@ _File generato automaticamente da `build/build_all.py`._
 
 ## Effetti
 
-**Dove lo trovi:** Effects Library → Toolbox → Effects  
+**Dove lo trovi:** Effects Library → Toolbox → Effects (cartella *YouTube Kit*)  
 **Come si usa:** Trascinalo **sopra la clip** (o su un Adjustment Clip per applicarlo a più clip).
 
 | Nome | Cosa fa |
@@ -71,7 +71,7 @@ _File generato automaticamente da `build/build_all.py`._
 
 ## Generatori
 
-**Dove lo trovi:** Effects Library → Toolbox → Generators → Fusion Generators  
+**Dove lo trovi:** Effects Library → Toolbox → Generators → Fusion Generators (cartella *YouTube Kit*)  
 **Come si usa:** Trascinalo su una traccia video sopra il resto.
 
 | Nome | Cosa fa |

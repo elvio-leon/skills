@@ -1,0 +1,339 @@
+{
+	Tools = ordered() {
+		LDF_Linea = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Angle",
+					Name = "Rotazione (90 = verticale)",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Linea",
+					Source = "TopLeftRed",
+					Name = "Colore",
+					ControlGroup = 1,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Linea",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Linea",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Speed",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Length",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Thick",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "StartDot",
+				},
+				Input11 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "EndDot",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				PuntoAMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "(Ctrl.Thick*3.2)*((1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((10)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalWidth",
+						},
+						Height = Input {
+							Expression = "(Ctrl.Thick*3.2)*((1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((10)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalHeight",
+						},
+						SoftEdge = Input { Value = 0.0006, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				PuntoA = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input {
+							Expression = "Linea.TopLeftRed",
+						},
+						TopLeftGreen = Input {
+							Expression = "Linea.TopLeftGreen",
+						},
+						TopLeftBlue = Input {
+							Expression = "Linea.TopLeftBlue",
+						},
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "PuntoAMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				LineaMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5+(Ctrl.Length)*(((min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))<0.5 and 4*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))^3 or 1-((-2*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))+2)^3)/2))/2, 0.5)",
+						},
+						Width = Input {
+							Expression = "(Ctrl.Length)*(((min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))<0.5 and 4*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))^3 or 1-((-2*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((32)*Ctrl.Speed,1),0),1))+2)^3)/2))",
+						},
+						Height = Input {
+							Expression = "(Ctrl.Thick)/Ctrl.Background.OriginalHeight",
+						},
+						SoftEdge = Input { Value = 0.0003, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Linea = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "LineaMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				PuntoBMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5+Ctrl.Length, 0.5)",
+						},
+						Width = Input {
+							Expression = "(Ctrl.Thick*3.2)*((1-(1-min(max(((time-comp.RenderStart)-(38)*Ctrl.Speed)/max((10)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalWidth",
+						},
+						Height = Input {
+							Expression = "(Ctrl.Thick*3.2)*((1-(1-min(max(((time-comp.RenderStart)-(38)*Ctrl.Speed)/max((10)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalHeight",
+						},
+						SoftEdge = Input { Value = 0.0006, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				PuntoB = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input {
+							Expression = "Linea.TopLeftRed",
+						},
+						TopLeftGreen = Input {
+							Expression = "Linea.TopLeftGreen",
+						},
+						TopLeftBlue = Input {
+							Expression = "Linea.TopLeftBlue",
+						},
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "PuntoBMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Livello1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "PuntoA",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.StartDot",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Livello2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Livello1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Livello3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Livello2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "PuntoB",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.EndDot",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Livello3",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.3, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1)",
+						},
+						Speed = Input { Value = 1, },
+						OutDur = Input { Value = 15, },
+						Length = Input { Value = 0.25, },
+						Thick = Input { Value = 4, },
+						StartDot = Input { Value = 1, },
+						EndDot = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+					UserControls = ordered() {
+						Speed = {
+							LINKS_Name = "Durata animazioni (1 = normale, 2 = più lenta)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.3,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0.05,
+							INP_MaxAllowed = 20,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 15,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 600,
+						},
+						Length = {
+							LINKS_Name = "Lunghezza linea",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.25,
+							INP_MinScale = 0.02,
+							INP_MaxScale = 0.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Thick = {
+							LINKS_Name = "Spessore (pixel)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 4,
+							INP_MinScale = 1,
+							INP_MaxScale = 20,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						StartDot = {
+							LINKS_Name = "Punto iniziale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						EndDot = {
+							LINKS_Name = "Punto finale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_Linea"
+}

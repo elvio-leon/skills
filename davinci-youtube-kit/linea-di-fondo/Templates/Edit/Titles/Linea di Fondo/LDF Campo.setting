@@ -1,0 +1,681 @@
+{
+	Tools = ordered() {
+		LDF_Campo = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Speed",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "GreenBg",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "PitchW",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				SfondoVerde = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.094, },
+						TopLeftGreen = Input { Value = 0.227, },
+						TopLeftBlue = Input { Value = 0.184, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				CerchioEst = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "2*9.15*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "2*9.15*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				CerchioInt = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "CerchioEst",
+							Source = "Mask",
+						},
+						PaintMode = Input { Value = FuID { "Subtract" }, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "2*9.15*((Ctrl.PitchW)/105)-(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "2*9.15*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)-(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Fondo1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "CerchioInt",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-52.5)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(68)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Fondo2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Fondo1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(52.5)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(68)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Lato1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Fondo2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(0)*((Ctrl.PitchW)/105), 0.5+(34)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(105)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Lato2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Lato1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(0)*((Ctrl.PitchW)/105), 0.5+(-34)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(105)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Meta = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Lato2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(0)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(68)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				AreaS1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Meta",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-36.0)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(40.32)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				AreaS2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaS1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-44.25)*((Ctrl.PitchW)/105), 0.5+(20.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(16.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				AreaS3 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaS2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-44.25)*((Ctrl.PitchW)/105), 0.5+(-20.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(16.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				PortaS1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaS3",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-47.0)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(18.32)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				PortaS2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaS1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-49.75)*((Ctrl.PitchW)/105), 0.5+(9.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(5.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				PortaS3 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaS2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(-49.75)*((Ctrl.PitchW)/105), 0.5+(-9.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(5.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				AreaD1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaS3",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(36.0)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(40.32)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+				},
+				AreaD2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaD1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(44.25)*((Ctrl.PitchW)/105), 0.5+(20.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(16.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1760, 0 } },
+				},
+				AreaD3 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaD2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(44.25)*((Ctrl.PitchW)/105), 0.5+(-20.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(16.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1870, 0 } },
+				},
+				PortaD1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AreaD3",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(47.0)*((Ctrl.PitchW)/105), 0.5+(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(0)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(18.32)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1980, 0 } },
+				},
+				PortaD2 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaD1",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(49.75)*((Ctrl.PitchW)/105), 0.5+(9.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(5.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2090, 0 } },
+				},
+				PortaD3 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaD2",
+							Source = "Mask",
+						},
+						Center = Input {
+							Expression = "Point(0.5+(49.75)*((Ctrl.PitchW)/105), 0.5+(-9.16)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight))",
+						},
+						Width = Input {
+							Expression = "(5.5)*((Ctrl.PitchW)/105)+(2.5/Ctrl.Background.OriginalWidth)",
+						},
+						Height = Input {
+							Expression = "(0)*((Ctrl.PitchW)*Ctrl.Background.OriginalWidth/105/Ctrl.Background.OriginalHeight)+(2.5/Ctrl.Background.OriginalHeight)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2200, 0 } },
+				},
+				Svela = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PortaD3",
+							Source = "Mask",
+						},
+						PaintMode = Input { Value = FuID { "Minimum" }, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "((Ctrl.PitchW)+0.02)*((min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((40)*Ctrl.Speed,1),0),1))<0.5 and 4*(min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((40)*Ctrl.Speed,1),0),1))^3 or 1-((-2*(min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((40)*Ctrl.Speed,1),0),1))+2)^3)/2)",
+						},
+						Height = Input { Value = 1.2, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2310, 0 } },
+				},
+				Campo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Svela",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2420, 0 } },
+				},
+				LineaMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5, 0.5)",
+						},
+						Width = Input {
+							Expression = "(((Ctrl.PitchW)+0.06))*(((min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((30)*Ctrl.Speed,1),0),1))<0.5 and 4*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((30)*Ctrl.Speed,1),0),1))^3 or 1-((-2*(min(max(((time-comp.RenderStart)-(8)*Ctrl.Speed)/max((30)*Ctrl.Speed,1),0),1))+2)^3)/2))",
+						},
+						Height = Input {
+							Expression = "(4)/Ctrl.Background.OriginalHeight",
+						},
+						SoftEdge = Input { Value = 0.0003, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2530, 0 } },
+				},
+				Linea = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "LineaMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2640, 0 } },
+				},
+				CentroMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "(12)*((1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((12)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalWidth",
+						},
+						Height = Input {
+							Expression = "(12)*((1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((12)*Ctrl.Speed,1),0),1))^3))/Ctrl.Background.OriginalHeight",
+						},
+						SoftEdge = Input { Value = 0.0006, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2750, 0 } },
+				},
+				Centro = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "CentroMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2860, 0 } },
+				},
+				Livello1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SfondoVerde",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.GreenBg",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2970, 0 } },
+				},
+				Livello2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Livello1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Campo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.85*(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((20)*Ctrl.Speed,1),0),1))^3)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 3080, 0 } },
+				},
+				Livello3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Livello2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3190, 0 } },
+				},
+				Livello4 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Livello3",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Centro",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3300, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Livello4",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1)",
+						},
+						Speed = Input { Value = 1, },
+						OutDur = Input { Value = 15, },
+						GreenBg = Input { Value = 0, },
+						PitchW = Input { Value = 0.5, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3410, 0 } },
+					UserControls = ordered() {
+						Speed = {
+							LINKS_Name = "Durata animazioni (1 = normale, 2 = più lenta)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.3,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0.05,
+							INP_MaxAllowed = 20,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 15,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 600,
+						},
+						GreenBg = {
+							LINKS_Name = "Sfondo verde pieno (per schermate titolo)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						PitchW = {
+							LINKS_Name = "Larghezza campo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.5,
+							INP_MinScale = 0.2,
+							INP_MaxScale = 0.9,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_Campo"
+}
