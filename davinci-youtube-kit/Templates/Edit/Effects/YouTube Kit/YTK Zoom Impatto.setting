@@ -1,0 +1,56 @@
+{
+	Tools = ordered() {
+		YTK_ZoomImpatto = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Strength",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local t=(time-comp.RenderStart)\nlocal s=1+0.18*Strength*min(max(t/3,0),1)\nif t>3 then s=1+Strength*(0.1+0.08*exp(-(t-3)/5)) end\nreturn s",
+						},
+						Center = Input {
+							Expression = ":local t=(time-comp.RenderStart)\nlocal a=0.012*Strength*exp(-t/6)\nreturn Point(0.5+a*sin(t*2.3), 0.5+a*cos(t*3.1))",
+						},
+						Edges = Input { Value = 3, },
+						MotionBlur = Input { Value = 1, },
+						Quality = Input { Value = 5, },
+						Strength = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Strength = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_ZoomImpatto"
+}

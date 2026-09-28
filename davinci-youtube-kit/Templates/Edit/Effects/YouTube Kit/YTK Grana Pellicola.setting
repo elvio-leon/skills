@@ -1,0 +1,51 @@
+{
+	Tools = ordered() {
+		YTK_GranaPellicola = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "MasterStrength",
+					Name = "Intensità",
+					Default = 0.06,
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "MasterXSize",
+					Name = "Dimensione grana",
+					Default = 0.8,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Monochrome",
+					Name = "Monocromatica",
+					Default = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = FilmGrain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						MasterStrength = Input { Value = 0.06, },
+						MasterXSize = Input { Value = 0.8, },
+						Monochrome = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_GranaPellicola"
+}

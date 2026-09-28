@@ -1,0 +1,128 @@
+{
+	Tools = ordered() {
+		YTK_Whip_Su = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "ClipA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "ClipB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blur",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Mosso",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				ClipA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5+(0)*((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2), 0.5+(1)*((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2))",
+						},
+						Edges = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				ClipB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5-(0)*(1-((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)), 0.5-(1)*(1-((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)))",
+						},
+						Edges = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Unisci = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ClipA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "ClipB",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Mosso = DirectionalBlur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Unisci",
+							Source = "Output",
+						},
+						Type = Input { Value = 0, },
+						Angle = Input { Value = 90, },
+						Length = Input {
+							Expression = "Ctrl.Blur*0.25*sin(pi*Ctrl.Mix)^2",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Blur = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+					UserControls = ordered() {
+						Blur = {
+							LINKS_Name = "Mosso (motion blur)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_Whip_Su"
+}

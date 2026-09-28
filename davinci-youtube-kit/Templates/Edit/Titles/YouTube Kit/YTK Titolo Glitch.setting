@@ -1,0 +1,297 @@
+{
+	Tools = ordered() {
+		YTK_TitoloGlitch = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "StyledText",
+					Name = "Testo",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Font",
+					Name = "Font",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Style",
+					Name = "Stile",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Size",
+					Name = "Dimensione testo",
+					Default = 0.12,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Red1",
+					Name = "Colore testo",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Green1",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Blue1",
+					ControlGroup = 1,
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input11 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input12 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Random",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Testo = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "GLITCH", },
+						Font = Input { Value = "Arial Black", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.12, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input { Value = 1, },
+						Green1 = Input { Value = 1, },
+						Blue1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						PriorityBack1 = Input { Value = 10, },
+						Enabled3 = Input { Value = 1, },
+						ElementShape3 = Input { Value = 0, },
+						Red3 = Input { Value = 0, },
+						Green3 = Input { Value = 0, },
+						Blue3 = Input { Value = 0, },
+						Alpha3 = Input { Value = 0.55, },
+						Offset3 = Input { Value = { 0.012, -0.018 }, },
+						Softness3 = Input { Value = 1, },
+						SoftnessX3 = Input { Value = 6, },
+						SoftnessY3 = Input { Value = 6, },
+						PriorityBack3 = Input { Value = 5, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				SoloR = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Testo",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				SoloG = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Testo",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				SoloB = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Testo",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				SpostaR = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloR",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local g=max(1-(time-comp.RenderStart)/max(Ctrl.InDur,1),1-(comp.RenderEnd-time)/max(Ctrl.OutDur,1),0)\nrandomseed(floor(time)*13+7)\nif random()<Ctrl.Random then g=max(g,0.6) end\nrandomseed(floor(time)*31+3)\nreturn Point(0.5+g*Ctrl.Amount*(0.004+0.02*random()), 0.5+g*Ctrl.Amount*0.006*(random()-0.5))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				SpostaB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloB",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local g=max(1-(time-comp.RenderStart)/max(Ctrl.InDur,1),1-(comp.RenderEnd-time)/max(Ctrl.OutDur,1),0)\nrandomseed(floor(time)*13+7)\nif random()<Ctrl.Random then g=max(g,0.6) end\nrandomseed(floor(time)*31+5)\nreturn Point(0.5-g*Ctrl.Amount*(0.004+0.02*random()), 0.5+g*Ctrl.Amount*0.006*(random()-0.5))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				UnisciR = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "SoloG",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaR",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				UnisciB = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "UnisciR",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaB",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "UnisciB",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local g=max(1-(time-comp.RenderStart)/max(Ctrl.InDur,1),1-(comp.RenderEnd-time)/max(Ctrl.OutDur,1),0)\nrandomseed(floor(time)*13+7)\nif random()<Ctrl.Random then g=max(g,0.6) end\nrandomseed(floor(time)*17+1)\nif g>0.5 and random()<0.35 then return 0 end\nreturn min(min(max((time-comp.RenderStart)/2,0),1),min(max((comp.RenderEnd-time)/2,0),1))",
+						},
+						InDur = Input { Value = 12, },
+						OutDur = Input { Value = 10, },
+						Amount = Input { Value = 1, },
+						Random = Input { Value = 0.08, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+					UserControls = ordered() {
+						InDur = {
+							LINKS_Name = "Durata glitch in entrata (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 12,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						OutDur = {
+							LINKS_Name = "Durata glitch in uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						Amount = {
+							LINKS_Name = "Intensità glitch",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Random = {
+							LINKS_Name = "Glitch casuali durante il testo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.08,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_TitoloGlitch"
+}

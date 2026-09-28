@@ -1,0 +1,155 @@
+{
+	Tools = ordered() {
+		YTK_LightLeak = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Dissolvenza",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Dissolvenza",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Tinta",
+					Source = "GainRed",
+					Name = "Tinta rosso",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Tinta",
+					Source = "GainGreen",
+					Name = "Tinta verde",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Tinta",
+					Source = "GainBlue",
+					Name = "Tinta blu",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Bruciatura",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Dissolvenza = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = "((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Luce = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 2, },
+						XScale = Input { Value = 1.2, },
+						Contrast = Input { Value = 1.6, },
+						Brightness = Input { Value = 0.1, },
+						SeetheRate = Input { Value = 0.3, },
+						Seethe = Input {
+							Expression = "Ctrl.Mix*2",
+						},
+						Center = Input {
+							Expression = "Point(-0.3+Ctrl.Mix*1.2, 0.5)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Tinta = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Luce",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 1.25, },
+						GainGreen = Input { Value = 0.62, },
+						GainBlue = Input { Value = 0.22, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Bruciatura = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Dissolvenza",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Tinta",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Amount*sin(pi*Ctrl.Mix)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Amount = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Intensità luce",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 1.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_LightLeak"
+}

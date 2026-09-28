@@ -1,0 +1,56 @@
+{
+	Tools = ordered() {
+		YTK_GlowSogno = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Threshold",
+					Name = "Soglia",
+					Default = 0.55,
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Gain",
+					Name = "Intensità",
+					Default = 0.9,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "XGlowSize",
+					Name = "Ampiezza bagliore",
+					Default = 40,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Mix",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = SoftGlow {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Threshold = Input { Value = 0.55, },
+						Gain = Input { Value = 0.9, },
+						XGlowSize = Input { Value = 40, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_GlowSogno"
+}

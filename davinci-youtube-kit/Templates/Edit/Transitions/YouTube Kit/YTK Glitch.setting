@@ -1,0 +1,205 @@
+{
+	Tools = ordered() {
+		YTK_Glitch = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Scatto",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = ":local p=Ctrl.Mix\nif p<0.35 then return 0 end\nif p>0.65 then return 1 end\nrandomseed(floor(time)*7+3)\nreturn iif(random()>0.5,1,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				SoloR = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				SoloG = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				SoloB = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				SpostaR = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloR",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local g=sin(pi*Ctrl.Mix)^0.7*Ctrl.Amount\nrandomseed(floor(time)*29+3)\nreturn Point(0.5+g*(0.006+0.03*random()), 0.5)",
+						},
+						Edges = Input { Value = 2, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				SpostaB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloB",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local g=sin(pi*Ctrl.Mix)^0.7*Ctrl.Amount\nrandomseed(floor(time)*29+9)\nreturn Point(0.5-g*(0.006+0.03*random()), 0.5)",
+						},
+						Edges = Input { Value = 2, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				UnisciR = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "SoloG",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaR",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				UnisciB = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "UnisciR",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaB",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Scatto = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "UnisciB",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local g=sin(pi*Ctrl.Mix)^0.7*Ctrl.Amount\nrandomseed(floor(time)*11+5)\nif random()<0.5 then return Point(0.5,0.5) end\nreturn Point(0.5+g*0.08*(random()-0.5), 0.5+g*0.02*(random()-0.5))",
+						},
+						Edges = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Amount = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Intensità glitch",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_Glitch"
+}

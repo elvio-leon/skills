@@ -1,0 +1,225 @@
+{
+	Tools = ordered() {
+		YTK_PictureInPicture = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Riduci",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Posizione",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Scale",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Border",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Radius",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Bordo",
+					Source = "TopLeftRed",
+					Name = "Colore bordo",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Bordo",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Bordo",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Vuoto = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Riduci = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = "Ctrl.Scale",
+						},
+						Center = Input {
+							Expression = "Posizione.Center",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Posizione = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Vuoto",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.72, 0.7 }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				MaskBordo = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Posizione.Center",
+						},
+						Width = Input {
+							Expression = "Ctrl.Scale+2*Ctrl.Border",
+						},
+						Height = Input {
+							Expression = "Ctrl.Scale+2*Ctrl.Border*(Ctrl.Background.OriginalWidth/max(Ctrl.Background.OriginalHeight,1))",
+						},
+						CornerRadius = Input {
+							Expression = "Ctrl.Radius",
+						},
+						SoftEdge = Input { Value = 0.0005, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Bordo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 1, },
+						TopLeftBlue = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "MaskBordo",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				MaskClip = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Posizione.Center",
+						},
+						Width = Input {
+							Expression = "Ctrl.Scale",
+						},
+						Height = Input {
+							Expression = "Ctrl.Scale",
+						},
+						CornerRadius = Input {
+							Expression = "Ctrl.Radius",
+						},
+						SoftEdge = Input { Value = 0.0005, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				ConBordo = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Vuoto",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bordo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ConBordo",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Riduci",
+							Source = "Output",
+						},
+						EffectMask = Input {
+							SourceOp = "MaskClip",
+							Source = "Mask",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Scale = Input { Value = 0.33, },
+						Border = Input { Value = 0.006, },
+						Radius = Input { Value = 0.08, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+					UserControls = ordered() {
+						Scale = {
+							LINKS_Name = "Dimensione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.33,
+							INP_MinScale = 0.1,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Border = {
+							LINKS_Name = "Spessore bordo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.006,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.03,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Radius = {
+							LINKS_Name = "Arrotondamento angoli",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.08,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_PictureInPicture"
+}

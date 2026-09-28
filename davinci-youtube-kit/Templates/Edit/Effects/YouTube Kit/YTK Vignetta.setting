@@ -1,0 +1,86 @@
+{
+	Tools = ordered() {
+		YTK_Vignetta = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Background",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Intensità",
+					Default = 0.7,
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Forma",
+					Source = "SoftEdge",
+					Name = "Morbidezza",
+					Default = 0.35,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Forma",
+					Source = "Width",
+					Name = "Ampiezza",
+					Default = 1.25,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Forma = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.25, },
+						Height = Input {
+							Expression = "Forma.Width",
+						},
+						SoftEdge = Input { Value = 0.35, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Nero = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Forma",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Foreground = Input {
+							SourceOp = "Nero",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input { Value = 0.7, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_Vignetta"
+}

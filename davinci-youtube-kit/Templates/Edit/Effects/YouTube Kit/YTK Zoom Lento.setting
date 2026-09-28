@@ -1,0 +1,84 @@
+{
+	Tools = ordered() {
+		YTK_ZoomLento = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "From",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "To",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Smooth",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pivot",
+					Name = "Punto di zoom",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local p=min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)\nif Smooth>0.5 then p=((p)<0.5 and 4*(p)^3 or 1-((-2*(p)+2)^3)/2) end\nreturn From+(To-From)*p",
+						},
+						Edges = Input { Value = 3, },
+						From = Input { Value = 1, },
+						To = Input { Value = 1.15, },
+						Smooth = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						From = {
+							LINKS_Name = "Zoom iniziale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 1,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						To = {
+							LINKS_Name = "Zoom finale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1.15,
+							INP_MinScale = 1,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Smooth = {
+							LINKS_Name = "Movimento morbido (ease)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_ZoomLento"
+}

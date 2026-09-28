@@ -1,0 +1,169 @@
+{
+	Tools = ordered() {
+		YTK_RGBSplit = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ingresso",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Flicker",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Mix",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ingresso = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				SoloR = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ingresso",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				SoloG = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ingresso",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				SoloB = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ingresso",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				SpostaR = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloR",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local a=Ctrl.Amount\nif Ctrl.Flicker>0.5 then randomseed(floor(time)*19+1) a=a*(0.4+1.2*random()) end\nreturn Point(0.5+a, 0.5)",
+						},
+						Edges = Input { Value = 2, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				SpostaB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloB",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local a=Ctrl.Amount\nif Ctrl.Flicker>0.5 then randomseed(floor(time)*19+2) a=a*(0.4+1.2*random()) end\nreturn Point(0.5-a, 0.5)",
+						},
+						Edges = Input { Value = 2, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				UnisciR = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "SoloG",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaR",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "UnisciR",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaB",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Amount = Input { Value = 0.006, },
+						Flicker = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Spostamento",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.006,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.05,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Flicker = {
+							LINKS_Name = "Tremolio casuale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_RGBSplit"
+}

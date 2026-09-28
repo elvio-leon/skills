@@ -1,0 +1,113 @@
+{
+	Tools = ordered() {
+		YTK_BandeCinemaGeneratore = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Ratio",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Fascia = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.2, },
+						Height = Input {
+							Expression = ":local r=Ctrl.Ratio\nlocal a=1\nif Ctrl.InDur>=1 then a=(1-(1-min(max((time-comp.RenderStart)/Ctrl.InDur,0),1))^3) end\nlocal v=min((Ctrl.Background.OriginalWidth/max(Ctrl.Background.OriginalHeight,1))/max(r,0.1),1)\nreturn 1+(v-1)*a",
+						},
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Nero = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Fascia",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Nero",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Ratio = Input { Value = 2.39, },
+						InDur = Input { Value = 12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+					UserControls = ordered() {
+						Ratio = {
+							LINKS_Name = "Formato (2.39 = cinema)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 2.39,
+							INP_MinScale = 1.5,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						InDur = {
+							LINKS_Name = "Entrata animata (frame, 0 = fisse)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 12,
+							INP_MinScale = 0,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_BandeCinemaGeneratore"
+}

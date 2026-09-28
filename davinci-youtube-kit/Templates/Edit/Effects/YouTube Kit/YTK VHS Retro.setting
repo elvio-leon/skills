@@ -1,0 +1,190 @@
+{
+	Tools = ordered() {
+		YTK_VHS = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Morbido",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Morbido = Blur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						XBlurSize = Input {
+							Expression = "1.5*Ctrl.Amount",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				SoloR = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Morbido",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainGreen = Input { Value = 0, },
+						GainBlue = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				SoloGB = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Morbido",
+							Source = "Output",
+						},
+						LockRGB = Input { Value = 0, },
+						GainRed = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				SpostaR = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "SoloR",
+							Source = "Output",
+						},
+						Edges = Input { Value = 2, },
+						Center = Input {
+							Expression = "Point(0.5+0.004*Ctrl.Amount, 0.5)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Colori = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "SoloGB",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SpostaR",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Sbiadito = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Colori",
+							Source = "Output",
+						},
+						Saturation = Input { Value = 0.78, },
+						Contrast = Input { Value = -0.08, },
+						Lift = Input { Value = 0.04, },
+						Gamma = Input { Value = 1.05, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Righe = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						LockXY = Input { Value = 0, },
+						XScale = Input { Value = 0.6, },
+						YScale = Input { Value = 90, },
+						Detail = Input { Value = 3, },
+						Contrast = Input { Value = 1.4, },
+						SeetheRate = Input { Value = 1.5, },
+						Center = Input {
+							Expression = "Point(0, time*0.013)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Interferenze = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Sbiadito",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Righe",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.18*Ctrl.Amount",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Grana = FilmGrain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Interferenze",
+							Source = "Output",
+						},
+						MasterStrength = Input { Value = 0.05, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Grana",
+							Source = "Output",
+						},
+						Edges = Input { Value = 2, },
+						Amount = Input { Value = 1, },
+						Center = Input {
+							Expression = ":randomseed(floor(time)*3+1)\nlocal j=0\nif random()<0.12 then j=(random()-0.5)*0.006*Amount end\nreturn Point(0.5+j, 0.5)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_VHS"
+}

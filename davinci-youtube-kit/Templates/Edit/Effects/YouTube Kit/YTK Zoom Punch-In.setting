@@ -1,0 +1,79 @@
+{
+	Tools = ordered() {
+		YTK_ZoomPunchIn = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Zoom",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Centro zoom",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pivot",
+					Name = "Punto di zoom",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":if InDur<1 then return Zoom end\nlocal a=min(max((time-comp.RenderStart)/InDur,0),1)\nreturn 1+(Zoom-1)*(1-(1-a)^3)",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Edges = Input { Value = 3, },
+						Zoom = Input { Value = 1.25, },
+						InDur = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Zoom = {
+							LINKS_Name = "Zoom",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1.25,
+							INP_MinScale = 1,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						InDur = {
+							LINKS_Name = "Durata animazione (frame, 0 = istantaneo)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0,
+							INP_MinScale = 0,
+							INP_MaxScale = 30,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_ZoomPunchIn"
+}

@@ -1,0 +1,195 @@
+{
+	Tools = ordered() {
+		YTK_TitoloCinematico = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "StyledText",
+					Name = "Testo",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Font",
+					Name = "Font",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Style",
+					Name = "Stile",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Size",
+					Name = "Dimensione testo",
+					Default = 0.065,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Red1",
+					Name = "Colore testo",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Green1",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Testo",
+					Source = "Blue1",
+					ControlGroup = 1,
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input11 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Spread",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Testo = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "IL TITOLO DEL TUO VIDEO", },
+						Font = Input { Value = "Arial", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.065, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input { Value = 1, },
+						Green1 = Input { Value = 1, },
+						Blue1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						PriorityBack1 = Input { Value = 10, },
+						Enabled3 = Input { Value = 1, },
+						ElementShape3 = Input { Value = 0, },
+						Red3 = Input { Value = 0, },
+						Green3 = Input { Value = 0, },
+						Blue3 = Input { Value = 0, },
+						Alpha3 = Input { Value = 0.55, },
+						Offset3 = Input { Value = { 0.012, -0.018 }, },
+						Softness3 = Input { Value = 1, },
+						SoftnessX3 = Input { Value = 6, },
+						SoftnessY3 = Input { Value = 6, },
+						PriorityBack3 = Input { Value = 5, },
+						CharacterSpacing = Input {
+							Expression = "1+Ctrl.Spread*((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				SfocaIn = Blur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Testo",
+							Source = "Output",
+						},
+						XBlurSize = Input {
+							Expression = "12*((1-(1-(1-min(max((time-comp.RenderStart)/max(Ctrl.InDur,1),0),1))^3))+(1-(1-(1-min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))^3)))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SfocaIn",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "min((1-(1-min(max((time-comp.RenderStart)/max(InDur,1),0),1))^3),(1-(1-min(max((comp.RenderEnd-time)/max(OutDur,1),0),1))^3))",
+						},
+						InDur = Input { Value = 24, },
+						OutDur = Input { Value = 20, },
+						Spread = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+					UserControls = ordered() {
+						InDur = {
+							LINKS_Name = "Durata entrata (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 24,
+							INP_MinScale = 1,
+							INP_MaxScale = 90,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 20,
+							INP_MinScale = 1,
+							INP_MaxScale = 90,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						Spread = {
+							LINKS_Name = "Allargamento lettere",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.35,
+							INP_MinScale = 0,
+							INP_MaxScale = 1.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_TitoloCinematico"
+}

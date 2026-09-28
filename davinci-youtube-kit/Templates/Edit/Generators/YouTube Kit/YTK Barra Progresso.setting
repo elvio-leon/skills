@@ -1,0 +1,182 @@
+{
+	Tools = ordered() {
+		YTK_BarraProgresso = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Thick",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Top",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Barra",
+					Source = "TopLeftRed",
+					Name = "Colore barra",
+					ControlGroup = 1,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Barra",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Barra",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Fondo",
+					Source = "TopLeftAlpha",
+					Name = "Opacità sfondo barra",
+					Default = 0.45,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				FondoMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(0.5, iif(Ctrl.Top>0.5, 1-Ctrl.Thick*0.5, Ctrl.Thick*0.5))",
+						},
+						Width = Input { Value = 1, },
+						Height = Input {
+							Expression = "Ctrl.Thick",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Fondo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0.45, },
+						EffectMask = Input {
+							SourceOp = "FondoMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				BarraMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)/2, iif(Ctrl.Top>0.5, 1-Ctrl.Thick*0.5, Ctrl.Thick*0.5))",
+						},
+						Width = Input {
+							Expression = "min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)",
+						},
+						Height = Input {
+							Expression = "Ctrl.Thick",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Barra = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.1, },
+						TopLeftBlue = Input { Value = 0.1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "BarraMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Unisci = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Fondo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Unisci",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Barra",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Thick = Input { Value = 0.02, },
+						Top = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+					UserControls = ordered() {
+						Thick = {
+							LINKS_Name = "Spessore barra",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.02,
+							INP_MinScale = 0.004,
+							INP_MaxScale = 0.08,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Top = {
+							LINKS_Name = "Barra in alto",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_BarraProgresso"
+}

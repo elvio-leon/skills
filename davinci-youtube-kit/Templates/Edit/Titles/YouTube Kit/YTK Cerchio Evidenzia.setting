@@ -1,0 +1,168 @@
+{
+	Tools = ordered() {
+		YTK_CerchioEvidenzia = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Anello",
+					Source = "Width",
+					Name = "Dimensione",
+					Default = 0.22,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Anello",
+					Source = "BorderWidth",
+					Name = "Spessore",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftRed",
+					Name = "Colore",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pulse",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Anello = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 0.22, },
+						Height = Input {
+							Expression = "Width*(Ctrl.Background.OriginalWidth/max(Ctrl.Background.OriginalHeight,1))",
+						},
+						Solid = Input { Value = 0, },
+						BorderWidth = Input { Value = 0.008, },
+						SoftEdge = Input { Value = 0.0008, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Colore = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.1, },
+						TopLeftBlue = Input { Value = 0.1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Anello",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Colore",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Size = Input {
+							Expression = "max((1+3.5*((min(max((time-comp.RenderStart)/max(InDur,1),0),1))-1)^3+2.5*((min(max((time-comp.RenderStart)/max(InDur,1),0),1))-1)^2),0)*(1-(1-min(max((comp.RenderEnd-time)/max(OutDur,1),0),1))^3)*(1+Pulse*sin((time-comp.RenderStart)*0.25))",
+						},
+						InDur = Input { Value = 10, },
+						OutDur = Input { Value = 8, },
+						Pulse = Input { Value = 0.04, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+					UserControls = ordered() {
+						InDur = {
+							LINKS_Name = "Durata entrata (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 8,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						Pulse = {
+							LINKS_Name = "Pulsazione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.04,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_CerchioEvidenzia"
+}

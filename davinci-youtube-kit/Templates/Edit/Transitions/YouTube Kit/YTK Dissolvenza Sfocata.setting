@@ -1,0 +1,112 @@
+{
+	Tools = ordered() {
+		YTK_DissolvenzaSfocata = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "SfocaA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "SfocaB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blur",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Dissolvenza",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				SfocaA = Blur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						XBlurSize = Input {
+							Expression = "Ctrl.Blur*((min(max(Ctrl.Mix*1.6,0),1))^3)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				SfocaB = Blur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						XBlurSize = Input {
+							Expression = "Ctrl.Blur*(1-(1-min(max(1.6-Ctrl.Mix*1.6,0),1))^3)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Dissolvenza = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "SfocaA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "SfocaB",
+							Source = "Output",
+						},
+						Mix = Input {
+							Expression = "((Ctrl.Mix)<0.5 and 4*(Ctrl.Mix)^3 or 1-((-2*(Ctrl.Mix)+2)^3)/2)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Blur = Input { Value = 40, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+					UserControls = ordered() {
+						Blur = {
+							LINKS_Name = "Sfocatura massima",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 40,
+							INP_MinScale = 0,
+							INP_MaxScale = 150,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_DissolvenzaSfocata"
+}

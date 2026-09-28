@@ -1,0 +1,38 @@
+{
+	Tools = ordered() {
+		YTK_Look_CaldoCinema = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Intensità look",
+					Default = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = FileLUT {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						LUTFile = Input { Value = "Setting:YTK_CaldoCinema.cube", },
+						Blend = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_Look_CaldoCinema"
+}

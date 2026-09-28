@@ -1,0 +1,217 @@
+{
+	Tools = ordered() {
+		YTK_Freccia = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Center",
+					Name = "Posizione",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Angle",
+					Name = "Rotazione",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftRed",
+					Name = "Colore",
+					ControlGroup = 1,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Colore",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Bounce",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Scale",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Asta = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.4773, 0.5 }, },
+						Width = Input { Value = 0.135, },
+						Height = Input { Value = 0.035, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				PuntaSu = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "Asta",
+							Source = "Mask",
+						},
+						Center = Input { Value = { 0.5323, 0.5315 }, },
+						Width = Input { Value = 0.07, },
+						Height = Input { Value = 0.035, },
+						Angle = Input { Value = -45, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				PuntaGiu = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "PuntaSu",
+							Source = "Mask",
+						},
+						Center = Input { Value = { 0.5323, 0.4685 }, },
+						Width = Input { Value = 0.07, },
+						Height = Input { Value = 0.035, },
+						Angle = Input { Value = 45, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Colore = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.85, },
+						TopLeftBlue = Input { Value = 0.05, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "PuntaGiu",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Oscilla = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Colore",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = "Point(0.5-Ctrl.Bounce*(0.5+0.5*sin((time-comp.RenderStart)*0.35)), 0.5)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Oscilla",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.4, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Size = Input {
+							Expression = "Scale*max((1+2.70158*((min(max((time-comp.RenderStart)/max(InDur,1),0),1))-1)^3+1.70158*((min(max((time-comp.RenderStart)/max(InDur,1),0),1))-1)^2),0)*(1-(1-min(max((comp.RenderEnd-time)/max(OutDur,1),0),1))^3)",
+						},
+						Angle = Input { Value = 0, },
+						InDur = Input { Value = 10, },
+						OutDur = Input { Value = 8, },
+						Bounce = Input { Value = 0.02, },
+						Scale = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+					UserControls = ordered() {
+						InDur = {
+							LINKS_Name = "Durata entrata (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 8,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 600,
+						},
+						Bounce = {
+							LINKS_Name = "Oscillazione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.02,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Scale = {
+							LINKS_Name = "Dimensione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.2,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "YTK_Freccia"
+}
