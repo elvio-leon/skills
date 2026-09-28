@@ -12,21 +12,23 @@ App per Mac, piccola e veloce, per cercare, guardare e scaricare video da YouTub
 
 ## Installazione
 
-Serve [Homebrew](https://brew.sh). Da Terminale, nella cartella `ytgrab/`:
+1. Scarica **YTGrab.dmg** dalla release
+   [ytgrab-latest](https://github.com/elvio-leon/skills/releases/tag/ytgrab-latest). La release viene
+   ricreata automaticamente a ogni modifica della cartella `ytgrab/`.
+2. Apri il DMG e trascina **YTGrab** nella cartella **Applicazioni**.
+3. **Solo la prima volta:** l'app non è firmata con un certificato sviluppatore Apple, quindi macOS la blocca.
+   Aprila una volta (comparirà l'avviso), poi vai in **Impostazioni di Sistema → Privacy e sicurezza**,
+   scorri in basso e premi **Apri comunque** accanto a "YTGrab". Dalle volte successive si apre normalmente.
 
-```bash
-./install.sh
-```
+L'app contiene già tutto quello che le serve: yt-dlp, ffmpeg e deno (un runtime JavaScript che yt-dlp usa
+per leggere YouTube). Non devi installare nulla e non serve il Terminale. È compilata per Apple Silicon (M1/M2/M3/M4).
 
-Lo script installa `python@3.12`, `ffmpeg` e `deno` con Homebrew. yt-dlp ha bisogno di un runtime JavaScript
-per leggere YouTube. Poi crea un ambiente Python in `~/Library/Application Support/YTGrab` e l'app
-`~/Applications/YTGrab.app`, che puoi aprire da Spotlight o mettere nel Dock.
+### Per sviluppatori
 
-Per provarla senza installare nulla (in quel caso si apre nel browser):
-
-```bash
-pip install "yt-dlp[default]" && python3 app.py --browser
-```
+- `packaging/build_mac.sh` costruisce `dist/YTGrab.app` e `dist/YTGrab.dmg` su un Mac. Lo stesso script gira
+  nel workflow `.github/workflows/ytgrab-mac.yml`.
+- `./install.sh` installa invece la versione "da sorgente" con Homebrew, in un ambiente Python.
+- `python3 app.py --browser` avvia l'app nel browser, senza finestra nativa.
 
 ## Come si usa
 
@@ -74,10 +76,10 @@ I file finiscono in `~/Movies/YTGrab` (la cartella si cambia in basso a destra) 
 - **"Sign in to confirm you're not a bot"**: in basso a destra, alla voce *Cookie*, scegli il browser in
   cui hai fatto l'accesso a YouTube (Safari potrebbe chiederti l'accesso completo al disco per il Terminale).
 - **Un download che prima funzionava ora fallisce**: YouTube cambia spesso. Premi **Aggiorna yt-dlp**
-  e riapri l'app.
+  (in basso a destra) e riapri l'app. La nuova versione viene salvata in
+  `~/Library/Application Support/YTGrab` e non serve riscaricare il DMG.
 - **Anteprima non disponibile**: alcuni video non si possono incorporare. Puoi comunque scaricarli e
   aggiungere gli spezzoni a mano.
-- Nell'app compare un avviso giallo se mancano `ffmpeg` o `deno`.
 
 ## Struttura
 
@@ -85,6 +87,7 @@ I file finiscono in `~/Movies/YTGrab` (la cartella si cambia in basso a destra) 
 ytgrab/
 ├── app.py          server locale + API + download (yt-dlp come libreria)
 ├── web/index.html  interfaccia (HTML/CSS/JS in un unico file, nessuna dipendenza)
-├── install.sh      installer per macOS
+├── packaging/      build dell'app .app/.dmg (PyInstaller) e icona
+├── install.sh      installazione da sorgente con Homebrew
 └── requirements.txt
 ```
