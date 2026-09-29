@@ -26,8 +26,15 @@ def _env(name: str, default):
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Percorsi ---------------------------------------------------------------
-DB_PATH = Path(_env("DB_PATH", str(BASE_DIR / "data" / "prospects.db")))
-LOG_DIR = Path(_env("LOG_DIR", str(BASE_DIR / "logs")))
+# Cartella dei dati: nell'app Mac è ~/Library/Application Support/Prospect Scraper
+# (PS_HOME impostata da desktop.py); da sorgente è la cartella del progetto.
+DATA_HOME = Path(_env("HOME", str(BASE_DIR)))
+DB_PATH = Path(_env("DB_PATH", str(DATA_HOME / "data" / "prospects.db")))
+LOG_DIR = Path(_env("LOG_DIR", str(DATA_HOME / "logs")))
+
+# App desktop (finestra nativa): gli export vengono salvati direttamente in EXPORT_DIR.
+DESKTOP = _env("DESKTOP", False)
+EXPORT_DIR = Path(_env("EXPORT_DIR", str(Path.home() / "Downloads")))
 
 # --- Ricerca ----------------------------------------------------------------
 MAX_RESULTS = _env("MAX_RESULTS", 100)          # tetto massimo selezionabile in UI

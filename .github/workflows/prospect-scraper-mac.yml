@@ -1,0 +1,97 @@
+name: Prospect Scraper macOS app
+
+on:
+  push:
+    paths:
+      - "prospect-scraper/**"
+      - ".github/workflows/prospect-scraper-mac.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prospect-scraper-mac-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14   # Apple Silicon (arm64), come un Mac M1
+    timeout-minutes: 45
+    env:
+      VERSION: "1.0.${{ github.run_number }}"
+    defaults:
+      run:
+        working-directory: prospect-scraper
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test automatici
+        run: |
+          # i siti di prova usano 127.0.0.2-10: su macOS vanno aggiunti al loopback
+          for i in $(seq 2 10); do sudo ifconfig lo0 alias 127.0.0.$i up; done
+          python3 -m pip install -r requirements.txt pytest
+          python3 -m pytest
+
+      - name: Build app + DMG
+        run: packaging/build_mac.sh
+
+      - name: Smoke test del server impacchettato
+        run: |
+          APP="dist/Prospect Scraper.app/Contents/MacOS/Prospect Scraper"
+          PS_HOME="$RUNNER_TEMP/ps-home" "$APP" --server 47821 $$ > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:47821/_stcore/health && break; sleep 1; done
+          echo
+          curl -sf http://127.0.0.1:47821/_stcore/health | grep -q ok || { cat server.log; exit 1; }
+          curl -sf http://127.0.0.1:47821/ | grep -qi "<title>" || { cat server.log; exit 1; }
+          echo "Server OK"
+
+      - name: Selftest della finestra (l'interfaccia deve comparire)
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          PS_HOME="$RUNNER_TEMP/ps-home2" "dist/Prospect Scraper.app/Contents/MacOS/Prospect Scraper" --selftest
+          cat "$RUNNER_TEMP/ps-home2/logs/server.log" | tail -20 || true
+
+      - name: Prova reale delle fonti (informativa)
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          PS_HOME: ${{ runner.temp }}/ps-live
+        run: |
+          python3 - <<'EOF'
+          from core.pipeline import Pipeline, RunParams, MODE_BOTH, MODE_SEARCH
+          from database.db import Database
+          db = Database()
+          def show(params):
+              print("\n=====", params.category, "|", params.keyword, "|", params.location, "|", params.providers)
+              r = Pipeline(db, on_message=lambda t, l="info": print("  >", t)).run(params)
+              for p in db.list_prospects(ids=r.prospect_ids):
+                  print(f"  - {p.company_name[:40]:40} | {p.website[:35]:35} | {p.city[:15]:15} | "
+                        f"{p.email[:30]:30} | {p.phone:18} | {p.status} {p.error_message[:40]}")
+          show(RunParams(category="Hospitality", keyword="hotel 4 stelle", location="Palermo",
+                         max_results=8, mode=MODE_BOTH, providers=["osm"]))
+          show(RunParams(category="Editoriale", keyword="magazine tecnologia", location="Italia",
+                         max_results=8, mode=MODE_SEARCH, providers=["wikidata"]))
+          show(RunParams(category="Custom", keyword="ecommerce arredamento", location="Milano",
+                         max_results=5, mode=MODE_SEARCH, providers=["osm"]))
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProspectScraper-dmg
+          path: prospect-scraper/dist/ProspectScraper.dmg
+
+      - name: Pubblica la release "prospect-scraper-latest"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete prospect-scraper-latest --cleanup-tag -y || true
+          gh release create prospect-scraper-latest dist/ProspectScraper.dmg \
+            --target "$GITHUB_SHA" \
+            --title "Prospect Scraper $VERSION (Mac Apple Silicon)" \
+            --notes "Scarica **ProspectScraper.dmg**, aprilo e trascina Prospect Scraper in Applicazioni. Al primo avvio: Impostazioni di Sistema → Privacy e sicurezza → Apri comunque."

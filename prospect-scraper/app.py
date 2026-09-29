@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import os
 import signal
+import subprocess
+import sys
 import threading
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -43,6 +46,43 @@ def run_label(run: dict) -> str:
 
 def run_title(run: dict) -> str:
     return " ".join(filter(None, [run.get("keyword") or "arricchimento", run.get("location")]))
+
+
+def save_export(data: bytes, filename: str) -> Path:
+    """App desktop: salva il file direttamente nella cartella degli export (Download)."""
+    folder = settings.EXPORT_DIR
+    folder.mkdir(parents=True, exist_ok=True)
+    stem, suffix = Path(filename).stem, Path(filename).suffix
+    path, n = folder / filename, 2
+    while path.exists():
+        path, n = folder / f"{stem} ({n}){suffix}", n + 1
+    path.write_bytes(data)
+    return path
+
+
+def reveal(path: Path) -> None:
+    """Mostra il file nel Finder / Esplora file."""
+    try:
+        if sys.platform == "darwin":
+            subprocess.Popen(["open", "-R", str(path)])
+        elif os.name == "nt":
+            subprocess.Popen(["explorer", "/select,", str(path)])
+        else:
+            subprocess.Popen(["xdg-open", str(path.parent)])
+    except OSError:
+        pass
+
+
+def export_button(label: str, make_data, filename: str, key: str, primary: bool = False,
+                  mime: str = "application/octet-stream", container=st) -> None:
+    """Da browser: download classico. Nell'app desktop: salva in Download e lo dice."""
+    kind = "primary" if primary else "secondary"
+    if not settings.DESKTOP:
+        container.download_button(label, make_data(), file_name=filename, mime=mime,
+                                  width="stretch", type=kind, key=key)
+        return
+    if container.button(label, width="stretch", type=kind, key=key):
+        ss.last_export = str(save_export(make_data(), filename))
 
 
 def shutdown_server() -> None:
@@ -96,7 +136,8 @@ with st.sidebar:
     run_clicked = st.button("CERCA PROSPECT", type="primary", width="stretch")
 
     st.divider()
-    if st.button("Chiudi app", width="stretch", help="Spegne l'app. I dati restano salvati."):
+    if not settings.DESKTOP and st.button("Chiudi app", width="stretch",
+                                          help="Spegne l'app. I dati restano salvati."):
         st.success("App chiusa. Puoi chiudere questa finestra; i dati restano salvati.")
         shutdown_server()
         st.stop()
@@ -143,6 +184,7 @@ if run_clicked:
         ss.run_log = result.log_text
         ss.run_had_errors = bool(result.fatal_error or result.n_failed or result.provider_errors)
         ss.pop("all_runs_xlsx", None)   # l'export di tutte le ricerche va rigenerato
+        ss.pop("last_export", None)
         ss["view"] = "Ultima ricerca"
 
 # log dell'ultima operazione (sopravvive ai rerun, es. dopo un download)
@@ -159,7 +201,8 @@ if ss.run_messages and not run_clicked:
 st.subheader("Risultati")
 runs = db.list_runs()
 VIEW_LAST, VIEW_SAVED, VIEW_ALL = "Ultima ricerca", "Ricerche salvate", "Tutto il database"
-view = st.segmented_control("Mostra", [VIEW_LAST, VIEW_SAVED, VIEW_ALL], default=VIEW_LAST,
+ss.setdefault("view", VIEW_LAST)
+view = st.segmented_control("Mostra", [VIEW_LAST, VIEW_SAVED, VIEW_ALL],
                             label_visibility="collapsed", key="view") or VIEW_LAST
 
 file_stem = "prospects"
@@ -174,17 +217,23 @@ elif view == VIEW_SAVED:
     chosen = col_run.selectbox("Ricerca", runs, format_func=run_label)
     prospects = db.list_prospects(ids=db.run_prospect_ids(chosen["id"]))
     file_stem = slugify(run_title(chosen))
+    def all_runs_xlsx() -> bytes:
+        """Un file Excel con un foglio per ogni ricerca salvata."""
+        return to_xlsx_multi_bytes({
+            run_title(r): prospects_to_dataframe(db.list_prospects(ids=db.run_prospect_ids(r["id"])))
+            for r in runs})
+
+    all_name = f"prospects-tutte-le-ricerche-{datetime.now():%Y%m%d}.xlsx"
     with col_all:
-        # un file con un foglio per ogni ricerca salvata (generato solo su richiesta)
-        if st.button("Prepara export di tutte le ricerche", width="stretch",
-                     help="Un file Excel con un foglio per ogni ricerca salvata."):
-            sheets = {run_title(r): prospects_to_dataframe(db.list_prospects(ids=db.run_prospect_ids(r["id"])))
-                      for r in runs}
-            ss.all_runs_xlsx = to_xlsx_multi_bytes(sheets)
-        if ss.get("all_runs_xlsx"):
-            st.download_button("DOWNLOAD XLSX (tutte)", ss.all_runs_xlsx,
-                               file_name=f"prospects-tutte-le-ricerche-{datetime.now():%Y%m%d}.xlsx",
-                               mime=XLSX_MIME, width="stretch", type="primary")
+        if settings.DESKTOP:
+            export_button("Excel con tutte le ricerche", all_runs_xlsx, all_name, key="exp_all")
+        else:  # nel browser il file va preparato prima del download
+            if st.button("Prepara export di tutte le ricerche", width="stretch",
+                         help="Un file Excel con un foglio per ogni ricerca salvata."):
+                ss.all_runs_xlsx = all_runs_xlsx()
+            if ss.get("all_runs_xlsx"):
+                st.download_button("DOWNLOAD XLSX (tutte)", ss.all_runs_xlsx, file_name=all_name,
+                                   mime=XLSX_MIME, width="stretch", type="primary")
 else:  # ultima ricerca: quella appena fatta o, ad app appena aperta, l'ultima salvata
     last = runs[0] if runs else None
     if ss.run_ids is not None:
@@ -262,9 +311,19 @@ scope = f"{len(selected)} righe selezionate" if selected else f"{len(export_df)}
 name = f"{file_stem}-{datetime.now():%Y%m%d-%H%M}"
 with export_bar:
     b1, b2, b3 = st.columns([1, 1, 4], vertical_alignment="center")
-    b1.download_button("DOWNLOAD CSV", to_csv_bytes(export_df), file_name=f"{name}.csv",
-                       mime="text/csv", width="stretch")
-    b2.download_button("DOWNLOAD XLSX", to_xlsx_bytes(export_df), file_name=f"{name}.xlsx",
-                       mime=XLSX_MIME, width="stretch", type="primary")
+    export_button("DOWNLOAD CSV", lambda: to_csv_bytes(export_df), f"{name}.csv", key="exp_csv",
+                  mime="text/csv", container=b1)
+    export_button("DOWNLOAD XLSX", lambda: to_xlsx_bytes(export_df), f"{name}.xlsx", key="exp_xlsx",
+                  primary=True, mime=XLSX_MIME, container=b2)
     b3.caption(f"Export: {scope}. Seleziona righe nella tabella per esportare solo quelle; "
                "il file include tutte le colonne.")
+
+# App desktop: conferma del salvataggio (vale anche per l'export di tutte le ricerche)
+if settings.DESKTOP and ss.get("last_export"):
+    saved = Path(ss.last_export)
+    with export_bar:
+        c_msg, c_btn = st.columns([4, 1], vertical_alignment="center")
+        c_msg.success(f"Salvato in **{saved.parent.name}**: {saved.name}")
+        if c_btn.button("Mostra nel Finder" if sys.platform == "darwin" else "Apri cartella",
+                        key="reveal", width="stretch"):
+            reveal(saved)

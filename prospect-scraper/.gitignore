@@ -15,3 +15,7 @@ logs/
 # export
 *.csv
 *.xlsx
+
+# build dell app
+build/
+dist/

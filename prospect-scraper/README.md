@@ -6,31 +6,44 @@ Risultati in tabella (ordinabile, filtrabile, con selezione righe) ed export CSV
 
 Niente AI, scoring, audit SEO, CRM o automazioni: è un MVP volutamente semplice.
 
-## Avvio (senza terminale)
+## Installazione su Mac (consigliata)
 
-**Serve solo Python 3.11 o superiore**, da installare una volta da
-[python.org/downloads](https://www.python.org/downloads/). Su Windows, durante
-l'installazione spunta **"Add python.exe to PATH"**.
+1. Scarica **ProspectScraper.dmg** dalla pagina
+   [Release "prospect-scraper-latest"](https://github.com/elvio-leon/skills/releases/tag/prospect-scraper-latest).
+2. Apri il file `.dmg` e trascina **Prospect Scraper** nella cartella **Applicazioni**.
+3. Apri Prospect Scraper da Applicazioni o dal Launchpad. Non serve installare Python o altro.
+4. Solo la prima volta macOS lo blocca, perché l'app non è firmata da uno sviluppatore Apple
+   registrato: vai in **Impostazioni di Sistema → Privacy e sicurezza**, scorri in basso e
+   premi **Apri comunque**.
 
-Poi fai doppio clic sul file del tuo sistema, nella cartella `prospect-scraper`:
+L'app si apre in una sua finestra. **Chiudendo la finestra si chiude tutto.** Gli export
+(CSV/Excel) vengono salvati direttamente nella cartella **Download**; la prima volta macOS
+chiede il permesso di accedervi. Dati e ricerche restano in
+`~/Library/Application Support/Prospect Scraper`, quindi sopravvivono agli aggiornamenti dell'app.
+
+Per aggiornare: scarica il nuovo `.dmg` e sostituisci l'app in Applicazioni.
+
+L'app è per Mac con processore Apple (M1 o successivi).
+
+## Windows e Linux (da sorgente, senza terminale)
+
+**Serve Python 3.11 o superiore**, da [python.org/downloads](https://www.python.org/downloads/).
+Su Windows spunta **"Add python.exe to PATH"** durante l'installazione. Poi doppio clic su:
 
 | Sistema | File |
 |---|---|
 | Windows | `Avvia Prospect Scraper (Windows).bat` |
-| macOS | `Avvia Prospect Scraper (Mac).command` (la prima volta: tasto destro → Apri) |
 | Linux | `avvia-prospect-scraper-linux.sh` |
 
 - **Il primo avvio** prepara l'app da solo (1-3 minuti, serve Internet). Quelli successivi
   durano pochi secondi.
-- L'app si apre in una **finestra dedicata** (Edge o Chrome in "modalità app", senza barra
-  degli indirizzi); se nessuno dei due è installato, si apre nel browser predefinito.
-- Se l'app è già aperta, il doppio clic la riporta in primo piano invece di avviarne un'altra.
-- Per spegnerla: pulsante **Chiudi app** in fondo alla barra laterale. Se chiudi solo la
-  finestra, l'app resta attiva in background e il prossimo doppio clic la riapre subito.
+- L'app si apre in una **finestra dedicata** (Edge o Chrome in "modalità app"); se nessuno
+  dei due è installato, si apre nel browser predefinito.
+- Per spegnerla: pulsante **Chiudi app** in fondo alla barra laterale.
 - I file esportati finiscono nella cartella **Download**.
 
 Suggerimento: crea un collegamento sul desktop (Windows: tasto destro sul file → *Invia a →
-Desktop (crea collegamento)*; macOS: tasto destro → *Crea alias*, poi sposta l'alias sulla Scrivania).
+Desktop (crea collegamento)*).
 
 Facoltativo e avanzato, per leggere i siti che mostrano i contenuti solo via JavaScript
 (da terminale, una sola volta):
@@ -47,8 +60,8 @@ streamlit run app.py
 ```
 </details>
 
-Il database è in `data/prospects.db` (tutte le ricerche restano salvate tra una sessione e
-l'altra), i log in `logs/`.
+Da sorgente il database è in `data/prospects.db` (tutte le ricerche restano salvate tra una
+sessione e l'altra), i log in `logs/`.
 
 ## Come si usa
 
@@ -170,8 +183,10 @@ sito aziendale: il link finisce nella colonna social oppure in `raw_data`.
 
 ```
 prospect-scraper/
-├── Avvia Prospect Scraper (Windows).bat / (Mac).command, avvia-prospect-scraper-linux.sh
-├── launcher.py               prepara l'ambiente, avvia il server, apre la finestra
+├── desktop.py                app Mac: server locale + finestra nativa (pywebview)
+├── packaging/                build dell'app Mac e del DMG (GitHub Actions)
+├── Avvia Prospect Scraper (Windows).bat, avvia-prospect-scraper-linux.sh
+├── launcher.py               avvio da sorgente: prepara l'ambiente, apre la finestra
 ├── .streamlit/config.toml    aspetto e impostazioni dell'interfaccia
 ├── app.py                    UI Streamlit (solo interfaccia)
 ├── core/pipeline.py          orchestrazione ricerca → dedup → DB → enrichment
@@ -224,7 +239,7 @@ senza rete: `python -m tests.site_server 8765` e poi
 
 ## Idee per una V2
 
-- App installabile vera e propria (eseguibile firmato), senza bisogno di Python.
+- App firmata e notarizzata da Apple (niente passaggio "Apri comunque"); versione Intel e Windows.
 
 - Provider aggiuntivi: Brave Search API (piano gratuito), registro imprese / OpenCorporates,
   Google Places API (a pagamento), sitemap.xml del sito per trovare le pagine contatti.
