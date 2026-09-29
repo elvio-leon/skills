@@ -6,27 +6,49 @@ Risultati in tabella (ordinabile, filtrabile, con selezione righe) ed export CSV
 
 Niente AI, scoring, audit SEO, CRM o automazioni: è un MVP volutamente semplice.
 
-## Installazione
+## Avvio (senza terminale)
 
-Richiede Python 3.11+.
+**Serve solo Python 3.11 o superiore**, da installare una volta da
+[python.org/downloads](https://www.python.org/downloads/). Su Windows, durante
+l'installazione spunta **"Add python.exe to PATH"**.
+
+Poi fai doppio clic sul file del tuo sistema, nella cartella `prospect-scraper`:
+
+| Sistema | File |
+|---|---|
+| Windows | `Avvia Prospect Scraper (Windows).bat` |
+| macOS | `Avvia Prospect Scraper (Mac).command` (la prima volta: tasto destro → Apri) |
+| Linux | `avvia-prospect-scraper-linux.sh` |
+
+- **Il primo avvio** prepara l'app da solo (1-3 minuti, serve Internet). Quelli successivi
+  durano pochi secondi.
+- L'app si apre in una **finestra dedicata** (Edge o Chrome in "modalità app", senza barra
+  degli indirizzi); se nessuno dei due è installato, si apre nel browser predefinito.
+- Se l'app è già aperta, il doppio clic la riporta in primo piano invece di avviarne un'altra.
+- Per spegnerla: pulsante **Chiudi app** in fondo alla barra laterale. Se chiudi solo la
+  finestra, l'app resta attiva in background e il prossimo doppio clic la riapre subito.
+- I file esportati finiscono nella cartella **Download**.
+
+Suggerimento: crea un collegamento sul desktop (Windows: tasto destro sul file → *Invia a →
+Desktop (crea collegamento)*; macOS: tasto destro → *Crea alias*, poi sposta l'alias sulla Scrivania).
+
+Facoltativo e avanzato, per leggere i siti che mostrano i contenuti solo via JavaScript
+(da terminale, una sola volta):
+`.venv/bin/python -m pip install playwright && .venv/bin/python -m playwright install chromium`
+(Windows: `.venv\Scripts\python -m ...`).
+
+<details><summary>Avvio da terminale (alternativa)</summary>
 
 ```bash
 cd prospect-scraper
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# opzionale, per i siti che mostrano i contenuti solo via JavaScript
-pip install playwright && playwright install chromium
-```
-
-## Avvio
-
-```bash
 streamlit run app.py
 ```
+</details>
 
-Si apre su http://localhost:8501. Il database viene creato in `data/prospects.db`,
-i log tecnici in `logs/`.
+Il database è in `data/prospects.db` (tutte le ricerche restano salvate tra una sessione e
+l'altra), i log in `logs/`.
 
 ## Come si usa
 
@@ -40,8 +62,21 @@ i log tecnici in `logs/`.
      è vuoto, i prospect già nel database non ancora arricchiti;
    - *Search + enrichment* (default).
 5. **CERCA PROSPECT**. Nella tabella puoi cercare, filtrare, ordinare (clic sull'intestazione)
-   e selezionare righe; i pulsanti **DOWNLOAD CSV/XLSX** esportano le righe selezionate
-   oppure, se non ne selezioni, tutte quelle filtrate.
+   e selezionare righe.
+
+### Export
+
+Sopra la tabella ci sono **DOWNLOAD CSV** e **DOWNLOAD XLSX**: esportano le righe selezionate
+oppure, se non ne selezioni, tutte quelle visibili con i filtri applicati. Il file include
+tutte le colonne (anche P.IVA, tutte le email, tutti i telefoni, indirizzo, URL della fonte...)
+e prende il nome dalla ricerca, es. `hotel-4-stelle-palermo-20260929-1305.xlsx`.
+
+Tre viste, scelte con i pulsanti sopra la tabella:
+
+- **Ultima ricerca**: i risultati dell'ultima ricerca (anche dopo aver riaperto l'app);
+- **Ricerche salvate**: scegli una qualsiasi ricerca fatta in passato e la esporti. Con
+  **Prepara export di tutte le ricerche** ottieni un unico Excel con **un foglio per ricerca**;
+- **Tutto il database**: tutti i prospect trovati finora, senza duplicati.
 
 ## Fonti di ricerca
 
@@ -135,6 +170,9 @@ sito aziendale: il link finisce nella colonna social oppure in `raw_data`.
 
 ```
 prospect-scraper/
+├── Avvia Prospect Scraper (Windows).bat / (Mac).command, avvia-prospect-scraper-linux.sh
+├── launcher.py               prepara l'ambiente, avvia il server, apre la finestra
+├── .streamlit/config.toml    aspetto e impostazioni dell'interfaccia
 ├── app.py                    UI Streamlit (solo interfaccia)
 ├── core/pipeline.py          orchestrazione ricerca → dedup → DB → enrichment
 ├── config/settings.py        parametri
@@ -185,6 +223,8 @@ senza rete: `python -m tests.site_server 8765` e poi
   filtrati, gli altri no.
 
 ## Idee per una V2
+
+- App installabile vera e propria (eseguibile firmato), senza bisogno di Python.
 
 - Provider aggiuntivi: Brave Search API (piano gratuito), registro imprese / OpenCorporates,
   Google Places API (a pagamento), sitemap.xml del sito per trovare le pagine contatti.

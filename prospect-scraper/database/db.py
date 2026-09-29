@@ -166,3 +166,13 @@ class Database:
                                 (run_id,)).fetchall()
         return [r[0] for r in rows]
 
+    def list_runs(self, limit: int = 200) -> list[dict]:
+        """Ricerche salvate (più recenti prima) con il numero di prospect collegati."""
+        with self.connect() as conn:
+            rows = conn.execute(
+                """SELECT r.*, COUNT(rp.prospect_id) AS n_prospects
+                   FROM runs r JOIN run_prospects rp ON rp.run_id = r.id
+                   GROUP BY r.id ORDER BY r.id DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]

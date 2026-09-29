@@ -1,0 +1,13 @@
+[server]
+headless = true
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# nasconde il pulsante "Deploy" e il menu da sviluppatore
+toolbarMode = "minimal"
+
+[theme]
+primaryColor = "#305496"

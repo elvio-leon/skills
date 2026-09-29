@@ -58,10 +58,35 @@ def to_csv_bytes(df: pd.DataFrame) -> bytes:
 
 
 def to_xlsx_bytes(df: pd.DataFrame, sheet_name: str = "Prospects") -> bytes:
-    df = _sanitize(df)
+    return to_xlsx_multi_bytes({sheet_name: df})
+
+
+def to_xlsx_multi_bytes(sheets: dict[str, pd.DataFrame]) -> bytes:
+    """Un file XLSX con un foglio per ogni DataFrame (es. un foglio per ricerca)."""
     wb = Workbook()
-    ws = wb.active
-    ws.title = sheet_name
+    wb.remove(wb.active)
+    used: set[str] = set()
+    for name, df in sheets.items():
+        _write_sheet(wb.create_sheet(_sheet_title(name, used)), _sanitize(df))
+    if not wb.worksheets:
+        _write_sheet(wb.create_sheet("Prospects"), _sanitize(pd.DataFrame(columns=list(LABELS.values()))))
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def _sheet_title(name: str, used: set[str]) -> str:
+    """Nome foglio valido per Excel: max 31 caratteri, senza []:*?/\\ e unico."""
+    base = re.sub(r"[\[\]:*?/\\]", " ", name or "Prospects").strip()[:31] or "Prospects"
+    title, n = base, 2
+    while title.lower() in used:
+        suffix = f" ({n})"
+        title, n = base[: 31 - len(suffix)] + suffix, n + 1
+    used.add(title.lower())
+    return title
+
+
+def _write_sheet(ws, df: pd.DataFrame) -> None:
     headers = list(df.columns)
     ws.append(headers)
     for row in df.itertuples(index=False):
@@ -90,6 +115,12 @@ def to_xlsx_bytes(df: pd.DataFrame, sheet_name: str = "Prospects") -> bytes:
 
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
+
+
+def slugify(text: str, max_len: int = 50) -> str:
+    """Testo -> parte di nome file ("hotel 4 stelle | Palermo" -> "hotel-4-stelle-palermo")."""
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode()
+    text = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
+    return text[:max_len].rstrip("-") or "prospects"

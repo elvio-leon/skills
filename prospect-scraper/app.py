@@ -1,10 +1,13 @@
 """Prospect Scraper: interfaccia Streamlit.
 
-Avvio: ``streamlit run app.py``
+Avvio: doppio clic su "Avvia Prospect Scraper" (vedi README) oppure ``streamlit run app.py``.
 """
 
 from __future__ import annotations
 
+import os
+import signal
+import threading
 from datetime import datetime
 
 import pandas as pd
@@ -13,7 +16,8 @@ import streamlit as st
 from config import settings
 from core.pipeline import MODE_BOTH, MODE_ENRICH, MODES, Pipeline, RunParams
 from database.db import Database
-from exporters.export import prospects_to_dataframe, to_csv_bytes, to_xlsx_bytes
+from exporters.export import (prospects_to_dataframe, slugify, to_csv_bytes, to_xlsx_bytes,
+                              to_xlsx_multi_bytes)
 from scrapers.search import CATEGORY_PROVIDERS, PROVIDERS, available_providers, default_provider_names
 
 CATEGORIES = list(CATEGORY_PROVIDERS)
@@ -23,7 +27,29 @@ TABLE_COLUMNS = ["Company", "Website", "Country", "City", "Category", "Phone", "
 STATUS_LABELS = {"enriched": "✅ enriched", "found": "🔎 found", "no_website": "➖ no website",
                  "failed": "⚠️ failed"}
 
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
 st.set_page_config(page_title="Prospect Scraper", page_icon="🔎", layout="wide")
+
+
+def run_label(run: dict) -> str:
+    try:
+        when = datetime.fromisoformat(run["started_at"]).astimezone().strftime("%d/%m/%Y %H:%M")
+    except (TypeError, ValueError):
+        when = ""
+    what = " · ".join(filter(None, [run.get("keyword") or "Arricchimento siti", run.get("location")]))
+    return f"{when} — {what} ({run['n_prospects']} prospect)"
+
+
+def run_title(run: dict) -> str:
+    return " ".join(filter(None, [run.get("keyword") or "arricchimento", run.get("location")]))
+
+
+def shutdown_server() -> None:
+    """Chiude il server dell'app (usato dal pulsante "Chiudi app")."""
+    def _stop():
+        os.kill(os.getpid(), signal.SIGTERM)
+    threading.Timer(1.0, _stop).start()
 
 
 @st.cache_resource
@@ -69,6 +95,12 @@ with st.sidebar:
 
     run_clicked = st.button("CERCA PROSPECT", type="primary", width="stretch")
 
+    st.divider()
+    if st.button("Chiudi app", width="stretch", help="Spegne l'app. I dati restano salvati."):
+        st.success("App chiusa. Puoi chiudere questa finestra; i dati restano salvati.")
+        shutdown_server()
+        st.stop()
+
 # ------------------------------------------------------------------- main ---
 st.title("🔎 Prospect Scraper")
 st.caption("Ricerca prospect da fonti pubbliche e raccolta dei contatti pubblicati sui loro siti.")
@@ -110,25 +142,58 @@ if run_clicked:
         ss.run_messages = messages
         ss.run_log = result.log_text
         ss.run_had_errors = bool(result.fatal_error or result.n_failed or result.provider_errors)
+        ss.pop("all_runs_xlsx", None)   # l'export di tutte le ricerche va rigenerato
+        ss["view"] = "Ultima ricerca"
 
 # log dell'ultima operazione (sopravvive ai rerun, es. dopo un download)
 if ss.run_messages and not run_clicked:
-    with st.expander("Log ultima operazione", expanded=False):
+    with st.expander("Log ultima operazione" + (" ⚠️" if ss.run_had_errors else ""), expanded=False):
         for level, text in ss.run_messages:
             (st.warning if level == "warning" else st.error if level == "error" else st.write)(text)
-if ss.run_log:
-    st.download_button(
-        "Scarica log tecnico" + (" (ci sono errori)" if ss.run_had_errors else ""),
-        ss.run_log.encode("utf-8"), file_name=f"prospect-log-{datetime.now():%Y%m%d-%H%M%S}.txt",
-        mime="text/plain", type="secondary")
+        if ss.run_log:
+            st.download_button("Scarica log tecnico", ss.run_log.encode("utf-8"),
+                               file_name=f"prospect-log-{datetime.now():%Y%m%d-%H%M%S}.txt",
+                               mime="text/plain")
 
 # -------------------------------------------------------------- risultati ---
 st.subheader("Risultati")
-view_options = ["Ultima ricerca", "Tutto il database"]
-view = st.radio("Mostra", view_options, horizontal=True, label_visibility="collapsed",
-                index=0 if ss.run_ids is not None else 1)
-prospects = db.list_prospects(ids=ss.run_ids) if view == view_options[0] and ss.run_ids is not None \
-    else db.list_prospects()
+runs = db.list_runs()
+VIEW_LAST, VIEW_SAVED, VIEW_ALL = "Ultima ricerca", "Ricerche salvate", "Tutto il database"
+view = st.segmented_control("Mostra", [VIEW_LAST, VIEW_SAVED, VIEW_ALL], default=VIEW_LAST,
+                            label_visibility="collapsed", key="view") or VIEW_LAST
+
+file_stem = "prospects"
+if view == VIEW_ALL:
+    prospects = db.list_prospects()
+    file_stem = "prospects-tutti"
+elif view == VIEW_SAVED:
+    if not runs:
+        st.info("Nessuna ricerca salvata. Imposta la ricerca nella barra laterale e premi **CERCA PROSPECT**.")
+        st.stop()
+    col_run, col_all = st.columns([3, 1], vertical_alignment="bottom")
+    chosen = col_run.selectbox("Ricerca", runs, format_func=run_label)
+    prospects = db.list_prospects(ids=db.run_prospect_ids(chosen["id"]))
+    file_stem = slugify(run_title(chosen))
+    with col_all:
+        # un file con un foglio per ogni ricerca salvata (generato solo su richiesta)
+        if st.button("Prepara export di tutte le ricerche", width="stretch",
+                     help="Un file Excel con un foglio per ogni ricerca salvata."):
+            sheets = {run_title(r): prospects_to_dataframe(db.list_prospects(ids=db.run_prospect_ids(r["id"])))
+                      for r in runs}
+            ss.all_runs_xlsx = to_xlsx_multi_bytes(sheets)
+        if ss.get("all_runs_xlsx"):
+            st.download_button("DOWNLOAD XLSX (tutte)", ss.all_runs_xlsx,
+                               file_name=f"prospects-tutte-le-ricerche-{datetime.now():%Y%m%d}.xlsx",
+                               mime=XLSX_MIME, width="stretch", type="primary")
+else:  # ultima ricerca: quella appena fatta o, ad app appena aperta, l'ultima salvata
+    last = runs[0] if runs else None
+    if ss.run_ids is not None:
+        prospects = db.list_prospects(ids=ss.run_ids)
+    else:
+        prospects = db.list_prospects(ids=db.run_prospect_ids(last["id"])) if last else []
+    if last:
+        st.caption(run_label(last))
+        file_stem = slugify(run_title(last))
 
 if not prospects:
     st.info("Nessun prospect. Imposta la ricerca nella barra laterale e premi **CERCA PROSPECT**.")
@@ -168,6 +233,8 @@ m2.metric("Con email", int((view_df["Email"] != "").sum()))
 m3.metric("Con telefono", int((view_df["Phone"] != "").sum()))
 m4.metric("Falliti", int(view_df["Status"].str.contains("failed").sum()))
 
+export_bar = st.container()   # pulsanti di export sopra la tabella, riempiti dopo la selezione
+
 link = st.column_config.LinkColumn
 event = st.dataframe(
     view_df,
@@ -192,12 +259,12 @@ export_df = view_df.iloc[selected] if selected else view_df
 export_df = export_df.assign(Status=export_df["Status"].map(
     lambda s: next((k for k, v in STATUS_LABELS.items() if v == s), s)))
 scope = f"{len(selected)} righe selezionate" if selected else f"{len(export_df)} righe (filtri applicati)"
-st.caption(f"Export: {scope}. Il file include tutte le colonne (anche quelle non visibili in tabella).")
-
-stamp = f"{datetime.now():%Y%m%d-%H%M}"
-b1, b2, _ = st.columns([1, 1, 4])
-b1.download_button("DOWNLOAD CSV", to_csv_bytes(export_df), file_name=f"prospects-{stamp}.csv",
-                   mime="text/csv", width="stretch")
-b2.download_button("DOWNLOAD XLSX", to_xlsx_bytes(export_df), file_name=f"prospects-{stamp}.xlsx",
-                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                   width="stretch")
+name = f"{file_stem}-{datetime.now():%Y%m%d-%H%M}"
+with export_bar:
+    b1, b2, b3 = st.columns([1, 1, 4], vertical_alignment="center")
+    b1.download_button("DOWNLOAD CSV", to_csv_bytes(export_df), file_name=f"{name}.csv",
+                       mime="text/csv", width="stretch")
+    b2.download_button("DOWNLOAD XLSX", to_xlsx_bytes(export_df), file_name=f"{name}.xlsx",
+                       mime=XLSX_MIME, width="stretch", type="primary")
+    b3.caption(f"Export: {scope}. Seleziona righe nella tabella per esportare solo quelle; "
+               "il file include tutte le colonne.")
