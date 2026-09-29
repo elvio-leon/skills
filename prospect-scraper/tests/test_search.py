@@ -65,3 +65,22 @@ def test_search_interface_returns_dicts():
                  client=FakeClient())
     assert out and set(out[0]) >= {"title", "url", "snippet", "source"}
     assert out[0]["source"] == "osm"
+
+
+def test_overpass_falls_back_to_mirror(monkeypatch):
+    from config import settings
+    monkeypatch.setattr(settings, "OVERPASS_URL", "https://overpass-main.example/api")
+    monkeypatch.setattr(settings, "OVERPASS_MIRRORS", ["https://overpass-mirror.example/api"])
+    client = FakeClient(fail={"overpass-main"})
+    results = OSMProvider(client).search(SearchRequest("hotel", "Palermo", "Hospitality", 5))
+    assert results
+    urls = [u for u, p, d in client.calls if "overpass" in u]
+    assert urls == ["https://overpass-main.example/api", "https://overpass-mirror.example/api"]
+
+
+def test_overpass_all_down_reports_error(monkeypatch):
+    from config import settings
+    monkeypatch.setattr(settings, "OVERPASS_MIRRORS", ["https://overpass-mirror.example/api"])
+    report = run_search(SearchRequest("hotel", "Palermo", "Hospitality", 5), ["osm"],
+                        FakeClient(fail={"overpass"}))
+    assert "osm" in report.errors

@@ -49,6 +49,9 @@ SEARXNG_URL = _env("SEARXNG_URL", "")
 
 NOMINATIM_URL = _env("NOMINATIM_URL", "https://nominatim.openstreetmap.org")
 OVERPASS_URL = _env("OVERPASS_URL", "https://overpass-api.de/api/interpreter")
+# Server Overpass alternativi (stessi dati OSM), provati se il principale è sovraccarico.
+OVERPASS_MIRRORS = [u for u in _env("OVERPASS_MIRRORS", "https://overpass.private.coffee/api/interpreter,"
+                                    "https://overpass.kumi.systems/api/interpreter").split(",") if u]
 WIKIDATA_API_URL = _env("WIKIDATA_API_URL", "https://www.wikidata.org/w/api.php")
 OVERPASS_TIMEOUT = _env("OVERPASS_TIMEOUT", 90)
 NOMINATIM_MIN_INTERVAL = 1.1   # policy Nominatim: max 1 richiesta/secondo

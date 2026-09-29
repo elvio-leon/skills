@@ -198,10 +198,7 @@ class OSMProvider(SearchProvider):
         limit = min(max(request.max_results * 2, 40), 400)
         query = self.build_query(selectors, place, stars, limit)
         log.info("Overpass query:\n%s", query)
-        data = self.client.get_json(settings.OVERPASS_URL, data={"data": query},
-                                    timeout=settings.OVERPASS_TIMEOUT + 15, min_interval=2)
-        if data.get("remark") and not data.get("elements"):
-            raise FetchError(f"Overpass: {data['remark'][:120]}")
+        data = self._overpass(query)
         results = []
         for el in data.get("elements", []):
             r = self._to_result(el, place, labels)
@@ -209,6 +206,25 @@ class OSMProvider(SearchProvider):
                 results.append(r)
         results.sort(key=lambda r: 0 if r.url else 1)
         return results[: request.max_results]
+
+    def _overpass(self, query: str) -> dict:
+        """Esegue la query sul server principale; se è sovraccarico (504, 429, timeout)
+        prova i server alternativi con gli stessi dati."""
+        last_error: Exception | None = None
+        for url in [settings.OVERPASS_URL, *settings.OVERPASS_MIRRORS]:
+            try:
+                data = self.client.get_json(url, data={"data": query},
+                                            timeout=settings.OVERPASS_TIMEOUT + 15, min_interval=2)
+            except Exception as exc:  # noqa: BLE001 - si prova il server successivo
+                log.warning("Overpass %s non disponibile: %s", url, exc)
+                last_error = exc
+                continue
+            if data.get("remark") and not data.get("elements"):
+                log.warning("Overpass %s: %s", url, data["remark"][:200])
+                last_error = FetchError(f"Overpass: {data['remark'][:120]}")
+                continue
+            return data
+        raise last_error or FetchError("Overpass non disponibile")
 
     def _to_result(self, el: dict, place: Place, labels: list[str]) -> SearchResult | None:
         tags = el.get("tags") or {}
