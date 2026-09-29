@@ -47,6 +47,12 @@ DEFAULT_PHONE_REGION = _env("DEFAULT_PHONE_REGION", "IT")
 # es. http://localhost:8888 . Se vuoto il provider è disattivato.
 SEARXNG_URL = _env("SEARXNG_URL", "")
 
+# --- Web Search (scoperta di aziende digitali tramite API di ricerca web) --------
+TAVILY_API_URL = _env("TAVILY_API_URL", "https://api.tavily.com/search")
+BRAVE_API_URL = _env("BRAVE_API_URL", "https://api.search.brave.com/res/v1/web/search")
+# Tetto di chiamate API per ricerca (ogni chiamata consuma 1 credito del provider).
+WEB_MAX_API_CALLS = _env("WEB_MAX_API_CALLS", 5)
+
 NOMINATIM_URL = _env("NOMINATIM_URL", "https://nominatim.openstreetmap.org")
 OVERPASS_URL = _env("OVERPASS_URL", "https://overpass-api.de/api/interpreter")
 # Server Overpass alternativi (stessi dati OSM), provati se il principale è sovraccarico.
@@ -111,6 +117,24 @@ NON_COMPANY_DOMAINS = {
     "ebay.it", "ebay.com", "crunchbase.com", "glassdoor.com", "indeed.com",
     "virgilio.it", "subito.it", "trustpilot.com", "wa.me", "whatsapp.com",
     "linktr.ee", "t.me", "hrs.com", "lastminute.com", "venere.com",
+}
+
+# Domini che la Web Search scarta (in aggiunta a NON_COMPANY_DOMAINS): directory,
+# marketplace, siti di recensioni, portali di lavoro, social, video, Q&A, codice,
+# aggregatori. Modificabile: sono i siti che non sono "il sito dell'azienda".
+WEB_EXCLUDED_DOMAINS = {
+    "wikipedia.org", "crunchbase.com", "g2.com", "capterra.com", "capterra.it", "getapp.com",
+    "softwareadvice.com", "trustpilot.com", "clutch.co", "goodfirms.co", "glassdoor.com",
+    "glassdoor.it", "indeed.com", "it.indeed.com", "infojobs.it", "linkedin.com", "facebook.com",
+    "instagram.com", "x.com", "twitter.com", "youtube.com", "tiktok.com", "reddit.com",
+    "quora.com", "medium.com", "github.com", "gitlab.com", "apps.apple.com", "apple.com",
+    "play.google.com", "google.com", "amazon.it", "amazon.com", "ebay.it", "zalando.it",
+    "yelp.com", "tripadvisor.it", "paginegialle.it", "europages.it", "kompass.com",
+    "ufficiocamerale.it", "reportaziende.it", "informazione-aziende.it", "companyreports.it",
+    "producthunt.com", "f6s.com", "angel.co", "wellfound.com", "dealroom.co", "tracxn.com",
+    "owler.com", "zoominfo.com", "rocketreach.co", "apollo.io", "similarweb.com",
+    "statista.com", "pinterest.com", "issuu.com", "slideshare.net", "scribd.com",
+    "eventbrite.it", "eventbrite.com", "meetup.com", "wix.com", "wordpress.org",
 }
 
 # Prefissi email chiaramente tecnici da escludere.

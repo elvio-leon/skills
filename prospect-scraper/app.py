@@ -16,17 +16,30 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from config import settings
-from core.pipeline import MODE_BOTH, MODE_ENRICH, MODES, Pipeline, RunParams
+from config import settings, user_settings
+from core.pipeline import (MODE_BOTH, MODE_ENRICH, MODE_SEARCH, MODES, SOURCE_WEB, WEB_CATEGORY,
+                           Pipeline, RunParams)
 from database.db import Database
 from exporters.export import (prospects_to_dataframe, slugify, to_csv_bytes, to_xlsx_bytes,
                               to_xlsx_multi_bytes)
+from scrapers import web_search
 from scrapers.search import CATEGORY_PROVIDERS, PROVIDERS, available_providers, default_provider_names
 
 CATEGORIES = list(CATEGORY_PROVIDERS)
 # colonne visibili in tabella (l'export contiene tutte le colonne)
 TABLE_COLUMNS = ["Company", "Website", "Country", "City", "Category", "Phone", "Email",
                  "LinkedIn", "Instagram", "Source", "Status", "Error"]
+SRC_LOCAL, SRC_WEB = "Local (OSM + Wikidata)", "Web Search"
+WEB_PROVIDER_LABELS = {"tavily": "Tavily (consigliato, gratuito)", "brave": "Brave Search",
+                       "searxng": "SearXNG (istanza propria)"}
+WEB_PROVIDER_HELP = {
+    "tavily": "Crea un account gratuito su https://app.tavily.com (1000 ricerche/mese, senza carta di "
+              "credito) e incolla qui la chiave API.",
+    "brave": "https://api-dashboard.search.brave.com — 5$ di credito gratuito al mese (≈1000 ricerche), "
+             "richiede carta di credito.",
+    "searxng": "Indirizzo della tua istanza SearXNG con formato JSON abilitato, "
+               "es. http://localhost:8888 (vedi README).",
+}
 STATUS_LABELS = {"enriched": "✅ enriched", "found": "🔎 found", "no_website": "➖ no website",
                  "failed": "⚠️ failed"}
 
@@ -107,31 +120,67 @@ ss.setdefault("run_had_errors", False)
 # ---------------------------------------------------------------- sidebar ---
 with st.sidebar:
     st.header("Ricerca")
-    category = st.selectbox("Tipo di ricerca", CATEGORIES, index=0)
-    keyword = st.text_input("Keyword", placeholder="es. hotel 4 stelle Palermo, SaaS Italia")
-    location = st.text_input("Località", placeholder=f"es. Sicilia, Milano (default: {settings.DEFAULT_LOCATION})")
-    max_results = st.select_slider("Numero risultati", options=settings.RESULT_OPTIONS,
-                                   value=settings.DEFAULT_RESULTS)
-    mode = st.selectbox("Modalità", MODES, index=MODES.index(MODE_BOTH))
-    urls_text = ""
-    if mode == MODE_ENRICH:
-        urls_text = st.text_area(
-            "Siti da arricchire (uno per riga)", height=120,
-            help="Lascia vuoto per arricchire i prospect già nel database non ancora arricchiti.")
+    ss.setdefault("search_source", SRC_LOCAL)
+    source = st.segmented_control("Fonte", [SRC_LOCAL, SRC_WEB], key="search_source") or SRC_LOCAL
+    if source == SRC_LOCAL:
+        category = st.selectbox("Tipo di ricerca", CATEGORIES, index=0)
+        keyword = st.text_input("Keyword", placeholder="es. hotel 4 stelle Palermo, SaaS Italia")
+        location = st.text_input("Località", placeholder=f"es. Sicilia, Milano (default: {settings.DEFAULT_LOCATION})")
+        max_results = st.select_slider("Numero risultati", options=settings.RESULT_OPTIONS,
+                                       value=settings.DEFAULT_RESULTS)
+        mode = st.selectbox("Modalità", MODES, index=MODES.index(MODE_BOTH))
+        urls_text = ""
+        if mode == MODE_ENRICH:
+            urls_text = st.text_area(
+                "Siti da arricchire (uno per riga)", height=120,
+                help="Lascia vuoto per arricchire i prospect già nel database non ancora arricchiti.")
 
-    avail = available_providers()
-    with st.expander("Opzioni avanzate"):
-        providers = st.multiselect(
-            "Fonti", options=list(avail), default=default_provider_names(category),
-            format_func=lambda n: PROVIDERS[n].label,
-            help="Le fonti predefinite dipendono dal tipo di ricerca.")
-        force_refresh = st.checkbox(
-            "Ri-visita anche i siti arricchiti di recente",
-            help=f"Di default i siti arricchiti negli ultimi {settings.REENRICH_AFTER_DAYS} giorni vengono riusati.")
-        if "searxng" not in avail:
-            st.caption("Ricerca web generica non attiva: imposta `PS_SEARXNG_URL` (vedi README).")
-        st.caption(f"Max {settings.MAX_PAGES_PER_DOMAIN} pagine/sito · {settings.MAX_WORKERS} siti in parallelo "
-                   f"· timeout {settings.REQUEST_TIMEOUT}s · pausa {settings.REQUEST_DELAY}s")
+        avail = available_providers()
+        with st.expander("Opzioni avanzate"):
+            providers = st.multiselect(
+                "Fonti", options=list(avail), default=default_provider_names(category),
+                format_func=lambda n: PROVIDERS[n].label,
+                help="Le fonti predefinite dipendono dal tipo di ricerca.")
+            force_refresh = st.checkbox(
+                "Ri-visita anche i siti arricchiti di recente",
+                help=f"Di default i siti arricchiti negli ultimi {settings.REENRICH_AFTER_DAYS} giorni vengono riusati.")
+            if "searxng" not in avail:
+                st.caption("Ricerca web generica non attiva: imposta `PS_SEARXNG_URL` (vedi README).")
+            st.caption(f"Max {settings.MAX_PAGES_PER_DOMAIN} pagine/sito · {settings.MAX_WORKERS} siti in parallelo "
+                       f"· timeout {settings.REQUEST_TIMEOUT}s · pausa {settings.REQUEST_DELAY}s")
+    else:
+        category = WEB_CATEGORY
+        keyword = st.text_input("Keyword", placeholder="es. SaaS B2B, startup fintech, magazine online",
+                                key="web_keyword")
+        location = st.text_input("Località / Paese", placeholder="es. Italia, Milano (facoltativo)",
+                                 key="web_location")
+        max_results = st.select_slider("Numero risultati", options=settings.RESULT_OPTIONS,
+                                       value=settings.DEFAULT_RESULTS, key="web_max_results")
+        enrich = st.checkbox("Visita i siti per trovare contatti (enrichment)", value=True,
+                             key="web_enrich")
+        mode = MODE_BOTH if enrich else MODE_SEARCH
+        urls_text, providers, force_refresh = "", None, False
+
+        saved_provider = user_settings.get("web_provider", "tavily")
+        if saved_provider not in WEB_PROVIDER_LABELS:
+            saved_provider = "tavily"
+        with st.expander("Impostazioni Web Search",
+                         expanded=not web_search.web_search_status(saved_provider)[0]):
+            web_provider = st.selectbox(
+                "Provider", list(WEB_PROVIDER_LABELS), index=list(WEB_PROVIDER_LABELS).index(saved_provider),
+                format_func=WEB_PROVIDER_LABELS.get, key="web_provider_select")
+            is_url = web_provider == "searxng"
+            setting_key = "searxng_url" if is_url else f"{web_provider}_api_key"
+            secret = st.text_input(
+                "URL dell'istanza" if is_url else "Chiave API", value=user_settings.load().get(setting_key, ""),
+                type="default" if is_url else "password", key=f"web_secret_{web_provider}")
+            if st.button("Salva", key="web_save"):
+                user_settings.save({"web_provider": web_provider, setting_key: secret})
+                st.success("Impostazioni salvate.")
+            web_ok, web_label = web_search.web_search_status(web_provider)
+            st.write(f"{web_label}: " + ("✅ configurato" if web_ok else "⚠️ non configurato"))
+            st.caption(WEB_PROVIDER_HELP[web_provider])
+            st.caption(f"Ogni ricerca usa 1-{settings.WEB_MAX_API_CALLS} chiamate API (1 credito ciascuna).")
 
     run_clicked = st.button("CERCA PROSPECT", type="primary", width="stretch")
 
@@ -150,7 +199,10 @@ if run_clicked:
     urls = [u.strip() for u in urls_text.splitlines() if u.strip()]
     if mode != MODE_ENRICH and not keyword.strip():
         st.sidebar.error("Inserisci una keyword.")
-    elif mode != MODE_ENRICH and not providers:
+    elif source == SRC_WEB and not web_search.web_search_status(web_provider)[0]:
+        st.sidebar.error("Web Search non configurata: inserisci la chiave API in "
+                         "«Impostazioni Web Search» e premi Salva.")
+    elif source == SRC_LOCAL and mode != MODE_ENRICH and not providers:
         st.sidebar.error("Seleziona almeno una fonte.")
     else:
         messages: list[tuple[str, str]] = []
@@ -172,9 +224,10 @@ if run_clicked:
             def on_progress(done: int, total: int, label: str = "") -> None:
                 progress_bar.progress(done / total, text=f"{done}/{total} · {label[:60]}")
 
+            web_args = {"search_source": SOURCE_WEB, "web_provider": web_provider} if source == SRC_WEB else {}
             params = RunParams(category=category, keyword=keyword.strip(), location=location.strip(),
                                max_results=max_results, mode=mode, providers=providers or None,
-                               urls=urls, force_refresh=force_refresh)
+                               urls=urls, force_refresh=force_refresh, **web_args)
             result = Pipeline(db, on_message=on_message, on_progress=on_progress).run(params)
             if result.fatal_error:
                 status.update(label="Errore", state="error", expanded=True)

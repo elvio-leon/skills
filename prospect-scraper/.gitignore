@@ -5,7 +5,8 @@ __pycache__/
 venv/
 .env
 
-# dati locali e log
+# dati locali e log (user_settings.json contiene le chiavi API)
+user_settings.json
 data/
 logs/
 *.db

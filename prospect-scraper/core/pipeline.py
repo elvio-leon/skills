@@ -7,18 +7,20 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Callable
+from urllib.parse import urlsplit
 
-from config import settings
+from config import settings, user_settings
 from database.db import Database, now_iso
 from models.prospect import STATUS_ENRICHED, STATUS_FAILED, STATUS_FOUND, STATUS_NO_WEBSITE, Prospect
-from scrapers import contacts, social
+from scrapers import contacts, social, web_search
 from scrapers.company import company_name_from_title
 from scrapers.http import HttpClient, default_client
 from scrapers.search import PROVIDERS, SearchRequest, SearchResult, run_search
 from scrapers.website import EnrichmentResult, WebsiteCrawler
 from utils.deduplication import deduplicate, merge_prospects
 from utils.logging import RunLogCapture, get_logger
-from utils.normalization import homepage_url, is_domain_in, normalize_domain
+from utils.normalization import (clean_text, homepage_url, is_domain_in, normalize_domain,
+                                 normalize_url, registrable_domain)
 
 log = get_logger("pipeline")
 
@@ -26,6 +28,11 @@ MODE_SEARCH = "Search"
 MODE_ENRICH = "Website enrichment"
 MODE_BOTH = "Search + enrichment"
 MODES = [MODE_SEARCH, MODE_ENRICH, MODE_BOTH]
+
+# Fonte della ricerca: locale (OSM + Wikidata) oppure Web Search (API di ricerca web)
+SOURCE_LOCAL = "local"
+SOURCE_WEB = "web"
+WEB_CATEGORY = "Web Search"
 
 _SOCIAL_FIELDS = ("linkedin", "instagram", "facebook", "twitter", "youtube")
 _EXTRA_FIELDS = ("city", "address", "postal_code", "country", "region", "email", *_SOCIAL_FIELDS)
@@ -41,6 +48,8 @@ class RunParams:
     providers: list[str] | None = None
     urls: list[str] = field(default_factory=list)   # per la modalità Website enrichment
     force_refresh: bool = False
+    search_source: str = SOURCE_LOCAL
+    web_provider: str | None = None     # solo per SOURCE_WEB (None = quello nelle impostazioni)
 
 
 @dataclass
@@ -106,6 +115,34 @@ def result_to_prospect(r: SearchResult, params: RunParams) -> Prospect:
     p.status = STATUS_FOUND if p.website else STATUS_NO_WEBSITE
     p.raw_data["search"] = {"title": r.title, "snippet": r.snippet, "url": r.url,
                             **{k: v for k, v in extra.items() if k not in _EXTRA_FIELDS}}
+    return p
+
+
+def _web_website(url: str, domain: str) -> str:
+    """Home del sito per un risultato web: host originale se è il dominio (o www.), altrimenti
+    il dominio registrabile. Mantiene lo schema http se presente."""
+    parts = urlsplit(normalize_url(url) or "")
+    host = (parts.hostname or "").lower()
+    scheme = "http" if parts.scheme == "http" else "https"
+    if host in (domain, f"www.{domain}"):
+        return f"{scheme}://{parts.netloc}/"
+    return f"{scheme}://{domain}/"
+
+
+def web_result_to_prospect(r: SearchResult, params: RunParams, query: str) -> Prospect:
+    """Converte un risultato della Web Search in prospect: solo dominio, sito e testo del
+    risultato. Città, paese, email e telefono restano vuoti (li trova l'enrichment)."""
+    extra = dict(r.extra or {})
+    domain = registrable_domain(r.url) or ""
+    p = Prospect(source=r.source, search_query=query, category=WEB_CATEGORY, domain=domain)
+    p.website = _web_website(r.url, domain) if domain else ""
+    p.company_name = (company_name_from_title(r.title, domain) or domain).strip()[:200]
+    p.raw_data["name_source"] = "title"    # provvisorio: il sito può dichiarare il nome vero
+    p.description = clean_text(r.snippet)[:500]
+    p.source_url = r.url
+    p.status = STATUS_FOUND if p.website else STATUS_NO_WEBSITE
+    p.raw_data["search"] = {"title": r.title, "snippet": r.snippet, "url": r.url,
+                            "rank": extra.get("rank"), "other_urls": extra.get("other_urls", [])}
     return p
 
 
@@ -203,11 +240,14 @@ class Pipeline:
         result.run_id = self.db.start_run(
             mode=params.mode, category=params.category, keyword=params.keyword,
             location=params.location, max_results=params.max_results,
-            providers=",".join(params.providers or []),
+            providers=(self._web_provider_name(params) if params.search_source == SOURCE_WEB
+                       else ",".join(params.providers or [])),
         )
         prospects: list[Prospect] = []
 
-        if params.mode in (MODE_SEARCH, MODE_BOTH):
+        if params.search_source == SOURCE_WEB and params.mode in (MODE_SEARCH, MODE_BOTH):
+            prospects = self._web_discovery(params, result)
+        elif params.mode in (MODE_SEARCH, MODE_BOTH):
             self.msg("Searching...", "info")
             request = SearchRequest(keyword=params.keyword, location=params.location,
                                     category=params.category, max_results=params.max_results)
@@ -246,6 +286,27 @@ class Pipeline:
             if result.n_cached:
                 summary += f", {result.n_cached} dalla cache"
         self.msg(summary, "success")
+
+    @staticmethod
+    def _web_provider_name(params: RunParams) -> str:
+        return params.web_provider or user_settings.get("web_provider", "tavily")
+
+    def _web_discovery(self, params: RunParams, result: RunResult) -> list[Prospect]:
+        """Scoperta via Web Search: un prospect per dominio aziendale trovato."""
+        provider = web_search.get_provider(params.web_provider, self.client)
+        self.msg(f"Searching the web ({provider.label})...", "info")
+        report = web_search.run_web_search(params.keyword, params.location, params.max_results,
+                                           provider=provider)
+        if report.errors:
+            result.provider_errors = {provider.name: "; ".join(report.errors)}
+        for err in report.errors:
+            self.msg(f"{provider.label}: {err}", "warning")
+        result.n_found = len(report.results)
+        self.msg(f"Found {report.raw_count} results, {result.n_found} domini aziendali "
+                 f"({report.api_calls} ricerche API)", "info")
+        fallback = report.queries[0] if report.queries else params.keyword
+        return [web_result_to_prospect(r, params, (r.extra or {}).get("query") or fallback)
+                for r in report.results]
 
     def _enrich_targets(self, params: RunParams) -> list[Prospect]:
         if params.urls:

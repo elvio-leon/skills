@@ -85,6 +85,15 @@ def _http_status_message(code: int) -> str:
     }.get(code, f"HTTP {code}")
 
 
+def _api_status_message(code: int) -> str:
+    """Messaggi per le API con chiave: distingue chiave non valida e limite raggiunto."""
+    if code in (401, 403):
+        return f"chiave API non valida (HTTP {code})"
+    if code == 429:
+        return "limite di ricerche raggiunto (HTTP 429)"
+    return _http_status_message(code)
+
+
 class HttpClient:
     """Thread-safe: può essere condiviso dai worker dell'enrichment."""
 
@@ -222,16 +231,31 @@ class HttpClient:
             )
 
     def get_json(self, url: str, *, params: dict | None = None, data: dict | None = None,
-                 min_interval: float | None = None, timeout: float | None = None):
+                 min_interval: float | None = None, timeout: float | None = None,
+                 headers: dict | None = None):
         """Chiamata ad API JSON (GET, o POST se ``data`` è valorizzato)."""
         self.throttle(url, min_interval)
         log.debug("API %s %s", url, params or "")
         if data is not None:
-            r = self.session.post(url, data=data, timeout=timeout or self.timeout)
+            r = self.session.post(url, data=data, timeout=timeout or self.timeout, headers=headers)
         else:
-            r = self.session.get(url, params=params, timeout=timeout or self.timeout)
+            r = self.session.get(url, params=params, timeout=timeout or self.timeout, headers=headers)
         if r.status_code != 200:
-            raise FetchError(f"{_http_status_message(r.status_code)} da {urlsplit(url).hostname}")
+            describe = _http_status_message if headers is None else _api_status_message
+            raise FetchError(f"{describe(r.status_code)} da {urlsplit(url).hostname}")
+        try:
+            return r.json()
+        except ValueError as exc:
+            raise FetchError(f"risposta non JSON da {urlsplit(url).hostname}") from exc
+
+    def post_json(self, url: str, payload: dict, *, headers: dict | None = None,
+                  min_interval: float | None = None, timeout: float | None = None):
+        """POST con corpo JSON a un'API (es. Tavily). Gli header (chiavi API) non vengono loggati."""
+        self.throttle(url, min_interval)
+        log.debug("API POST %s", url)
+        r = self.session.post(url, json=payload, timeout=timeout or self.timeout, headers=headers)
+        if r.status_code != 200:
+            raise FetchError(f"{_api_status_message(r.status_code)} da {urlsplit(url).hostname}")
         try:
             return r.json()
         except ValueError as exc:

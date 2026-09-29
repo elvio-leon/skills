@@ -121,6 +121,41 @@ search("hotel 4 stelle", 20, location="Palermo", category="Hospitality")
 # -> [{"title": ..., "url": ..., "snippet": ..., "source": ..., "extra": {...}}, ...]
 ```
 
+## Web Search (aziende digitali)
+
+La ricerca locale (OpenStreetMap + Wikidata) trova attività con una sede fisica. Per **startup,
+SaaS, e-commerce e publisher** online serve la **Web Search**: nella barra laterale scegli
+**Fonte → Web Search**. È un modo di ricerca indipendente: la ricerca locale resta com'è.
+
+Flusso: **ricerca web (API) → domini aziendali → deduplicazione per dominio → enrichment dei siti → CSV/XLSX**.
+Portali, directory, social, siti di recensioni e marketplace vengono scartati; più risultati dello
+stesso sito (`www.`, sottodomini, pagine diverse) diventano un solo prospect.
+
+**Configurazione (una volta sola, nell'app):**
+
+1. crea un account gratuito su https://app.tavily.com (1000 ricerche al mese, senza carta di credito);
+2. nella barra laterale apri **Impostazioni Web Search**, incolla la chiave API e premi **Salva**.
+
+La chiave è salvata solo sul tuo computer (`user_settings.json` nella cartella dei dati, permessi
+`0600`) e non compare mai in log, messaggi o export. In alternativa: variabili d'ambiente
+`PS_TAVILY_API_KEY`, `PS_BRAVE_API_KEY`, `PS_SEARXNG_URL`, `PS_WEB_PROVIDER`.
+
+| Provider | Costo | Note |
+|---|---|---|
+| **Tavily** (predefinito) | 1000 ricerche/mese gratis, **nessuna carta** | Fino a 20 risultati per chiamata, senza paginazione (altri risultati con varianti della query). |
+| **Brave Search** | 5$/mese di credito (≈1000 ricerche), **carta richiesta** | https://api-dashboard.search.brave.com. Fino a 20 risultati per chiamata, con paginazione. |
+| **SearXNG** | Gratuito, ma serve Docker e un'istanza propria | Interroga a sua volta motori come Google/Bing. Per utenti tecnici. |
+
+**Costo di una ricerca:** ogni chiamata API costa 1 credito. Una ricerca da 20 risultati usa in
+genere 1-3 chiamate; il massimo è `WEB_MAX_API_CALLS` (5, `PS_WEB_MAX_API_CALLS`). L'app mostra
+quante ricerche API sono state fatte ("N ricerche API").
+
+**Limiti:** tra i risultati possono esserci blog, articoli e classifiche ("i 10 migliori SaaS") che
+non sono il sito di un'azienda; nessuna qualificazione dei prospect (settore, dimensione, fit) per ora.
+Città, paese, email e telefono arrivano solo dall'enrichment del sito (se attivo).
+
+Nuovi provider: vedi la docstring di `scrapers/web_search/__init__.py`.
+
 ## Configurazione
 
 Tutti i parametri sono in `config/settings.py` e si possono sovrascrivere con variabili
@@ -191,10 +226,12 @@ prospect-scraper/
 ├── app.py                    UI Streamlit (solo interfaccia)
 ├── core/pipeline.py          orchestrazione ricerca → dedup → DB → enrichment
 ├── config/settings.py        parametri
+├── config/user_settings.py   impostazioni dell'utente (chiavi API) in user_settings.json
 ├── database/db.py, schema.sql
 ├── scrapers/
 │   ├── http.py               client HTTP: rate limit, retry, robots.txt, errori
-│   ├── search/               motore di ricerca modulare
+│   ├── web_search/           Web Search (Tavily, Brave, SearXNG): provider, discovery, dedup per dominio
+│   ├── search/               motore di ricerca modulare (locale: OSM + Wikidata)
 │   │   ├── base.py           interfaccia SearchProvider
 │   │   ├── geo.py            geocoding località (Nominatim)
 │   │   ├── osm.py, wikidata.py, searxng.py

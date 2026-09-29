@@ -54,6 +54,45 @@ def normalize_domain(url_or_domain: str | None) -> str | None:
     return host or None
 
 
+# suffissi pubblici a due livelli (lista essenziale, non l'intera Public Suffix List)
+_MULTI_SUFFIXES = {
+    "co.uk", "org.uk", "ac.uk", "gov.uk", "me.uk", "com.au", "net.au", "org.au", "co.nz",
+    "co.jp", "com.br", "com.mx", "com.ar", "co.za", "com.tr", "com.cn", "com.hk", "com.sg",
+    "co.in", "co.kr", "co.il",
+}
+# piattaforme di hosting dove il sottodominio È l'azienda (acme.substack.com)
+_HOSTING_PLATFORMS = {
+    "substack.com", "medium.com", "wordpress.com", "blogspot.com", "wixsite.com", "github.io",
+    "netlify.app", "vercel.app", "myshopify.com", "webflow.io", "squarespace.com",
+    "notion.site", "carrd.co", "framer.website", "pages.dev",
+}
+_IPV4_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
+
+
+def registrable_domain(url_or_domain: str | None) -> str | None:
+    """Dominio "principale" del sito: toglie i sottodomini (blog.example.com -> example.com).
+
+    Gestisce i suffissi a più livelli (example.co.uk) e le piattaforme di hosting in
+    cui il sottodominio identifica l'azienda (acme.substack.com resta com'è).
+    Indirizzi IP e localhost restano invariati.
+
+    >>> registrable_domain("http://blog.example.com/x")
+    'example.com'
+    """
+    host = normalize_domain(url_or_domain)
+    if not host:
+        return None
+    if host == "localhost" or _IPV4_RE.match(host) or ":" in host:
+        return host
+    labels = host.split(".")
+    if len(labels) <= 2:
+        return host
+    keep = 3 if ".".join(labels[-2:]) in _MULTI_SUFFIXES else 2
+    if ".".join(labels[-keep:]) in _HOSTING_PLATFORMS or ".".join(labels[-2:]) in _HOSTING_PLATFORMS:
+        keep = 3
+    return ".".join(labels[-keep:])
+
+
 def normalize_url(url: str | None) -> str | None:
     """URL pulito: schema minuscolo, host minuscolo, niente frammento.
 
