@@ -1,0 +1,149 @@
+{
+	Tools = ordered() {
+		LDF_FuocoRapido = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Sfoca",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blur",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Start",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dur",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Zoom",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutToo",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pivot",
+					Name = "Punto di zoom",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Sfoca = Blur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						XBlurSize = Input {
+							Expression = ":local a=1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.Dur,1),0),1))^4)\nif Ctrl.OutToo>0.5 then a=max(a,1-(1-(1-min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))^3)) end\nreturn Ctrl.Blur*a",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Sfoca",
+							Source = "Output",
+						},
+						Edges = Input { Value = 3, },
+						Size = Input {
+							Expression = ":local a=1-(1-(1-min(max(((time-comp.RenderStart)-Start)/max(Dur,1),0),1))^4)\nif OutToo>0.5 then a=max(a,1-(1-(1-min(max((comp.RenderEnd-time)/max(OutDur,1),0),1))^3)) end\nreturn 1+Zoom/100*a",
+						},
+						Blur = Input { Value = 25, },
+						Start = Input { Value = 0, },
+						Dur = Input { Value = 10, },
+						Zoom = Input { Value = 6, },
+						OutToo = Input { Value = 0, },
+						OutDur = Input { Value = 10, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+					UserControls = ordered() {
+						Blur = {
+							LINKS_Name = "Sfocatura iniziale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 25,
+							INP_MinScale = 0,
+							INP_MaxScale = 100,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Start = {
+							LINKS_Name = "Inizia dopo (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0,
+							INP_MinScale = 0,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 100000,
+						},
+						Dur = {
+							LINKS_Name = "Durata messa a fuoco (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 10000,
+						},
+						Zoom = {
+							LINKS_Name = "Assestamento zoom (%)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 6,
+							INP_MinScale = 0,
+							INP_MaxScale = 20,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						OutToo = {
+							LINKS_Name = "Sfoca anche alla fine della clip",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						OutDur = {
+							LINKS_Name = "Durata sfocatura finale (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 10000,
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_FuocoRapido"
+}

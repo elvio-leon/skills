@@ -1,0 +1,357 @@
+{
+	Tools = ordered() {
+		LDF_EvidenziaGiocatore = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ingresso",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Zona",
+					Source = "Center",
+					Name = "Posizione giocatore (animabile con i keyframe)",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Zona",
+					Source = "SoftEdge",
+					Name = "Morbidezza bordo",
+					Default = 0.02,
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "W",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Shape",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dark",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Desat",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Tint",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Ring",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Start",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "InDur",
+				},
+				Input11 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input12 = InstanceInput {
+					SourceOp = "Anello",
+					Source = "TopLeftRed",
+					Name = "Colore anello",
+					ControlGroup = 1,
+				},
+				Input13 = InstanceInput {
+					SourceOp = "Anello",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input14 = InstanceInput {
+					SourceOp = "Anello",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Uscita",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ingresso = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Scuro = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ingresso",
+							Source = "Output",
+						},
+						Gain = Input {
+							Expression = "1-Ctrl.Dark*min((1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4),min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))",
+						},
+						Saturation = Input {
+							Expression = "1-Ctrl.Desat*min((1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4),min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Verde = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.094, },
+						TopLeftGreen = Input { Value = 0.227, },
+						TopLeftBlue = Input { Value = 0.184, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Tinta = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Scuro",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Verde",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Tint*0.35*min((1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4),min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Zona = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input {
+							Expression = "(Ctrl.W*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))",
+						},
+						Height = Input {
+							Expression = "(Ctrl.W*Ctrl.Shape*Ctrl.Background.OriginalWidth/Ctrl.Background.OriginalHeight*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))",
+						},
+						SoftEdge = Input { Value = 0.02, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Tinta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Ingresso",
+							Source = "Output",
+						},
+						EffectMask = Input {
+							SourceOp = "Zona",
+							Source = "Mask",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						W = Input { Value = 0.12, },
+						Shape = Input { Value = 1.7, },
+						Dark = Input { Value = 0.55, },
+						Desat = Input { Value = 0.6, },
+						Tint = Input { Value = 0.3, },
+						Ring = Input { Value = 4, },
+						Start = Input { Value = 0, },
+						InDur = Input { Value = 10, },
+						OutDur = Input { Value = 8, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+					UserControls = ordered() {
+						W = {
+							LINKS_Name = "Larghezza zona",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.12,
+							INP_MinScale = 0.02,
+							INP_MaxScale = 0.6,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Shape = {
+							LINKS_Name = "Forma (1 = cerchio, 2 = ovale verticale)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1.7,
+							INP_MinScale = 0.3,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Dark = {
+							LINKS_Name = "Scurisci il resto",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.55,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Desat = {
+							LINKS_Name = "Togli colore al resto",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.6,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Tint = {
+							LINKS_Name = "Tinta verde sul resto",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.3,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Ring = {
+							LINKS_Name = "Spessore anello (pixel, 0 = nessuno)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 4,
+							INP_MinScale = 0,
+							INP_MaxScale = 20,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Start = {
+							LINKS_Name = "Inizia dopo (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0,
+							INP_MinScale = 0,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 100000,
+						},
+						InDur = {
+							LINKS_Name = "Durata entrata (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 10,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 10000,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 8,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 10000,
+						},
+					},
+				},
+				AnelloEst = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Zona.Center",
+						},
+						Width = Input {
+							Expression = "(Ctrl.W*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))+2*Ctrl.Ring/Ctrl.Background.OriginalWidth",
+						},
+						Height = Input {
+							Expression = "(Ctrl.W*Ctrl.Shape*Ctrl.Background.OriginalWidth/Ctrl.Background.OriginalHeight*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))+2*Ctrl.Ring/Ctrl.Background.OriginalHeight",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				AnelloInt = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						EffectMask = Input {
+							SourceOp = "AnelloEst",
+							Source = "Mask",
+						},
+						PaintMode = Input { Value = FuID { "Subtract" }, },
+						Center = Input {
+							Expression = "Zona.Center",
+						},
+						Width = Input {
+							Expression = "(Ctrl.W*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))",
+						},
+						Height = Input {
+							Expression = "(Ctrl.W*Ctrl.Shape*Ctrl.Background.OriginalWidth/Ctrl.Background.OriginalHeight*(1+1.5*(1-(1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4))))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Anello = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "AnelloInt",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Uscita = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Ctrl",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Anello",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "iif(Ctrl.Ring>0.01,1,0)*min((1-(1-min(max(((time-comp.RenderStart)-Ctrl.Start)/max(Ctrl.InDur,1),0),1))^4),min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_EvidenziaGiocatore"
+}

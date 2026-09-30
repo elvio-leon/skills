@@ -1,0 +1,150 @@
+{
+	Tools = ordered() {
+		LDF_Frusta = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "ClipA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "ClipB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dir",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blur",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Mosso",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				ClipA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Edges = Input { Value = 0, },
+						Center = Input {
+							Expression = ":local m=Ctrl.Dir\nlocal dx=0\nlocal dy=0\nif m<0.5 then dx=-1 elseif m<1.5 then dx=1 elseif m<2.5 then dy=1 else dy=-1 end\nlocal e=((Ctrl.Mix)<0.5 and 16*(Ctrl.Mix)^5 or 1-((-2*(Ctrl.Mix)+2)^5)/2)\nreturn Point(0.5+dx*e, 0.5+dy*e)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				ClipB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Edges = Input { Value = 0, },
+						Center = Input {
+							Expression = ":local m=Ctrl.Dir\nlocal dx=0\nlocal dy=0\nif m<0.5 then dx=-1 elseif m<1.5 then dx=1 elseif m<2.5 then dy=1 else dy=-1 end\nlocal e=((Ctrl.Mix)<0.5 and 16*(Ctrl.Mix)^5 or 1-((-2*(Ctrl.Mix)+2)^5)/2)\nreturn Point(0.5-dx*(1-e), 0.5-dy*(1-e))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Unisci = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ClipA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "ClipB",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Mosso = DirectionalBlur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Unisci",
+							Source = "Output",
+						},
+						Type = Input { Value = 0, },
+						Angle = Input {
+							Expression = "iif(Ctrl.Dir<1.5, 0, 90)",
+						},
+						Length = Input {
+							Expression = "Ctrl.Blur*0.3*sin(pi*Ctrl.Mix)^2",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Dir = Input { Value = 0, },
+						Blur = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+					UserControls = ordered() {
+						Dir = {
+							{ CCS_AddString = "Verso sinistra" },
+							{ CCS_AddString = "Verso destra" },
+							{ CCS_AddString = "Verso l'alto" },
+							{ CCS_AddString = "Verso il basso" },
+							LINKS_Name = "Direzione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Blur = {
+							LINKS_Name = "Mosso",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_Frusta"
+}

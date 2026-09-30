@@ -1,0 +1,38 @@
+{
+	Tools = ordered() {
+		LDF_Look_Tensione = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Blend",
+					Name = "Intensità look",
+					Default = 0.8,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = FileLUT {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						LUTFile = Input { Value = "Setting:LDF_Tensione.cube", },
+						Blend = Input { Value = 0.8, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_Look_Tensione"
+}

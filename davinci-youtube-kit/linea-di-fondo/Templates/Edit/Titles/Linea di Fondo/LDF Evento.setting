@@ -110,7 +110,7 @@
 						StyledText = Input {
 							Expression = ":local y=Ctrl.Year\nif Ctrl.Count>0.5 then y=Ctrl.Year-Ctrl.CountFrom*(1-(1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((40)*Ctrl.Speed,1),0),1))^3)) end\nreturn Text(string.format('%d', floor(y+0.5)))",
 						},
-						Font = Input { Value = "SangBleu Kingdom", },
+						Font = Input { Value = "Optima", },
 						Style = Input { Value = "Regular", },
 						Size = Input { Value = 0.13, },
 						VerticalJustificationNew = Input { Value = 3, },
@@ -170,7 +170,7 @@
 						Height = Input { Value = 1080, },
 						UseFrameFormatSettings = Input { Value = 1, },
 						StyledText = Input { Value = "UN MONDIALE\nDUE MONDI", },
-						Font = Input { Value = "SangBleu Kingdom", },
+						Font = Input { Value = "Optima", },
 						Style = Input { Value = "Regular", },
 						Size = Input { Value = 0.034, },
 						VerticalJustificationNew = Input { Value = 3, },

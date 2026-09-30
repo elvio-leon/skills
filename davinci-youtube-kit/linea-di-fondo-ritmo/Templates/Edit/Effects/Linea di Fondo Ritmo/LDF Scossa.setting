@@ -1,0 +1,144 @@
+{
+	Tools = ordered() {
+		LDF_Scossa = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Tremolio",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Strength",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Speed",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Start",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dur",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Zoom",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Tremolio = CameraShake {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						XDeviation = Input {
+							Expression = "0.02*Ctrl.Strength",
+						},
+						YDeviation = Input {
+							Expression = "0.02*Ctrl.Strength",
+						},
+						RotationDeviation = Input {
+							Expression = "0.4*Ctrl.Strength",
+						},
+						Speed = Input {
+							Expression = "Ctrl.Speed",
+						},
+						Randomness = Input { Value = 0.9, },
+						OverallStrength = Input {
+							Expression = ":local f=(time-comp.RenderStart)-Ctrl.Start\nif f<0 then return 0 end\nif Ctrl.Dur<1 then return 1 end\nreturn (1-min(f/Ctrl.Dur,1))^2",
+						},
+						Edges = Input { Value = 3, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Tremolio",
+							Source = "Output",
+						},
+						Size = Input {
+							Expression = "Zoom/100",
+						},
+						Strength = Input { Value = 0.6, },
+						Speed = Input { Value = 0.7, },
+						Start = Input { Value = 0, },
+						Dur = Input { Value = 12, },
+						Zoom = Input { Value = 106, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+					UserControls = ordered() {
+						Strength = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.6,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Speed = {
+							LINKS_Name = "Velocità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.7,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Start = {
+							LINKS_Name = "Inizia dopo (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0,
+							INP_MinScale = 0,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 100000,
+						},
+						Dur = {
+							LINKS_Name = "Durata (frame, 0 = tutta la clip)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 12,
+							INP_MinScale = 0,
+							INP_MaxScale = 120,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 100000,
+						},
+						Zoom = {
+							LINKS_Name = "Zoom anti-bordi (%)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 106,
+							INP_MinScale = 100,
+							INP_MaxScale = 130,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 100,
+							INP_MaxAllowed = 400,
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_Scossa"
+}

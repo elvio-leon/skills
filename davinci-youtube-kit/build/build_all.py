@@ -315,6 +315,7 @@ def main():
     import lupa
 
     import ldf
+    import ritmo
 
     lua = lupa.LuaRuntime(unpack_returned_tuples=True)
     runner = lua.execute(MOCK_ENV)
@@ -327,6 +328,9 @@ def main():
         dict(name=ldf.PACK, prefix=ldf.PREFIX, root=ROOT / "linea-di-fondo", catalog=ldf.CATALOG,
              looks=ldf.LOOKS, look_funcs=ldf.LOOK_FUNCS, sounds=ldf.SOUNDS, dist="LineaDiFondo",
              theme=dict(bg=(24, 58, 47), fg=(245, 239, 230), accent=(181, 50, 60))),
+        dict(name=ritmo.PACK, prefix=ritmo.PREFIX, root=ROOT / "linea-di-fondo-ritmo", catalog=ritmo.CATALOG,
+             looks=ritmo.LOOKS, look_funcs=ritmo.LOOK_FUNCS, sounds=ritmo.SOUNDS, dist="LineaDiFondoRitmo",
+             theme=dict(bg=(30, 30, 30), fg=(245, 239, 230), accent=(181, 50, 60))),
     ]
     for pk in packs:
         if not only or pk["dist"] in only:

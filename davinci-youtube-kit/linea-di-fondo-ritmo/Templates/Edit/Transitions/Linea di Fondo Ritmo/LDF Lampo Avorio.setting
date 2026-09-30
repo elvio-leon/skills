@@ -1,0 +1,172 @@
+{
+	Tools = ordered() {
+		LDF_LampoAvorio = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "ClipA",
+					Source = "Input",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "ClipB",
+					Source = "Input",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Peak",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Punch",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftRed",
+					Name = "Colore lampo",
+					ControlGroup = 1,
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Lampo",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				ClipA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				ClipB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Edges = Input { Value = 3, },
+						Size = Input {
+							Expression = "1+Ctrl.Punch*(1-(1-(1-min(max((Ctrl.Mix-0.5)*2,0),1))^4))",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "ClipA",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "ClipB",
+							Source = "Output",
+						},
+						Mix = Input {
+							Expression = "min(max((Ctrl.Mix-0.5+0.02)/0.04,0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Luce = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Lampo = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Luce",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Peak*(1-abs(2*Ctrl.Mix-1))^2",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Peak = Input { Value = 1, },
+						Punch = Input { Value = 0.08, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+					UserControls = ordered() {
+						Peak = {
+							LINKS_Name = "Intensità lampo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Punch = {
+							LINKS_Name = "Scatto zoom sulla clip nuova",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.08,
+							INP_MinScale = 0,
+							INP_MaxScale = 0.4,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_LampoAvorio"
+}

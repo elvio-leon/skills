@@ -3,7 +3,8 @@
 Identity rules applied here (from the brand guide):
 * palette: verde profondo #183A2F (dominant), avorio #F5EFE6 (contrast),
   terracotta #B5323C (only for lines, routes, points, dates), ardesia #1E1E1E;
-* SangBleu for editorial titles, Inter for information / coordinates;
+* Optima for titles and information (the brand fonts SangBleu / Inter are
+  not installed on the editing machine);
 * "la linea" is the proprietary element: it appears, extends, becomes a
   route, a timeline, an underline, a pitch line;
 * motion is slow, precise, geometric: eases without overshoot, no glitch,
@@ -23,8 +24,10 @@ AVORIO = (0.961, 0.937, 0.902)     # #F5EFE6
 TERRA = (0.710, 0.196, 0.235)      # #B5323C
 ARDESIA = (0.118, 0.118, 0.118)    # #1E1E1E
 
-SERIF, SERIF_STYLE = "SangBleu Kingdom", "Regular"
-SANS = "Inter"
+# Optima for everything: it ships with macOS and is available in Resolve without
+# installing anything. Titles use Regular, labels and names use Bold.
+SERIF, SERIF_STYLE = "Optima", "Regular"
+SANS = "Optima"
 
 OW = "Ctrl.Background.OriginalWidth"
 OH = "Ctrl.Background.OriginalHeight"
@@ -163,7 +166,7 @@ def t_titolo():
     x = 0.08
     tools = [
         green_bg_layer()[0],
-        tx("Sopra", "CAPITOLO 01", SANS, "Medium", 0.016, TERRA, track=1.35,
+        tx("Sopra", "CAPITOLO 01", SANS, "Regular", 0.016, TERRA, track=1.35,
            center_expr=rise(x, 0.64, st(0, 16))),
         tx("Titolo", "IL CALCIO IN COREA DEL NORD", SERIF, SERIF_STYLE, 0.062, AVORIO,
            center_expr=rise(x, 0.545, st(6, 26), 0.018)),
@@ -186,7 +189,7 @@ def t_coordinate():
     tools = [
         Tool("PannelloMask", "RectangleMask", {"Center": (0.5, 0.5), "Width": 0.3, "Height": 0.3}),
         solid("Pannello", VERDE, {"EffectMask": Conn("PannelloMask", "Mask"), "TopLeftAlpha": 0.94}),
-        tx("Luogo", "KABUL", SANS, "SemiBold", 0.04, AVORIO, track=1.05,
+        tx("Luogo", "KABUL", SANS, "Bold", 0.04, AVORIO, track=1.05,
            center_expr=rise(0.375, 0.58, st(4, 20))),
         tx("Coord", "34.5553° N\n69.2075° E", SANS, "Regular", 0.02, AVORIO, pos=(0.375, 0.46),
            track=1.15, extra={"End": Expr(ease_io(st(18, 30))), "LineSpacing": 1.3}),
@@ -238,7 +241,7 @@ def scheda(name, lines, underline_after, underline_len=0.05):
 def t_persona():
     return scheda("LDF_Persona", [
         ("Nome", "GEORGE WEAH", SERIF, SERIF_STYLE, 0.05, AVORIO, 1.0, 0.25),
-        ("Descrizione", "DALLA LIBERIA AL MONDO", SANS, "Medium", 0.016, AVORIO, 1.35, 0.185),
+        ("Descrizione", "DALLA LIBERIA AL MONDO", SANS, "Regular", 0.016, AVORIO, 1.35, 0.185),
         ("Periodo", "1966  —  1995", SANS, "Regular", 0.016, AVORIO, 1.2, 0.145),
     ], underline_after="Periodo", underline_len=0.07)
 
@@ -247,7 +250,7 @@ def t_club():
     return scheda("LDF_Club", [
         ("Club", "AL AHLY", SERIF, SERIF_STYLE, 0.062, AVORIO, 1.0, 0.3),
         ("Payoff", "IL CLUB DEL POPOLO", SERIF, SERIF_STYLE, 0.024, AVORIO, 1.05, 0.225),
-        ("Citta", "IL CAIRO, EGITTO", SANS, "Medium", 0.015, AVORIO, 1.35, 0.17),
+        ("Citta", "IL CAIRO, EGITTO", SANS, "Regular", 0.015, AVORIO, 1.35, 0.17),
         ("Fondazione", "EST. 1907", SANS, "Regular", 0.015, TERRA, 1.35, 0.135),
     ], underline_after="Payoff", underline_len=0.05)
 
@@ -320,7 +323,7 @@ def t_timeline():
         after = clamp01(f"(({prog})-{reach})*8")
         vis = f"iif({i}<Ctrl.Count,1,0)"
         tools += dot(f"Punto{i + 1}", f"Point({xi}, {y})", 13, TERRA, f"{vis}*{ease_out(after)}")
-        tools.append(tx(f"Anno{i + 1}", years[i], SANS, "Medium", 0.016, AVORIO, track=1.2, left=False,
+        tools.append(tx(f"Anno{i + 1}", years[i], SANS, "Regular", 0.016, AVORIO, track=1.2, left=False,
                         center_expr=Expr(f"Point({xi}, {y}+0.045-(1-{ease_out(after)})*0.01)")))
         layers += [(f"Punto{i + 1}", None), (f"Anno{i + 1}", Expr(f"{vis}*{ease_out(after)}"))]
     mt, last = stack(layers)
@@ -379,7 +382,7 @@ def t_rotta():
                                   ("B", "RIO DE JANEIRO", "22.9068° S  43.1729° W", "(10+Ctrl.DrawDur)")):
         stage = clamp01(f"({T}-({delay}+8)*Ctrl.Speed)/max(18*Ctrl.Speed,1)")
         pc = f"Punto{p}Mask.Center"
-        tools.append(tx(f"Nome{p}", name, SANS, "SemiBold", 0.015, AVORIO, track=1.25,
+        tools.append(tx(f"Nome{p}", name, SANS, "Bold", 0.015, AVORIO, track=1.25,
                         center_expr=Expr(f"Point({pc}.X+0.012, {pc}.Y+0.032)")))
         tools.append(tx(f"Coord{p}", coord, SANS, "Regular", 0.012, AVORIO, track=1.15,
                         center_expr=Expr(f"Point({pc}.X+0.012, {pc}.Y+0.006)")))
@@ -407,7 +410,7 @@ def t_punto():
                                           "Center": Expr(P), "Width": Expr(f"2*({ring_r}-1.5)/{OW}"),
                                           "Height": Expr(f"2*({ring_r}-1.5)/{OH}")}),
         solid("Anello", TERRA, {"EffectMask": Conn("AnelloInt", "Mask")}),
-        tx("Nome", "SEOUL", SANS, "SemiBold", 0.02, AVORIO, track=1.2,
+        tx("Nome", "SEOUL", SANS, "Bold", 0.02, AVORIO, track=1.2,
            center_expr=Expr(f"Point({P}.X+0.018, {P}.Y+0.012)")),
         tx("Coord", "37.5665° N  126.9780° E", SANS, "Regular", 0.013, AVORIO, track=1.15,
            center_expr=Expr(f"Point({P}.X+0.018, {P}.Y-0.018)")),

@@ -9,20 +9,19 @@ Elenco completo: **[CATALOGO.md](CATALOGO.md)**.
 | Preso | Come è applicato |
 |---|---|
 | Palette | Verde profondo `#183A2F` per pannelli e sfondi, avorio `#F5EFE6` per i testi, terracotta `#B5323C` **solo** per linee, punti, rotte e date, ardesia `#1E1E1E` per il testo su carta |
-| Tipografia | **SangBleu** per titoli, nomi, anni; **Inter** per coordinate, label e informazioni, con tracking ampio. Niente terzo font |
+| Tipografia | **Optima** per tutto: Regular per titoli e anni, Bold per nomi e luoghi, tracking ampio per coordinate e label. Niente secondo font |
 | La linea | Elemento centrale di quasi tutti i template: appare, si estende, diventa rotta, timeline, sottolineatura, confine tra due clip, campo da calcio |
-| Motion | Lento, preciso, geometrico: solo easing morbidi, nessun rimbalzo, nessuno zoom aggressivo |
+| Motion | Lento, preciso, geometrico: solo easing morbidi, nessun rimbalzo, nessuno zoom aggressivo (per le parti intense c'è il pack [Ritmo](../linea-di-fondo-ritmo/README.md)) |
 | Spazio negativo | Testi piccoli e allineati a sinistra, tanto verde intorno |
 | Carta | Texture presente ma discreta (micro-grana), mai vintage |
 
 **Escluso volutamente** (perché il brief lo vieta): glitch, particelle, glow, zoom aggressivi, grana pesante, vignette, filtri verde/seppia forzati sulle foto. Esclusi anche logo, banner e thumbnail, come mi hai chiesto.
 
-## 1. Font (da fare una volta sola)
+## 1. Font
 
-- **Inter**: gratuito, scaricalo da Google Fonts e installalo.
-- **SangBleu**: è un font commerciale (Swiss Typefaces). I template cercano **"SangBleu Kingdom"**. Se hai un'altra collezione (Empire, Republic, Versailles, Sunrise) o il font non è installato, Resolve usa un font di ripiego: scegli quello giusto dal campo **Font** nell'Inspector.
+Tutti i titoli usano **Optima** (Regular per i titoli, Bold per nomi e luoghi): è già disponibile in DaVinci Resolve, non serve installare nulla. SangBleu e Inter della guida di brand non sono più richiesti.
 
-Installa i font **prima** di aprire Resolve.
+Per cambiare peso a un testo usa il campo **Stile** nell'Inspector: *Regular*, *Italic*, *Bold*, *Bold Italic* ed *ExtraBlack* (se la tua versione di Optima lo include).
 
 ## 2. Installazione
 

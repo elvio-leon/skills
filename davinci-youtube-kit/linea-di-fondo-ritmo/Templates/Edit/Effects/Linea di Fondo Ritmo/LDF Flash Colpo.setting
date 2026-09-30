@@ -1,0 +1,148 @@
+{
+	Tools = ordered() {
+		LDF_FlashColpo = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Espo",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Start",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dur",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Expo",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftRed",
+					Name = "Colore lampo",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Luce",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Espo = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Gain = Input {
+							Expression = ":local f=(time-comp.RenderStart)-Ctrl.Start\nif f<0 then return 0 end\nreturn 1+Ctrl.Expo*(1-min(f/max(Ctrl.Dur,1),1))^2",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Luce = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Espo",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Luce",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local f=(time-comp.RenderStart)-Start\nif f<0 then return 0 end\nreturn Amount*(1-min(f/max(Dur,1),1))^2",
+						},
+						Start = Input { Value = 0, },
+						Dur = Input { Value = 8, },
+						Amount = Input { Value = 0.8, },
+						Expo = Input { Value = 0.5, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+					UserControls = ordered() {
+						Start = {
+							LINKS_Name = "Inizia dopo (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0,
+							INP_MinScale = 0,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 100000,
+						},
+						Dur = {
+							LINKS_Name = "Durata lampo (frame)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 8,
+							INP_MinScale = 1,
+							INP_MaxScale = 40,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 1000,
+						},
+						Amount = {
+							LINKS_Name = "Intensità lampo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.8,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Expo = {
+							LINKS_Name = "Sovraesposizione",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.5,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "LDF_FlashColpo"
+}
