@@ -1,0 +1,136 @@
+---
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import CaseRow from '../components/CaseRow.astro';
+import FrameworkColumns from '../components/FrameworkColumns.astro';
+import Contatto from '../components/Contatto.astro';
+import { PERSONA } from '../config';
+import { brand, profilo, profiloBreve, serviziVisibili } from '../data/profilo';
+import { getCasiPubblicati } from '../lib/casi';
+import { graph, person, website } from '../lib/schema-org';
+
+const casi = (await getCasiPubblicati()).filter((c) => c.data.in_evidenza);
+const TOT = 5;
+
+const title = 'Elvio Leonardi · SEO & AI Search Specialist';
+const description =
+  'Consulente freelance SEO e AI Search a Palermo. SEO tecnica, GEO e contenuti: casi studio con numeri veri su Google e sulle risposte delle AI.';
+---
+
+<Base title={title} description={description} og="/og/home.png" jsonLd={graph(person(), website())}>
+  <section data-theme="paper" class="section hero" aria-labelledby="hero-titolo">
+    <div class="wrap">
+      <div class="rail-like t-label muted">
+        <span>{PERSONA.ruolo}</span>
+        <span aria-hidden="true">01 / 0{TOT}</span>
+      </div>
+      <h1 id="hero-titolo" class="t-display hero__nome">{PERSONA.nome}</h1>
+      <p class="t-h3 hero__ruolo">{PERSONA.ruolo}</p>
+      <p class="t-body measure hero__frase">{profiloBreve}</p>
+      <p class="t-small muted measure">{profilo.apertura} Oggi come freelance, da {PERSONA.citta}.</p>
+      <div class="hero__cta">
+        <a class="cta" href="/casi-studio/">Guarda i casi studio <span aria-hidden="true">→</span></a>
+        <a class="arrow-link" href={`mailto:${PERSONA.email}`}>{PERSONA.email}</a>
+      </div>
+    </div>
+  </section>
+
+  <Section label="Casi studio" index={2} total={TOT} labelledby="casi-titolo">
+    <h2 id="casi-titolo" class="t-h2">Casi in evidenza</h2>
+    <ul class="casi">
+      {casi.map((c) => <CaseRow caso={c} />)}
+    </ul>
+    <p class="casi__tutti">
+      <a class="arrow-link" href="/casi-studio/">Tutti i casi studio <span class="arrow" aria-hidden="true">→</span></a>
+    </p>
+  </Section>
+
+  <Section label="Cosa faccio" index={3} total={TOT} labelledby="servizi-titolo">
+    <h2 id="servizi-titolo" class="t-h2 sezione-titolo">Cosa faccio</h2>
+    <FrameworkColumns items={serviziVisibili} />
+  </Section>
+
+  <Section label="Brand" index={4} total={TOT} labelledby="brand-titolo">
+    <h2 id="brand-titolo" class="t-h2 sezione-titolo">Brand su cui ho lavorato</h2>
+    <ul class="brand t-h3">
+      {brand.map((b) => <li>{b}</li>)}
+    </ul>
+  </Section>
+
+  <Contatto index={5} total={TOT} />
+</Base>
+
+<style>
+  .hero {
+    padding-top: var(--s-5);
+  }
+  .rail-like {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-2);
+    padding-top: var(--s-2);
+    border-top: var(--hairline) solid var(--border);
+    margin-bottom: var(--s-5);
+  }
+  .hero__ruolo {
+    margin-top: var(--s-3);
+  }
+  .hero__frase {
+    margin-top: var(--s-4);
+  }
+  .hero__frase + p {
+    margin-top: var(--s-2);
+  }
+  .hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2) var(--s-4);
+    margin-top: var(--s-5);
+  }
+  .cta {
+    display: inline-flex;
+    gap: 0.75em;
+    align-items: center;
+    min-height: 3.5rem;
+    padding: var(--s-2) var(--s-3);
+    background: var(--accent-primary);
+    color: var(--on-accent);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--fs-label);
+    line-height: var(--lh-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cta:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .hero .arrow-link {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .casi {
+    margin-top: var(--s-5);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .casi__tutti {
+    margin-top: var(--s-3);
+  }
+  .sezione-titolo {
+    margin-bottom: var(--s-5);
+  }
+  .brand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) 0;
+    max-width: 62rem;
+  }
+  .brand li:not(:last-child)::after {
+    content: '·';
+    padding-inline: 0.5em;
+    color: var(--text-secondary);
+  }
+</style>

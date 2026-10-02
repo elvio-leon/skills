@@ -1,0 +1,58 @@
+---
+import { PERSONA } from '../config';
+import Section from './Section.astro';
+
+/** Chiusura in sezione Ink. id="contatto" è il target del link "Contatti" nell'header. */
+interface Props {
+  index?: number;
+  total?: number;
+}
+const { index, total } = Astro.props;
+---
+
+<Section theme="ink" label="Contatti" index={index} total={total} id="contatto" labelledby="contatto-titolo">
+  <h2 id="contatto-titolo" class="t-h2">Contatti</h2>
+  <ul class="contatti">
+    <li>
+      <p class="t-label muted">Email</p>
+      <a class="t-data-md contatti__email" href={`mailto:${PERSONA.email}`}>{PERSONA.email}</a>
+    </li>
+    <li>
+      <p class="t-label muted">LinkedIn</p>
+      <a class="t-data-sm contatti__link" href={PERSONA.linkedin} rel="me">
+        linkedin.com/in/elvio-leonardi <span aria-hidden="true">→</span>
+      </a>
+    </li>
+  </ul>
+</Section>
+
+<style>
+  .contatti {
+    display: grid;
+    gap: var(--s-4);
+    margin-top: var(--s-5);
+  }
+  .contatti li {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-2);
+    display: grid;
+    gap: var(--s-1);
+    min-width: 0;
+  }
+  .contatti li:first-child {
+    border-top-color: var(--accent-primary);
+  }
+  .contatti__email {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.12em;
+    overflow-wrap: anywhere;
+    font-size: clamp(1.5rem, 0.9rem + 2.6vw, 2.75rem);
+  }
+  .contatti__link {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    overflow-wrap: anywhere;
+  }
+</style>

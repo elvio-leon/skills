@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import Rail from '../components/Rail.astro';
+import Contatto from '../components/Contatto.astro';
+---
+
+<Base
+  title="Pagina non trovata · Elvio Leonardi"
+  description="La pagina che cerchi non esiste o è stata spostata."
+  og="/og/home.png"
+  noindex
+>
+  <section data-theme="paper" class="section nf" aria-labelledby="nf-titolo">
+    <div class="wrap">
+      <Rail label="Errore 404" />
+      <p class="t-data-lg accent" aria-hidden="true">404</p>
+      <h1 id="nf-titolo" class="t-h1 nf-h1">Pagina non trovata</h1>
+      <p class="t-body measure nf-testo">La pagina che cerchi non esiste o è stata spostata.</p>
+      <ul class="nf-links">
+        <li><a class="arrow-link" href="/">Home <span class="arrow" aria-hidden="true">→</span></a></li>
+        <li>
+          <a class="arrow-link" href="/casi-studio/">Casi studio <span class="arrow" aria-hidden="true">→</span></a>
+        </li>
+        <li><a class="arrow-link" href="/chi-sono/">Chi sono <span class="arrow" aria-hidden="true">→</span></a></li>
+      </ul>
+    </div>
+  </section>
+  <Contatto />
+</Base>
+
+<style>
+  .nf {
+    padding-top: var(--s-5);
+  }
+  .nf-h1 {
+    margin-top: var(--s-3);
+  }
+  .nf-testo {
+    margin-top: var(--s-3);
+  }
+  .nf-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-4);
+    margin-top: var(--s-4);
+  }
+</style>

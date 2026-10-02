@@ -1,0 +1,95 @@
+---
+import type { Caso } from '../lib/casi';
+import { formatta, numero, numeroHtml } from '../lib/format';
+
+type Kpi = Caso['data']['kpi_principale'];
+
+/** KPI: il numero è il titolo. Protagonista in accento, secondari in neutro. */
+interface Props {
+  principale: Kpi;
+  secondari?: Kpi[];
+  /** Periodo di confronto mostrato accanto al delta. */
+  confronto?: string;
+  /** Mostra la riga "prima → dopo" sotto il KPI protagonista. */
+  mostraConfronto?: boolean;
+}
+const {
+  principale,
+  secondari = [],
+  confronto = 'semestre su semestre',
+  mostraConfronto = true,
+} = Astro.props;
+const v = (k: Kpi) => numeroHtml(formatta(k.valore, k.formato, k.decimali));
+const isDelta = (k: Kpi) => k.formato.startsWith('delta');
+---
+
+<div class="datacard">
+  <div class="kpi kpi--main">
+    <p class="t-data-lg accent">
+      <Fragment set:html={v(principale)} />
+      {principale.unita && <span class="kpi__unit t-data-md"> {principale.unita}</span>}
+    </p>
+    <p class="t-h3 kpi__label">{principale.label}</p>
+    {
+      mostraConfronto && principale.confronto && (
+        <p class="t-data-sm kpi__conf">
+          {numero(principale.confronto.prima)} <span aria-hidden="true">→</span>
+          <span class="visually-hidden">a</span> {numero(principale.confronto.dopo)}
+        </p>
+      )
+    }
+    {isDelta(principale) && <p class="t-caption">Variazione {confronto}</p>}
+  </div>
+  {
+    secondari.length > 0 && (
+      <ul class="kpi-list">
+        {secondari.map((k) => (
+          <li class="kpi">
+            <p class="t-data-md">
+              <Fragment set:html={v(k)} />
+              {k.unita && <span class="kpi__unit t-data-sm"> {k.unita}</span>}
+            </p>
+            <p class="t-small kpi__label2">{k.label}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>
+
+<style>
+  .datacard {
+    display: grid;
+    gap: var(--s-5) var(--gutter);
+  }
+  @media (min-width: 64rem) {
+    .datacard {
+      grid-template-columns: 7fr 5fr;
+      align-items: start;
+    }
+  }
+  .kpi {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-3);
+  }
+  .kpi--main {
+    border-top-color: var(--accent-primary);
+  }
+  .kpi__label {
+    margin-top: var(--s-2);
+  }
+  .kpi__conf {
+    margin-top: var(--s-2);
+  }
+  .kpi-list {
+    display: grid;
+    gap: var(--s-4);
+  }
+  .kpi__unit {
+    color: var(--text-secondary);
+  }
+  .kpi__label2 {
+    margin-top: var(--s-1);
+    color: var(--text-secondary);
+  }
+</style>

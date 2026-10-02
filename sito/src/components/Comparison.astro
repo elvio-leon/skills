@@ -1,0 +1,65 @@
+---
+import { numero, numeroHtml } from '../lib/format';
+
+/** Confronto prima/dopo: "prima" su bg-secondary, "dopo" con regola in accento. */
+interface Props {
+  prima: number;
+  dopo: number;
+  labelPrima: string;
+  labelDopo: string;
+  unita?: string;
+}
+const { prima, dopo, labelPrima, labelDopo, unita } = Astro.props;
+---
+
+<div class="cmp">
+  <div class="cmp__side cmp__side--prima">
+    <p class="t-label muted">{labelPrima}</p>
+    <p class="t-data-md" set:html={numeroHtml(numero(prima))} />
+    {unita && <p class="t-small muted">{unita}</p>}
+  </div>
+  <span class="cmp__arrow t-data-md" aria-hidden="true">→</span>
+  <div class="cmp__side cmp__side--dopo">
+    <p class="t-label muted">{labelDopo}</p>
+    <p class="t-data-md" set:html={numeroHtml(numero(dopo))} />
+    {unita && <p class="t-small muted">{unita}</p>}
+  </div>
+</div>
+
+<style>
+  .cmp {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+  }
+  @media (min-width: 40rem) {
+    .cmp {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: var(--s-3);
+    }
+  }
+  .cmp__side {
+    display: grid;
+    gap: var(--s-1);
+    align-content: start;
+    padding: var(--s-3);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .cmp__side--prima {
+    background: var(--bg-secondary);
+  }
+  .cmp__side--dopo {
+    border-top-color: var(--accent-primary);
+  }
+  .cmp__arrow {
+    align-self: center;
+    justify-self: start;
+    padding-inline: var(--s-3);
+  }
+  @media (max-width: 39.99rem) {
+    .cmp__arrow {
+      transform: rotate(90deg);
+    }
+  }
+</style>

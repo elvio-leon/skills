@@ -1,0 +1,126 @@
+---
+import Base from '../../layouts/Base.astro';
+import Rail from '../../components/Rail.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import Contatto from '../../components/Contatto.astro';
+import { getCasiPubblicati, slugTipo, tipi, urlCaso } from '../../lib/casi';
+import { breadcrumb, graph, person, PERSON_ID, WEBSITE_ID } from '../../lib/schema-org';
+import { abs } from '../../config';
+
+const casi = await getCasiPubblicati();
+const TIPI = ['SEO', 'AI Search'] as const;
+const conteggio = Object.fromEntries(
+  TIPI.map((t) => [t, casi.filter((c) => tipi(c).includes(t)).length]),
+);
+
+const title = 'Casi studio SEO e AI Search · Elvio Leonardi';
+const description =
+  'Casi studio di SEO e AI Search con numeri verificabili: clic organici, mercati, leve usate. Fonte e periodo dichiarati per ogni dato, clienti anonimi.';
+
+const jsonLd = graph(
+  {
+    '@type': 'CollectionPage',
+    '@id': abs('/casi-studio/#page'),
+    url: abs('/casi-studio/'),
+    name: title,
+    description,
+    inLanguage: 'it-IT',
+    isPartOf: { '@id': WEBSITE_ID },
+    author: { '@id': PERSON_ID },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: casi.map((c, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: abs(urlCaso(c)),
+        name: c.data.titolo,
+      })),
+    },
+  },
+  breadcrumb([
+    { name: 'Home', path: '/' },
+    { name: 'Casi studio', path: '/casi-studio/' },
+  ]),
+  person(),
+);
+---
+
+<Base title={title} description={description} og="/og/casi-studio.png" jsonLd={jsonLd}>
+  <section data-theme="paper" class="section idx-header" aria-labelledby="idx-titolo">
+    <div class="wrap">
+      <Rail label="Casi studio" index={1} total={2} />
+      <h1 id="idx-titolo" class="t-h1">Casi studio</h1>
+      <p class="t-body measure idx-intro">
+        Progetti SEO e AI Search con i numeri reali. Per ogni dato trovi fonte e periodo di confronto. I
+        clienti restano anonimi.
+      </p>
+
+      <nav class="filtri t-label" aria-label="Filtra per tipo">
+        <span class="muted">Filtra</span>
+        <a href="#tutti">Tutti ({casi.length})</a>
+        {TIPI.map((t) => <a href={`#${slugTipo(t)}`}>{t} ({conteggio[t]})</a>)}
+      </nav>
+
+      <div class="lista-wrap">
+        <span id="tutti" class="target"></span>
+        {TIPI.map((t) => <span id={slugTipo(t)} class="target" />)}
+        <ul class="lista">
+          {casi.map((c) => <CaseRow caso={c} headingLevel="h2" />)}
+        </ul>
+        {
+          TIPI.filter((t) => conteggio[t] === 0).map((t) => (
+            <p class={`vuoto vuoto--${slugTipo(t)} t-body muted`}>Nessun caso {t} pubblicato per ora.</p>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <Contatto index={2} total={2} />
+</Base>
+
+<style>
+  .idx-header {
+    padding-top: var(--s-5);
+  }
+  .idx-intro {
+    margin-top: var(--s-3);
+  }
+  .filtri {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--s-3);
+    margin-top: var(--s-5);
+  }
+  .filtri a {
+    display: inline-block;
+    padding-block: 0.75rem;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .lista-wrap {
+    margin-top: var(--s-3);
+  }
+  .target {
+    display: block;
+    scroll-margin-top: var(--s-6);
+  }
+  .lista {
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .vuoto {
+    display: none;
+    padding-block: var(--s-4);
+  }
+
+  /* Filtro senza JS: l'anchor attivo (:target) nasconde le righe di altri tipi. */
+  #seo:target ~ .lista :global(.row:not([data-tipo~='seo'])),
+  #ai-search:target ~ .lista :global(.row:not([data-tipo~='ai-search'])) {
+    display: none;
+  }
+  #seo:target ~ .vuoto--seo,
+  #ai-search:target ~ .vuoto--ai-search {
+    display: block;
+  }
+</style>

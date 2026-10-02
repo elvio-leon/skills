@@ -1,0 +1,75 @@
+---
+import { numeroHtml } from '../lib/format';
+import { protagonista, tipi, slugTipo, urlCaso, type Caso } from '../lib/casi';
+
+/** Riga di un caso: numero protagonista, settore, contesto, link. Niente card. */
+interface Props {
+  caso: Caso;
+  headingLevel?: 'h2' | 'h3';
+}
+const { caso, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+const d = caso.data;
+const t = tipi(caso);
+---
+
+<li class="row" data-tipo={t.map(slugTipo).join(' ')}>
+  <p class="t-data-md accent row__num" set:html={numeroHtml(protagonista(caso))} />
+  <div class="row__body">
+    <p class="t-label muted">{t.join(' · ')}</p>
+    <H class="t-h3 row__title">
+      <a href={urlCaso(caso)}>{d.titolo}</a>
+    </H>
+    <p class="t-small muted">{d.settore} · {d.estratto}</p>
+  </div>
+  <span class="row__go t-label" aria-hidden="true">Leggi il caso <span class="arrow">→</span></span>
+</li>
+
+<style>
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2) var(--gutter);
+    padding-block: var(--s-4);
+    border-bottom: var(--hairline) solid var(--border);
+  }
+  @media (min-width: 56rem) {
+    .row {
+      grid-template-columns: 4fr 6fr 2fr;
+      align-items: baseline;
+    }
+    .row__go {
+      justify-self: end;
+    }
+  }
+  .row__title {
+    margin-block: var(--s-1);
+  }
+  .row__title a {
+    text-decoration: none;
+  }
+  /* tutta la riga è cliccabile, il link resta uno solo */
+  .row__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .row:hover .row__title a,
+  .row__title a:focus-visible {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.15em;
+  }
+  .row__go {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .arrow {
+    display: inline-block;
+    transition: transform 150ms ease;
+  }
+  .row:hover .arrow {
+    transform: translateX(4px);
+  }
+</style>

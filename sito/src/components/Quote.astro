@@ -1,0 +1,54 @@
+---
+import Marker from './Marker.astro';
+
+/** Citazione/insight. Pensata per sezioni Ink. */
+interface Props {
+  testo: string;
+  sequenza?: string[];
+}
+const { testo, sequenza } = Astro.props;
+---
+
+<figure class="quote">
+  <blockquote class="t-h2 quote__testo">
+    <p><Marker testo={testo} /></p>
+  </blockquote>
+  {
+    sequenza && sequenza.length > 0 && (
+      <figcaption class="quote__seq t-label">
+        {sequenza.map((s, i) => (
+          <>
+            {i > 0 && (
+              <span class="quote__arrow" aria-hidden="true">
+                →
+              </span>
+            )}
+            <span>{s}</span>
+            {i < sequenza.length - 1 && <span class="visually-hidden">, </span>}
+          </>
+        ))}
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .quote {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-4);
+    max-width: 62rem;
+  }
+  .quote__testo {
+    text-wrap: balance;
+  }
+  .quote__seq {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-2);
+    margin-top: var(--s-4);
+    color: var(--text-secondary);
+  }
+  .quote__arrow {
+    color: var(--text-primary);
+  }
+</style>

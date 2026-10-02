@@ -1,0 +1,91 @@
+/* Leonardi Editorial: design token.
+   Paper è il tema di default; Ink si attiva per sezione con data-theme="ink".
+   Il sito non segue prefers-color-scheme: i temi sono scelte editoriali. */
+
+:root,
+[data-theme='paper'] {
+  --bg-primary: #f4f4ef;
+  --bg-secondary: #e8e8e1;
+  --text-primary: #101216;
+  --text-secondary: #575d66;
+  --border: #cacbc2;
+  --border-strong: var(--text-primary);
+  --accent-primary: #1d3fcf;
+  --accent-soft: #dce1f7;
+  --on-accent: #ffffff;
+  --accent-secondary: #ffe04a;
+  --on-marker: #101216;
+  --data-muted: #8c8e86;
+  --success: #1b7446;
+  --error: #bf232b;
+}
+
+[data-theme='ink'] {
+  --bg-primary: #101216;
+  --bg-secondary: #1a1d23;
+  --text-primary: #f1f1ec;
+  --text-secondary: #9ea4ad;
+  --border: #2e323a;
+  --border-strong: var(--text-primary);
+  --accent-primary: #8ea2ff;
+  --accent-soft: #1b2553;
+  --on-accent: #101216;
+  --accent-secondary: #ffe04a;
+  --on-marker: #101216;
+  --data-muted: #5a606a;
+  --success: #5cc48a;
+  --error: #ff7b73;
+}
+
+:root {
+  color-scheme: light;
+
+  --font-sans: 'Geist', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Scala web: mobile 360 px → desktop 1280 px */
+  --fs-display: clamp(3.25rem, 2.1739rem + 4.7826vw, 6rem);
+  --lh-display: clamp(3.25rem, 2.2717rem + 4.3478vw, 5.75rem);
+  --fs-h1: clamp(2.5rem, 1.913rem + 2.6087vw, 4rem);
+  --lh-h1: clamp(2.75rem, 2.212rem + 2.3913vw, 4.125rem);
+  --fs-h2: clamp(2rem, 1.7065rem + 1.3043vw, 2.75rem);
+  --lh-h2: clamp(2.375rem, 2.0815rem + 1.3043vw, 3.125rem);
+  --fs-h3: clamp(1.5rem, 1.4022rem + 0.4348vw, 1.75rem);
+  --lh-h3: clamp(1.875rem, 1.7772rem + 0.4348vw, 2.125rem);
+  --fs-body: clamp(1.125rem, 1.0761rem + 0.2174vw, 1.25rem);
+  --lh-body: clamp(1.75rem, 1.6766rem + 0.3261vw, 1.9375rem);
+  --fs-small: clamp(1rem, 0.9755rem + 0.1087vw, 1.0625rem);
+  --lh-small: clamp(1.5rem, 1.4511rem + 0.2174vw, 1.625rem);
+  --fs-caption: clamp(0.875rem, 0.8505rem + 0.1087vw, 0.9375rem);
+  --lh-caption: clamp(1.25rem, 1.2011rem + 0.2174vw, 1.375rem);
+  --fs-label: clamp(0.8125rem, 0.788rem + 0.1087vw, 0.875rem);
+  --lh-label: clamp(1rem, 0.9511rem + 0.2174vw, 1.125rem);
+  --fs-data-sm: clamp(1.125rem, 1.0761rem + 0.2174vw, 1.25rem);
+  --lh-data-sm: clamp(1.5rem, 1.4511rem + 0.2174vw, 1.625rem);
+  --fs-data-md: clamp(2rem, 1.7065rem + 1.3043vw, 2.75rem);
+  --lh-data-md: clamp(2rem, 1.7065rem + 1.3043vw, 2.75rem);
+  --fs-data-lg: clamp(4.5rem, 3.3261rem + 5.2174vw, 7.5rem);
+  --lh-data-lg: clamp(4.25rem, 3.1739rem + 4.7826vw, 7rem);
+
+  /* Spaziatura su base 8 */
+  --s-1: 0.5rem;   /* 8 */
+  --s-2: 1rem;     /* 16 */
+  --s-3: 1.5rem;   /* 24 */
+  --s-4: 2.5rem;   /* 40 */
+  --s-5: 4rem;     /* 64 */
+  --s-6: 6rem;     /* 96 */
+  --s-7: 9rem;     /* 144 */
+
+  /* Griglia */
+  --content-max: 75rem; /* 1200 */
+  --gutter: 1.5rem;     /* 24 */
+  --margin: clamp(1.25rem, -0.0217rem + 5.6522vw, 4.5rem); /* 20 → 72 */
+  --section-y: clamp(4rem, 3.2174rem + 3.4783vw, 6rem);   /* 64 → 96 */
+  --measure: 68ch;
+
+  /* Linguaggio visivo */
+  --rule: 4px;
+  --hairline: 2px;
+  --node: 18px;
+  --sign: 12px;
+}

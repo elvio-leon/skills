@@ -1,0 +1,100 @@
+---
+/** Percorso (Workflow): date in colonna fissa, nodi da 18 px su linea da 4 px. */
+interface Item {
+  periodo: string;
+  ruolo: string;
+  org: string;
+  dettaglio?: string;
+}
+interface Props {
+  items: Item[];
+  /** Indice dell'elemento in accento. */
+  accent?: number;
+}
+const { items, accent = 0 } = Astro.props;
+---
+
+<ol class="tl">
+  {
+    items.map((it, i) => (
+      <li class:list={['tl__item', { 'tl__item--accent': accent === i }]}>
+        <p class="tl__date t-label">{it.periodo}</p>
+        <span class="tl__node" aria-hidden="true" />
+        <div class="tl__body">
+          <h3 class="t-h3">{it.org}</h3>
+          <p class="t-small">{it.ruolo}</p>
+          {it.dettaglio && <p class="t-small muted tl__det">{it.dettaglio}</p>}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .tl {
+    max-width: 62rem;
+  }
+  .tl__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--node) minmax(0, 1fr);
+    grid-template-areas:
+      'node date'
+      '. body';
+    column-gap: var(--s-2);
+    row-gap: var(--s-1);
+    padding-bottom: var(--s-4);
+  }
+  @media (min-width: 48rem) {
+    .tl__item {
+      grid-template-columns: 11rem var(--node) minmax(0, 1fr);
+      grid-template-areas: 'date node body';
+      column-gap: var(--s-3);
+    }
+  }
+  .tl__item:last-child {
+    padding-bottom: 0;
+  }
+  .tl__date {
+    grid-area: date;
+    color: var(--text-secondary);
+    line-height: var(--lh-h3);
+  }
+  .tl__node {
+    grid-area: node;
+    position: relative;
+    z-index: 1;
+    width: var(--node);
+    height: var(--node);
+    margin-top: calc((var(--lh-h3) - var(--node)) / 2);
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: var(--rule) solid var(--border-strong);
+  }
+  .tl__item--accent .tl__node {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+  /* linea verticale da 4 px fra i nodi */
+  .tl__item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--lh-h3) / 2);
+    bottom: calc(var(--lh-h3) / -2);
+    left: calc(var(--node) / 2 - var(--rule) / 2);
+    width: var(--rule);
+    background: var(--border-strong);
+  }
+  @media (min-width: 48rem) {
+    .tl__item:not(:last-child)::before {
+      left: calc(11rem + var(--s-3) + var(--node) / 2 - var(--rule) / 2);
+    }
+  }
+  .tl__body {
+    grid-area: body;
+  }
+  .tl__det {
+    margin-top: var(--s-1);
+    max-width: var(--measure);
+  }
+</style>

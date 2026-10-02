@@ -1,0 +1,49 @@
+---
+import { PERSONA } from '../config';
+
+/** Firma: quadrato in accento + nome + "SEO · AI Search". */
+interface Props {
+  href?: string;
+  /** Nasconde la riga "SEO · AI Search" (header compatto). */
+  compatta?: boolean;
+}
+const { href, compatta = false } = Astro.props;
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag class="firma" href={href}>
+  <span class="firma__sign" aria-hidden="true"></span>
+  <span class="firma__nome">{PERSONA.nome}</span>
+  {!compatta && <span class="firma__ruolo">{PERSONA.firma}</span>}
+</Tag>
+
+<style>
+  .firma {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    row-gap: 0.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    min-height: 44px;
+  }
+  .firma__sign {
+    width: var(--sign);
+    height: var(--sign);
+    background: var(--accent-primary);
+    flex: none;
+  }
+  .firma__nome {
+    font-weight: 600;
+    font-size: var(--fs-small);
+    letter-spacing: -0.01em;
+  }
+  .firma__ruolo {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--fs-label);
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+  }
+</style>

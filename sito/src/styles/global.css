@@ -1,0 +1,338 @@
+@import './tokens.css';
+
+/* Font self-hosted (Geist e Geist Mono, SIL OFL 1.1), subset latino. */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Reset essenziale */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: var(--s-3);
+}
+body {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+h1,
+h2,
+h3,
+p,
+li,
+dd,
+blockquote,
+figcaption {
+  overflow-wrap: break-word;
+}
+
+/* Tema per sezione */
+[data-theme] {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Layout */
+.wrap {
+  width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--margin));
+  margin-inline: auto;
+  padding-inline: var(--margin);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+.measure {
+  max-width: var(--measure);
+}
+.section {
+  padding-block: var(--section-y);
+}
+
+/* Tipografia */
+.t-display,
+.t-h1,
+.t-h2,
+.t-h3 {
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: -0.045em;
+}
+.t-h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -0.035em;
+}
+.t-h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: -0.03em;
+}
+.t-h3 {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: -0.02em;
+}
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: -0.005em;
+}
+.t-small {
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  letter-spacing: 0;
+}
+.t-caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: 0;
+  color: var(--text-secondary);
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.t-data-sm,
+.t-data-md,
+.t-data-lg {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-feature-settings: 'tnum' 1;
+}
+.t-data-sm {
+  font-size: var(--fs-data-sm);
+  line-height: var(--lh-data-sm);
+  letter-spacing: -0.01em;
+}
+.t-data-md {
+  font-size: var(--fs-data-md);
+  line-height: var(--lh-data-md);
+  letter-spacing: -0.03em;
+}
+.t-data-lg {
+  font-size: var(--fs-data-lg);
+  line-height: var(--lh-data-lg);
+  letter-spacing: -0.05em;
+}
+.muted {
+  color: var(--text-secondary);
+}
+.accent {
+  color: var(--accent-primary);
+}
+.positive {
+  color: var(--success);
+}
+.negative {
+  color: var(--error);
+}
+
+/* Testo corrente */
+.prose > * + * {
+  margin-top: var(--s-3);
+}
+.prose h3 {
+  margin-top: var(--s-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.25em;
+}
+.prose li + li {
+  margin-top: var(--s-1);
+}
+.prose strong {
+  font-weight: 600;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  border-top: var(--rule) solid var(--border-strong);
+}
+.prose th {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  border-bottom: var(--hairline) solid var(--border);
+}
+.prose td {
+  padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  border-bottom: var(--hairline) solid var(--border);
+  vertical-align: top;
+}
+
+/* Link */
+a {
+  color: inherit;
+}
+.prose a,
+a.link {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.prose a:hover,
+a.link:hover {
+  text-decoration-thickness: 2px;
+}
+.arrow-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  padding-block: 0.75rem;
+}
+.arrow-link:hover {
+  text-decoration-thickness: 2px;
+}
+.arrow-link .arrow {
+  transition: transform 150ms ease;
+}
+.arrow-link:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* Marker giallo: 1-4 parole */
+mark {
+  background: var(--accent-secondary);
+  color: var(--on-marker);
+  padding: 0 0.15em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Focus visibile */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+/* Accessibilità */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  left: var(--margin);
+  top: -100px;
+  z-index: 10;
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  padding: var(--s-1) var(--s-2);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.skip-link:focus {
+  top: var(--s-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Separatori decimali e delle migliaia nei numeri Mono grandi */
+.sep {
+  margin-inline: -0.18em;
+}

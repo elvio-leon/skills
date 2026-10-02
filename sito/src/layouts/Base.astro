@@ -1,0 +1,167 @@
+---
+import '../styles/global.css';
+import { PERSONA, PARTITA_IVA, SITE_NAME, abs } from '../config';
+import Analytics from '../components/Analytics.astro';
+import Firma from '../components/Firma.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+interface Props {
+  /** <title>: max 60 caratteri. */
+  title: string;
+  /** Meta description: 140-155 caratteri. */
+  description: string;
+  /** Percorso dell'immagine Open Graph (1200x630), es. /og/home.png */
+  og: string;
+  ogType?: 'website' | 'article' | 'profile';
+  jsonLd?: Record<string, unknown>;
+  /** Pagina non indicizzabile (404). */
+  noindex?: boolean;
+}
+
+const { title, description, og, ogType = 'website', jsonLd, noindex = false } = Astro.props;
+
+if (title.length > 60) throw new Error(`Title oltre 60 caratteri: "${title}"`);
+if (!noindex && (description.length < 140 || description.length > 155)) {
+  throw new Error(`Meta description fuori da 140-155 caratteri (${description.length}): "${description}"`);
+}
+
+const path = Astro.url.pathname;
+const canonical = abs(path);
+const ogImage = abs(og);
+const current = (href: string) => (path.startsWith(href) ? 'page' : undefined);
+const anno = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {!noindex && <link rel="canonical" href={canonical} />}
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="author" content={PERSONA.nome} />
+    <meta name="theme-color" content="#F4F4EF" />
+
+    <link rel="preload" href="/fonts/Geist-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Geist-Regular.woff2" as="font" type="font/woff2" crossorigin />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {jsonLd && <JsonLd data={jsonLd} />}
+    <slot name="head" />
+    <Analytics />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenuto">Vai al contenuto</a>
+
+    <header class="site-header" data-theme="paper">
+      <div class="wrap site-header__inner">
+        <Firma href="/" compatta />
+        <nav aria-label="Principale">
+          <ul class="nav">
+            <li><a href="/casi-studio/" aria-current={current('/casi-studio/')}>Casi studio</a></li>
+            <li><a href="/chi-sono/" aria-current={current('/chi-sono/')}>Chi sono</a></li>
+            <li><a href="#contatto">Contatti</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenuto" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer" data-theme="paper">
+      <div class="wrap site-footer__inner">
+        <Firma />
+        <ul class="site-footer__links t-small">
+          <li><a class="link" href={`mailto:${PERSONA.email}`}>{PERSONA.email}</a></li>
+          <li><a class="link" href={PERSONA.linkedin} rel="me">LinkedIn</a></li>
+          {PERSONA.youtube && (
+            <li><a class="link" href={PERSONA.youtube} rel="me">YouTube · Linea di fondo</a></li>
+          )}
+        </ul>
+        <p class="t-caption">
+          © {anno} {PERSONA.nome} · {PERSONA.citta}{PARTITA_IVA && ` · P. IVA ${PARTITA_IVA}`}
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .site-header__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-3);
+    padding-block: var(--s-2);
+  }
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-3);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--fs-label);
+    line-height: var(--lh-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .nav a {
+    display: inline-block;
+    padding-block: 0.875rem;
+    text-decoration: none;
+    color: var(--text-primary);
+  }
+  .nav a:hover,
+  .nav a[aria-current='page'] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.4em;
+  }
+  main:focus {
+    outline: none;
+  }
+  .site-footer {
+    border-top: var(--hairline) solid var(--border);
+  }
+  .site-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-4);
+  }
+  .site-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-3);
+  }
+  .site-footer__links a {
+    display: inline-block;
+    padding-block: 0.625rem;
+  }
+</style>

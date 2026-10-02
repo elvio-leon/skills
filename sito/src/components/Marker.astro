@@ -1,0 +1,11 @@
+---
+import { conMarker } from '../lib/format';
+
+/** Testo da frontmatter con ==parola== resa come marker giallo. */
+interface Props {
+  testo: string;
+}
+const { testo } = Astro.props;
+---
+
+<Fragment set:html={conMarker(testo)} />

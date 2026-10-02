@@ -1,0 +1,178 @@
+---
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import Rail from '../components/Rail.astro';
+import Timeline from '../components/Timeline.astro';
+import Contatto from '../components/Contatto.astro';
+import { PERSONA } from '../config';
+import { docenza, formazione, percorso, profilo, strumenti } from '../data/profilo';
+import { breadcrumb, graph, person, profilePage } from '../lib/schema-org';
+
+const TOT = 6;
+const title = 'Chi sono · Elvio Leonardi, SEO & AI Search';
+const description =
+  'Elvio Leonardi, SEO & AI Search Specialist a Palermo. Lavoro sulla Search dal 2020: dentsu, Intarget, RankWit AI. Percorso, strumenti e docenza.';
+
+const jsonLd = graph(
+  profilePage('/chi-sono/', title, description),
+  person(),
+  breadcrumb([
+    { name: 'Home', path: '/' },
+    { name: 'Chi sono', path: '/chi-sono/' },
+  ]),
+);
+---
+
+<Base title={title} description={description} og="/og/chi-sono.png" ogType="profile" jsonLd={jsonLd}>
+  <section data-theme="paper" class="section top" aria-labelledby="profilo">
+    <div class="wrap">
+      <Rail label="Chi sono" index={1} total={TOT} />
+      <h1 id="profilo" class="t-h1 chi-h1">{PERSONA.nome}, {PERSONA.ruolo}</h1>
+      <div class="prose measure t-body testo">
+        <p class="t-h3">{profilo.apertura}</p>
+        {profilo.paragrafi.map((p) => <p>{p}</p>)}
+        <p>{profilo.introLeve}</p>
+      </div>
+      <ul class="leve measure">
+        {
+          profilo.leve.map((l) => (
+            <li class="t-body">
+              <span class="leve__arrow" aria-hidden="true">→</span>
+              <span>
+                <strong>{l.nome}</strong>, {l.testo}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="t-body measure chiusura">{profilo.chiusura}</p>
+    </div>
+  </section>
+
+  <Section label="Percorso" index={2} total={TOT} labelledby="percorso">
+    <h2 id="percorso" class="t-h2 h2-gap">Percorso</h2>
+    <Timeline items={percorso} />
+    <h3 class="t-label muted formazione-t">Formazione</h3>
+    <ul class="formazione">
+      {
+        formazione.map((f) => (
+          <li>
+            <p class="t-h3">{f.titolo}</p>
+            <p class="t-small muted">{f.org}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Section label="Strumenti" index={3} total={TOT} labelledby="strumenti">
+    <h2 id="strumenti" class="t-h2 h2-gap">Strumenti</h2>
+    <ul class="strumenti t-data-sm">
+      {strumenti.map((s) => <li>{s}</li>)}
+    </ul>
+  </Section>
+
+  <Section label="Docenza" index={4} total={TOT} labelledby="docenza">
+    <h2 id="docenza" class="t-h2 h2-gap">Docenza</h2>
+    <div class="docenza">
+      <p class="t-label muted">{docenza.anno} · {docenza.org}</p>
+      <p class="t-h3">{docenza.testo}</p>
+    </div>
+  </Section>
+
+  <Section label="Fuori dal lavoro" index={5} total={TOT} labelledby="personale">
+    <h2 id="personale" class="t-h2 h2-gap">Linea di fondo</h2>
+    <p class="t-body measure">
+      {profilo.personale}
+    </p>
+    {
+      PERSONA.youtube && (
+        <p class="yt">
+          <a class="arrow-link" href={PERSONA.youtube} rel="me">
+            Il canale su YouTube <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </p>
+      )
+    }
+  </Section>
+
+  <Contatto index={6} total={TOT} />
+</Base>
+
+<style>
+  .top {
+    padding-top: var(--s-5);
+  }
+  .chi-h1 {
+    max-width: 20ch;
+  }
+  .testo {
+    margin-top: var(--s-5);
+  }
+  .leve {
+    margin-top: var(--s-3);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .leve li {
+    display: flex;
+    gap: 0.75em;
+    padding-block: var(--s-2);
+    border-bottom: var(--hairline) solid var(--border);
+  }
+  .leve__arrow {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--accent-primary);
+  }
+  .leve strong {
+    font-weight: 600;
+  }
+  .chiusura {
+    margin-top: var(--s-4);
+  }
+  .h2-gap {
+    margin-bottom: var(--s-5);
+  }
+  .formazione-t {
+    margin-top: var(--s-6);
+    margin-bottom: var(--s-3);
+  }
+  .formazione {
+    display: grid;
+    gap: var(--s-3) var(--gutter);
+    max-width: 62rem;
+  }
+  @media (min-width: 48rem) {
+    .formazione {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .formazione li,
+  .docenza {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-2);
+    display: grid;
+    gap: var(--s-1);
+  }
+  .docenza {
+    max-width: var(--measure);
+  }
+  .strumenti {
+    display: grid;
+    column-gap: var(--gutter);
+    max-width: 62rem;
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  @media (min-width: 48rem) {
+    .strumenti {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .strumenti li {
+    padding-block: var(--s-2);
+    border-bottom: var(--hairline) solid var(--border);
+  }
+  .yt {
+    margin-top: var(--s-3);
+  }
+</style>

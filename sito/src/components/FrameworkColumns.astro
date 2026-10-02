@@ -1,0 +1,73 @@
+---
+/** Colonne con regola da 4 px in testa; una sola colonna in accento. */
+interface Item {
+  titolo: string;
+  testo: string;
+  punti?: string[];
+  protagonista?: boolean;
+}
+interface Props {
+  items: Item[];
+  headingLevel?: 'h2' | 'h3';
+}
+const { items, headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+---
+
+<ul class="cols" style={`--n: ${items.length}`}>
+  {
+    items.map((it) => (
+      <li class:list={['col', { 'col--accent': it.protagonista }]}>
+        <H class="t-h3">{it.titolo}</H>
+        <p class="t-small col__testo">{it.testo}</p>
+        {it.punti && it.punti.length > 0 && (
+          <ul class="col__punti t-small">
+            {it.punti.map((p) => (
+              <li>
+                <span class="arrow" aria-hidden="true">→</span> {p}
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--s-5) var(--gutter);
+  }
+  @media (min-width: 48rem) {
+    .cols {
+      grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    }
+  }
+  .col {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-3);
+  }
+  .col--accent {
+    border-top-color: var(--accent-primary);
+  }
+  .col__testo {
+    margin-top: var(--s-2);
+  }
+  .col__punti {
+    margin-top: var(--s-3);
+    color: var(--text-secondary);
+  }
+  .col__punti li {
+    display: flex;
+    gap: 0.5em;
+    padding-block: var(--s-1);
+    border-top: var(--hairline) solid var(--border);
+  }
+  .arrow {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+</style>

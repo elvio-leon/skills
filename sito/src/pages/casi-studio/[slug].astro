@@ -1,0 +1,314 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import Rail from '../../components/Rail.astro';
+import Marker from '../../components/Marker.astro';
+import Process from '../../components/Process.astro';
+import DataCard from '../../components/DataCard.astro';
+import Comparison from '../../components/Comparison.astro';
+import BarChart from '../../components/BarChart.astro';
+import FonteCaption from '../../components/FonteCaption.astro';
+import Quote from '../../components/Quote.astro';
+import CaseRow from '../../components/CaseRow.astro';
+import Contatto from '../../components/Contatto.astro';
+import { getCasiPubblicati, ogCaso, successivo, tipi, urlCaso, type Caso } from '../../lib/casi';
+import { article, breadcrumb, graph, person } from '../../lib/schema-org';
+
+export async function getStaticPaths() {
+  const casi = await getCasiPubblicati();
+  return casi.map((caso) => ({ params: { slug: caso.id }, props: { caso, casi } }));
+}
+
+interface Props {
+  caso: Caso;
+  casi: Caso[];
+}
+const { caso, casi } = Astro.props;
+const d = caso.data;
+const { Content } = await render(caso);
+const next = successivo(casi, caso);
+
+type Blocco = { fonte?: string; periodo_prima?: string; periodo_dopo?: string; periodo?: string };
+/** Fonte e periodo del blocco, ereditati dal caso se assenti. */
+const fonteDi = (b: Blocco = {}) =>
+  b.periodo
+    ? { fonte: b.fonte ?? d.fonte, periodo: b.periodo }
+    : {
+        fonte: b.fonte ?? d.fonte,
+        periodo_prima: b.periodo_prima ?? d.periodo_prima,
+        periodo_dopo: b.periodo_dopo ?? d.periodo_dopo,
+      };
+
+const appLeve = d.approfondimenti.filter((a) => a.posizione === 'leve');
+const appRisultati = d.approfondimenti.filter((a) => a.posizione === 'risultati');
+
+// Numerazione delle sezioni per i rail
+const sezioni = [
+  'header',
+  'contesto',
+  'ruolo',
+  'leve',
+  ...appLeve.map(() => 'app'),
+  'risultati',
+  ...appRisultati.map(() => 'app'),
+  'insight',
+  ...(d.pdf ? ['pdf'] : []),
+  'prossimo',
+  'contatto',
+];
+const TOT = sezioni.length;
+let n = 0;
+const idx = () => ++n;
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Casi studio', path: '/casi-studio/' },
+  { name: d.titolo, path: urlCaso(caso) },
+];
+const jsonLd = graph(article(caso), breadcrumb(crumbs), person());
+---
+
+<Base title={d.meta_title} description={d.meta_description} og={ogCaso(caso)} ogType="article" jsonLd={jsonLd}>
+  <Fragment slot="head">
+    <meta property="article:published_time" content={d.data_pubblicazione.toISOString()} />
+    <meta property="article:modified_time" content={(d.data_modifica ?? d.data_pubblicazione).toISOString()} />
+  </Fragment>
+
+  <article>
+    <header data-theme="paper" class="section caso-header">
+      <div class="wrap">
+        <nav aria-label="Percorso" class="crumbs t-label">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li><a href="/casi-studio/">Casi studio</a></li>
+            <li><span aria-current="page">{d.titolo}</span></li>
+          </ol>
+        </nav>
+        <Rail label={tipi(caso).join(' · ')} index={idx()} total={TOT} />
+        <h1 class="t-h1 caso-h1">{d.titolo}</h1>
+        <p class="t-h3 muted caso-sub">{d.settore} · {d.periodo}</p>
+        <p class="t-body measure caso-sintesi">{d.sintesi}</p>
+      </div>
+    </header>
+
+    <Section label="Contesto" index={idx()} total={TOT} labelledby="contesto">
+      <h2 id="contesto" class="t-h2 h2-gap">Contesto</h2>
+      <div class="prose measure t-body">
+        <Content />
+      </div>
+      <div class="obiettivo">
+        <p class="t-label muted">Obiettivo</p>
+        <p class="t-h3"><Marker testo={d.obiettivo} /></p>
+      </div>
+    </Section>
+
+    <Section label="Il mio ruolo" index={idx()} total={TOT} labelledby="ruolo">
+      <h2 id="ruolo" class="t-h2 h2-gap">Il mio ruolo</h2>
+      <dl class="ruolo">
+        <div>
+          <dt class="t-label muted">Cosa ho fatto</dt>
+          <dd class="t-body">{d.ruolo.descrizione}</dd>
+        </div>
+        <div>
+          <dt class="t-label muted">Con chi</dt>
+          <dd class="t-body">{d.ruolo.team}</dd>
+        </div>
+        <div>
+          <dt class="t-label muted">Durata</dt>
+          <dd class="t-body">{d.ruolo.durata}</dd>
+        </div>
+      </dl>
+    </Section>
+
+    <Section label="Cosa è stato fatto" index={idx()} total={TOT} labelledby="leve">
+      <h2 id="leve" class="t-h2 h2-gap">Cosa è stato fatto</h2>
+      <Process steps={d.leve} />
+    </Section>
+
+    {
+      [...appLeve, null, ...appRisultati].map((a, i) =>
+        a === null ? (
+          <Section label="Risultati" index={idx()} total={TOT} labelledby="risultati">
+            <h2 id="risultati" class="t-h2 h2-gap">Risultati</h2>
+            <DataCard principale={d.kpi_principale} secondari={d.kpi_secondari} mostraConfronto={false} />
+            {d.kpi_principale.confronto && (
+              <div class="blocco">
+                <Comparison
+                  prima={d.kpi_principale.confronto.prima}
+                  dopo={d.kpi_principale.confronto.dopo}
+                  labelPrima="Prima"
+                  labelDopo="Dopo"
+                  unita={d.kpi_principale.label.toLowerCase()}
+                />
+              </div>
+            )}
+            <FonteCaption {...fonteDi()} />
+            <div class="grafici">
+              {d.grafici.map((g, gi) => (
+                <BarChart id={`g${gi}`} {...g} {...fonteDi(g)} />
+              ))}
+            </div>
+          </Section>
+        ) : (
+          <Section label={a.eyebrow} index={idx()} total={TOT} labelledby={`app-${i}`}>
+            <h2 id={`app-${i}`} class="t-h2 h2-gap">
+              {a.titolo}
+            </h2>
+            {a.kpi && <DataCard principale={a.kpi} />}
+            {a.testo && <p class="t-body measure blocco">{a.testo}</p>}
+            {a.punti && (
+              <ul class="punti t-body">
+                {a.punti.map((p) => (
+                  <li>
+                    <span class="punti__arrow" aria-hidden="true">
+                      →
+                    </span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {a.grafico && (
+              <div class="grafici">
+                <BarChart id={`a${i}`} {...a.grafico} {...fonteDi(a.grafico.fonte ? a.grafico : a)} />
+              </div>
+            )}
+            {(a.kpi || a.fonte || a.periodo) && !a.grafico && <FonteCaption {...fonteDi(a)} />}
+          </Section>
+        ),
+      )
+    }
+
+    <Section theme="ink" label="Insight" index={idx()} total={TOT} labelledby="insight">
+      <h2 id="insight" class="visually-hidden">Cosa rifarei</h2>
+      <Quote testo={d.insight} sequenza={d.sequenza} />
+    </Section>
+
+    {
+      d.pdf && (
+        <Section label="PDF" index={idx()} total={TOT} labelledby="pdf">
+          <h2 id="pdf" class="t-h2 h2-gap">
+            Il caso in PDF
+          </h2>
+          <a class="arrow-link" href={d.pdf} download>
+            Scarica il PDF <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </Section>
+      )
+    }
+  </article>
+
+  <Section label="Altri casi" index={idx()} total={TOT} labelledby="prossimo">
+    <h2 id="prossimo" class="t-h2">{next ? 'Caso successivo' : 'Altri casi studio'}</h2>
+    {
+      next ? (
+        <ul class="next">
+          <CaseRow caso={next} />
+        </ul>
+      ) : (
+        <p class="t-body measure blocco">Altri casi in arrivo.</p>
+      )
+    }
+    <p class="blocco-sm">
+      <a class="arrow-link" href="/casi-studio/">Tutti i casi studio <span class="arrow" aria-hidden="true">→</span></a>
+    </p>
+  </Section>
+
+  <Contatto index={idx()} total={TOT} />
+</Base>
+
+<style>
+  .caso-header {
+    padding-top: var(--s-4);
+  }
+  .crumbs {
+    margin-bottom: var(--s-3);
+    color: var(--text-secondary);
+  }
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75em;
+  }
+  .crumbs li:not(:last-child)::after {
+    content: '→';
+    margin-left: 0.75em;
+  }
+  .crumbs a {
+    display: inline-block;
+    padding-block: 0.75rem;
+    color: var(--text-secondary);
+  }
+  .crumbs span {
+    display: inline-block;
+    padding-block: 0.75rem;
+  }
+  .caso-h1 {
+    max-width: 18ch;
+  }
+  .caso-sub {
+    margin-top: var(--s-3);
+    font-weight: 400;
+  }
+  .caso-sintesi {
+    margin-top: var(--s-5);
+    padding-top: var(--s-3);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .h2-gap {
+    margin-bottom: var(--s-5);
+  }
+  .obiettivo {
+    margin-top: var(--s-5);
+    max-width: var(--measure);
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-2);
+    display: grid;
+    gap: var(--s-1);
+  }
+  .ruolo {
+    display: grid;
+    gap: var(--s-4);
+    max-width: var(--measure);
+  }
+  .ruolo div {
+    border-top: var(--hairline) solid var(--border);
+    padding-top: var(--s-2);
+    display: grid;
+    gap: var(--s-1);
+  }
+  .ruolo dd {
+    margin: 0;
+  }
+  .blocco {
+    margin-top: var(--s-5);
+  }
+  .blocco-sm {
+    margin-top: var(--s-3);
+  }
+  .grafici {
+    display: grid;
+    gap: var(--s-6);
+    margin-top: var(--s-6);
+    max-width: 62rem;
+  }
+  .punti {
+    max-width: var(--measure);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+  .punti li {
+    display: flex;
+    gap: 0.75em;
+    padding-block: var(--s-2);
+    border-bottom: var(--hairline) solid var(--border);
+  }
+  .punti__arrow {
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .next {
+    margin-top: var(--s-5);
+    border-top: var(--rule) solid var(--border-strong);
+  }
+</style>

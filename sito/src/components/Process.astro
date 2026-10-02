@@ -1,0 +1,81 @@
+---
+/** Step numerati: nodi da 18 px su linea da 4 px. */
+interface Step {
+  titolo: string;
+  testo?: string;
+}
+interface Props {
+  steps: Step[];
+  /** Indice (0-based) dello step da evidenziare in accento. */
+  accent?: number;
+}
+const { steps, accent } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<ol class="process">
+  {
+    steps.map((s, i) => (
+      <li class:list={['step', { 'step--accent': accent === i }]}>
+        <span class="step__node" aria-hidden="true" />
+        <span class="step__num t-label">{pad(i + 1)}</span>
+        <div class="step__body">
+          <h3 class="t-h3">{s.titolo}</h3>
+          {s.testo && <p class="t-body step__testo">{s.testo}</p>}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .process {
+    position: relative;
+    max-width: 62rem;
+  }
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--node) 3rem minmax(0, 1fr);
+    column-gap: var(--s-2);
+    padding-bottom: var(--s-5);
+  }
+  .step:last-child {
+    padding-bottom: 0;
+  }
+  /* linea da 4 px che unisce i nodi */
+  .step::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--node) / 2 - var(--rule) / 2);
+    top: calc(var(--lh-h3) / 2);
+    bottom: calc(var(--lh-h3) / -2);
+    width: var(--rule);
+    background: var(--border-strong);
+  }
+  .step:last-child::before {
+    display: none;
+  }
+  .step__node {
+    position: relative;
+    z-index: 1;
+    width: var(--node);
+    height: var(--node);
+    margin-top: calc((var(--lh-h3) - var(--node)) / 2);
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: var(--rule) solid var(--border-strong);
+  }
+  .step--accent .step__node {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+  .step__num {
+    color: var(--text-secondary);
+    line-height: var(--lh-h3);
+  }
+  .step__testo {
+    margin-top: var(--s-1);
+    max-width: var(--measure);
+  }
+</style>

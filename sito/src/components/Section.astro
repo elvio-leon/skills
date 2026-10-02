@@ -1,0 +1,29 @@
+---
+import Rail from './Rail.astro';
+
+/** Sezione editoriale: tema Paper o Ink, rail in testa. */
+interface Props {
+  theme?: 'paper' | 'ink';
+  label: string;
+  index?: number;
+  total?: number;
+  id?: string;
+  /** id dell'heading che dà il nome alla sezione. */
+  labelledby?: string;
+  class?: string;
+}
+const { theme = 'paper', label, index, total, id, labelledby, class: cls } = Astro.props;
+---
+
+<section
+  data-theme={theme}
+  id={id}
+  aria-labelledby={labelledby}
+  aria-label={labelledby ? undefined : label}
+  class:list={['section', cls]}
+>
+  <div class="wrap">
+    <Rail label={label} index={index} total={total} />
+    <slot />
+  </div>
+</section>

@@ -1,0 +1,21 @@
+---
+/** Caption obbligatoria sotto ogni dato: fonte e periodo. */
+interface Props {
+  fonte: string;
+  periodo_prima?: string;
+  periodo_dopo?: string;
+  periodo?: string;
+}
+const { fonte, periodo_prima, periodo_dopo, periodo } = Astro.props;
+const quando = periodo ?? `${periodo_prima} vs ${periodo_dopo}`;
+---
+
+<p class="t-caption fonte">
+  Fonte: {fonte} · {periodo ? 'Periodo' : 'Confronto'}: {quando}
+</p>
+
+<style>
+  .fonte {
+    margin-top: var(--s-2);
+  }
+</style>

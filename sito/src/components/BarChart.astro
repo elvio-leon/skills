@@ -1,0 +1,155 @@
+---
+import { formatta, type Formato } from '../lib/format';
+import FonteCaption from './FonteCaption.astro';
+
+/**
+ * Barre orizzontali in SVG statico, generate a build time.
+ * Scala da 0, una barra in accento, valore a fine barra, nessun asse numerico.
+ * Due varianti (stretta e larga) così il testo resta leggibile a ogni larghezza:
+ * il CSS mostra solo quella giusta, l'altra è display:none.
+ */
+interface Barra {
+  label: string;
+  valore: number;
+  protagonista?: boolean;
+}
+interface Props {
+  id: string;
+  titolo: string;
+  barre: Barra[];
+  formato: Formato;
+  decimali?: number;
+  fonte: string;
+  periodo_prima?: string;
+  periodo_dopo?: string;
+  periodo?: string;
+}
+
+const { id, titolo, barre, formato, decimali, ...fonte } = Astro.props;
+
+const max = Math.max(...barre.map((b) => b.valore));
+const valori = barre.map((b) => formatta(b.valore, formato, decimali));
+const desc = barre.map((b, i) => `${b.label}: ${valori[i]}`).join('; ');
+
+const LABEL = 16; // small
+const VALUE = 20; // data-sm
+const BAR = 28;
+const GAP_LABEL = 8;
+const ROW = LABEL + GAP_LABEL + BAR + 24;
+const CHAR = VALUE * 0.62; // larghezza media di un carattere Geist Mono
+const reserve = Math.max(...valori.map((v) => v.length)) * CHAR + 16;
+
+function layout(width: number) {
+  const usable = width - reserve;
+  return barre.map((b, i) => {
+    const y = i * ROW;
+    const w = max === 0 ? 0 : Math.max(2, (b.valore / max) * usable);
+    return {
+      ...b,
+      testo: valori[i],
+      labelY: y + LABEL,
+      barY: y + LABEL + GAP_LABEL,
+      w: Math.round(w * 10) / 10,
+    };
+  });
+}
+
+const height = barre.length * ROW - 24;
+const varianti = [
+  { key: 'n', width: 340, rows: layout(340) },
+  { key: 'w', width: 760, rows: layout(760) },
+];
+---
+
+<figure class="chart">
+  <h3 class="t-h3 chart__title">{titolo}</h3>
+  {
+    varianti.map((v) => (
+      <svg
+        class:list={['chart__svg', `chart__svg--${v.key}`]}
+        viewBox={`0 0 ${v.width} ${height}`}
+        width={v.width}
+        height={height}
+        role="img"
+        aria-labelledby={`${id}-${v.key}-t ${id}-${v.key}-d`}
+      >
+        <title id={`${id}-${v.key}-t`}>{titolo}</title>
+        <desc id={`${id}-${v.key}-d`}>{desc}</desc>
+        {v.rows.map((r) => (
+          <g>
+            <text class="chart__label" x="0" y={r.labelY}>
+              {r.label}
+            </text>
+            <rect
+              class:list={['chart__bar', { 'chart__bar--accent': r.protagonista }]}
+              x="0"
+              y={r.barY}
+              width={r.w}
+              height={BAR}
+            />
+            <text
+              class="chart__value"
+              x={r.w + 12}
+              y={r.barY + BAR / 2}
+              dominant-baseline="central"
+            >
+              {r.testo}
+            </text>
+          </g>
+        ))}
+      </svg>
+    ))
+  }
+  <figcaption>
+    <FonteCaption {...fonte} />
+  </figcaption>
+</figure>
+
+<style>
+  .chart {
+    border-top: var(--rule) solid var(--border-strong);
+    padding-top: var(--s-3);
+  }
+  .chart__title {
+    margin-bottom: var(--s-3);
+  }
+  .chart__svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .chart__svg--n {
+    max-width: 400px;
+  }
+  .chart__svg--w {
+    display: none;
+    max-width: 760px;
+  }
+  @media (min-width: 52rem) {
+    .chart__svg--n {
+      display: none;
+    }
+    .chart__svg--w {
+      display: block;
+    }
+  }
+  .chart__label {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    fill: var(--text-primary);
+  }
+  .chart__value {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    fill: var(--text-primary);
+  }
+  .chart__bar {
+    fill: var(--data-muted);
+  }
+  .chart__bar--accent {
+    fill: var(--accent-primary);
+  }
+</style>
