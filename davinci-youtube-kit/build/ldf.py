@@ -13,7 +13,7 @@ Identity rules applied here (from the brand guide):
 
 from __future__ import annotations
 
-from fusion import LEN, R, T, Conn, Expr, Exposed, FuID, Macro, Tool, anim_curves, checkbox, clamp01, combo, slider
+from fusion import LEN, R, T, Conn, Expr, Exposed, F, FuID, Macro, Tool, anim_curves, checkbox, clamp01, combo, slider
 from templates import FRAME, canvas, ctrl_values, ease_in, ease_io, ease_out, solid
 
 PACK = "Linea di Fondo"
@@ -38,7 +38,10 @@ OH = "Ctrl.Background.OriginalHeight"
 # --------------------------------------------------------------------------- #
 def st(a, d):
     """Progress 0..1 of an animation stage starting at frame a lasting d frames
-    (both multiplied by the 'Durata animazioni' control)."""
+    (both multiplied by the 'Durata animazioni' control). Numbers are frames at
+    25 fps and follow the 60 fps scale; expressions are used as they are."""
+    a = F(a) if isinstance(a, (int, float)) else a
+    d = F(d) if isinstance(d, (int, float)) else d
     return clamp01(f"({T}-({a})*Ctrl.Speed)/max(({d})*Ctrl.Speed,1)")
 
 
@@ -313,7 +316,7 @@ def t_timeline():
     c = {**BASE_CONTROLS, "Count": slider("Numero di punti", 4, 2, 6, integer=True, allowed=(2, 6)),
          "DrawDur": slider("Durata tracciamento (frame)", 60, 10, 200, integer=True, allowed=(1, 2000))}
     x0, x1, y = 0.12, 0.88, 0.5
-    prog = ease_io(clamp01(f"({T}-6*Ctrl.Speed)/max(Ctrl.DrawDur*Ctrl.Speed,1)"))
+    prog = ease_io(clamp01(f"({T}-{F(6)}*Ctrl.Speed)/max(Ctrl.DrawDur*Ctrl.Speed,1)"))
     tools = hline("Linea", x0, y, x1 - x0, 3, TERRA, prog)
     layers = [("Linea", None)]
     for i in range(n_max):
@@ -348,7 +351,7 @@ def t_rotta():
     A, B = "PuntoAMask.Center", "PuntoBMask.Center"
     dx, dy = f"(({B}.X-{A}.X)*{OW})", f"(({B}.Y-{A}.Y)*{OH})"
     scale = f"(math.sqrt({dx}^2+{dy}^2)/(0.4*{OW}))"
-    draw = ease_io(clamp01(f"({T}-10*Ctrl.Speed)/max(Ctrl.DrawDur*Ctrl.Speed,1)"))
+    draw = ease_io(clamp01(f"({T}-{F(10)}*Ctrl.Speed)/max(Ctrl.DrawDur*Ctrl.Speed,1)"))
     # Canonical arc: chord from x=0.3 to 0.7 at y=0.5 in a frame-sized image, built as the
     # top part of an elliptical ring (outer minus inner ellipse), revealed by a wipe.
     a_px = f"(0.3*{OW})"
@@ -358,7 +361,7 @@ def t_rotta():
     tools = [
         *dot("PuntoA", (0.25, 0.4), 16, AVORIO, ease_out(st(0, 10))),
         *dot("PuntoB", (0.75, 0.6), 16, AVORIO, ease_out(clamp01(
-            f"({T}-(10*Ctrl.Speed+Ctrl.DrawDur*Ctrl.Speed))/max(10*Ctrl.Speed,1)"))),
+            f"({T}-({F(10)}*Ctrl.Speed+Ctrl.DrawDur*Ctrl.Speed))/max({F(10)}*Ctrl.Speed,1)"))),
         Tool("ArcoEsterno", "EllipseMask", {"Center": Expr(f"Point(0.5, {cy})"),
                                             "Width": Expr(f"2*({a_px}+{t_px}/2)/{OW}"),
                                             "Height": Expr(f"2*({b_px}+{t_px}/2)/{OH}")}),
@@ -379,8 +382,8 @@ def t_rotta():
     ]
     labels = []
     for p, name, coord, delay in (("A", "DAKAR", "14.7167° N  17.4677° W", "0"),
-                                  ("B", "RIO DE JANEIRO", "22.9068° S  43.1729° W", "(10+Ctrl.DrawDur)")):
-        stage = clamp01(f"({T}-({delay}+8)*Ctrl.Speed)/max(18*Ctrl.Speed,1)")
+                                  ("B", "RIO DE JANEIRO", "22.9068° S  43.1729° W", f"({F(10)}+Ctrl.DrawDur)")):
+        stage = clamp01(f"({T}-({delay}+{F(8)})*Ctrl.Speed)/max({F(18)}*Ctrl.Speed,1)")
         pc = f"Punto{p}Mask.Center"
         tools.append(tx(f"Nome{p}", name, SANS, "Bold", 0.015, AVORIO, track=1.25,
                         center_expr=Expr(f"Point({pc}.X+0.012, {pc}.Y+0.032)")))
@@ -400,7 +403,7 @@ def t_rotta():
 def t_punto():
     c = {**BASE_CONTROLS, "Pulse": checkbox("Anello che pulsa lentamente", 1)}
     P = "PuntoMask.Center"
-    ring_t = f"(({T}%60)/60)"
+    ring_t = f"(({T}%{F(60)})/{F(60)})"
     ring_r = f"(10+50*{ease_out(ring_t)})"
     tools = [
         *dot("Punto", (0.5, 0.5), 14, TERRA, ease_out(st(0, 12))),

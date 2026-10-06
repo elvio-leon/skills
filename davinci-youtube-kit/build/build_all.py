@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import shutil
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import fusion  # noqa: E402
 import luts  # noqa: E402
 import sfx  # noqa: E402
 from fusion import Conn, Expr  # noqa: E402
@@ -32,6 +34,8 @@ from templates import CATALOG, LOOKS  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 PACK = "YouTube Kit"
 DIST = ROOT / "dist"
+# The templates are timed in 25 fps frames; the 60 fps editions scale every duration.
+FPS60_SCALE = 60 / 25
 CATEGORY_COLORS = {"Titles": (230, 57, 70), "Transitions": (69, 123, 157),
                    "Effects": (42, 157, 143), "Generators": (244, 162, 97)}
 
@@ -248,6 +252,58 @@ def write_catalog(pk):
     (root / "CATALOGO.md").write_text("\n".join(L) + "\n", encoding="utf-8")
 
 
+def write_templates(pk, templates, lua, runner, fps60=False):
+    """Build, validate and write every template of a pack; returns counts per category.
+
+    With ``fps60`` every duration is rescaled from 25 fps frames to 60 fps
+    frames, and names and folder get a "60fps" suffix.
+    """
+    pre = pk["prefix"]
+    name = pk["name"] + (" 60fps" if fps60 else "")
+    fusion.K = FPS60_SCALE if fps60 else 1.0
+    count = {}
+    try:
+        for category, label, builder, _desc in pk["catalog"]:
+            macro = builder()
+            fusion.scale_frame_controls(macro)
+            if fps60:
+                label += " 60fps"
+                macro.name += "_60fps"
+            validate(macro, lua, runner)
+            text = macro.render()
+            validate_lua_syntax(lua, text, label)
+            folder = templates / category / name
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / f"{label}.setting").write_text(text, encoding="utf-8")
+            make_icon(folder / f"{label}.png", label.replace(pre + " ", ""), category, pk["theme"], pre)
+            count[category] = count.get(category, 0) + 1
+    finally:
+        fusion.K = 1.0
+    return count
+
+
+def write_drfx(drfx, templates):
+    with zipfile.ZipFile(drfx, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(templates.rglob("*")):
+            if f.is_file():
+                z.write(f, Path("Edit") / f.relative_to(templates))
+    print(f"DRFX: {drfx.relative_to(ROOT)} ({drfx.stat().st_size // 1024} KB)")
+
+
+def build_60fps(pk, lua, runner):
+    """60 fps edition: templates only (sounds and LUT files are the same)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        templates = Path(tmp) / "Edit"
+        fx_dir = templates / "Effects" / f"{pk['name']} 60fps"
+        fx_dir.mkdir(parents=True)
+        for key, label, _ in pk["looks"]:
+            (fx_dir / f"{pk['prefix']}_{key}.cube").write_text(luts.cube_text(key, label, pk["look_funcs"]))
+        print("Template 60fps:", write_templates(pk, templates, lua, runner, fps60=True))
+        drfx = DIST / f"{pk['dist']}-60fps.drfx"
+        write_drfx(drfx, templates)
+    return drfx
+
+
 def build_pack(pk, lua, runner):
     root, pre, name = pk["root"], pk["prefix"], pk["name"]
     templates = root / "Templates" / "Edit"
@@ -266,17 +322,7 @@ def build_pack(pk, lua, runner):
         (fx_dir / f"{pre}_{key}.cube").write_text(text)
     print(f"LUT: {len(pk['looks'])}")
 
-    count = {}
-    for category, label, builder, _desc in pk["catalog"]:
-        macro = builder()
-        validate(macro, lua, runner)
-        text = macro.render()
-        validate_lua_syntax(lua, text, label)
-        folder = templates / category / name
-        folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"{label}.setting").write_text(text, encoding="utf-8")
-        make_icon(folder / f"{label}.png", label.replace(pre + " ", ""), category, pk["theme"], pre)
-        count[category] = count.get(category, 0) + 1
+    count = write_templates(pk, templates, lua, runner)
     print("Template:", count)
 
     for cat, sname, fn, _desc in pk["sounds"]:
@@ -289,11 +335,8 @@ def build_pack(pk, lua, runner):
 
     DIST.mkdir(exist_ok=True)
     drfx = DIST / f"{pk['dist']}.drfx"
-    with zipfile.ZipFile(drfx, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in sorted(templates.rglob("*")):
-            if f.is_file():
-                z.write(f, Path("Edit") / f.relative_to(templates))
-    print(f"DRFX: {drfx.relative_to(ROOT)} ({drfx.stat().st_size // 1024} KB)")
+    write_drfx(drfx, templates)
+    extra_drfx = [build_60fps(pk, lua, runner)] if pk.get("fps60") else []
 
     full = DIST / f"{pk['dist']}-completo.zip"
     top = Path(pk["dist"])
@@ -307,7 +350,8 @@ def build_pack(pk, lua, runner):
                 z.write(root / extra, top / extra)
         for inst in ("installa_windows.bat", "installa_mac.command"):
             z.write(ROOT / inst, top / inst)
-        z.write(drfx, top / drfx.name)
+        for f in [drfx, *extra_drfx]:
+            z.write(f, top / f.name)
     print(f"ZIP: {full.relative_to(ROOT)} ({full.stat().st_size // 1024} KB)")
 
 
@@ -326,10 +370,10 @@ def main():
         dict(name=PACK, prefix="YTK", root=ROOT, catalog=CATALOG, looks=LOOKS, look_funcs=luts.LOOK_FUNCS,
              sounds=sfx.SOUNDS, dist="YouTubeKit", theme=None),
         dict(name=ldf.PACK, prefix=ldf.PREFIX, root=ROOT / "linea-di-fondo", catalog=ldf.CATALOG,
-             looks=ldf.LOOKS, look_funcs=ldf.LOOK_FUNCS, sounds=ldf.SOUNDS, dist="LineaDiFondo",
+             looks=ldf.LOOKS, look_funcs=ldf.LOOK_FUNCS, sounds=ldf.SOUNDS, dist="LineaDiFondo", fps60=True,
              theme=dict(bg=(24, 58, 47), fg=(245, 239, 230), accent=(181, 50, 60))),
         dict(name=ritmo.PACK, prefix=ritmo.PREFIX, root=ROOT / "linea-di-fondo-ritmo", catalog=ritmo.CATALOG,
-             looks=ritmo.LOOKS, look_funcs=ritmo.LOOK_FUNCS, sounds=ritmo.SOUNDS, dist="LineaDiFondoRitmo",
+             looks=ritmo.LOOKS, look_funcs=ritmo.LOOK_FUNCS, sounds=ritmo.SOUNDS, dist="LineaDiFondoRitmo", fps60=True,
              theme=dict(bg=(30, 30, 30), fg=(245, 239, 230), accent=(181, 50, 60))),
     ]
     for pk in packs:

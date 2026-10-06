@@ -11,7 +11,7 @@ machine without installing anything.
 
 from __future__ import annotations
 
-from fusion import R, T, Conn, Expr, Exposed, FuID, Macro, Tool, anim_curves, checkbox, clamp01, combo, slider
+from fusion import R, T, Conn, Expr, Exposed, F, FuID, Macro, Tool, anim_curves, checkbox, clamp01, combo, slider
 from ldf import AVORIO, OH, OW, TERRA, VERDE, hline, st, vline
 from templates import FRAME, canvas, ctrl_values, ease_in, ease_out, solid
 
@@ -114,7 +114,7 @@ def zoom_controls(**d):
 def fx_zoom(name, **defaults):
     c = zoom_controls(**defaults)
     pre = ":" + ZOOM_LUA
-    shake = (f"local e={T}-arrivo({T})\n"
+    shake = (f"local e=({T}-arrivo({T}))/{F(1)}\n"
              "if e<0 or Ctrl.Shake<=0 then return {zero} end\n"
              "local a=Ctrl.Shake*0.01*exp(-e/4)\n")
     tools = [
@@ -131,7 +131,7 @@ def fx_zoom(name, **defaults):
         Tool("Mosso", "DirectionalBlur", {
             "Input": Conn("Scossa"), "Type": 3,
             "Center": Expr("Point(Ctrl.Pivot.X+Ctrl.Center.X-0.5, Ctrl.Pivot.Y+Ctrl.Center.Y-0.5)"),
-            "Length": Expr(pre + f"return min(Ctrl.ZBlur*abs(zoom({T})-zoom({T}-1))/zoom({T})*1.5,0.25)"),
+            "Length": Expr(pre + f"return min(Ctrl.ZBlur*abs(zoom({T})-zoom({T}-1))/zoom({T})*1.5*{F(1)},0.25)"),
         }),
     ]
     return Macro(name, tools, "Mosso",
@@ -163,7 +163,7 @@ def fx_scossa():
         Tool("Tremolio", "CameraShake", {"XDeviation": Expr("0.02*Ctrl.Strength"),
                                          "YDeviation": Expr("0.02*Ctrl.Strength"),
                                          "RotationDeviation": Expr("0.4*Ctrl.Strength"),
-                                         "Speed": Expr("Ctrl.Speed"), "Randomness": 0.9,
+                                         "Speed": Expr(f"Ctrl.Speed/{F(1)}"), "Randomness": 0.9,
                                          "OverallStrength": Expr(strength), "Edges": 3}),
         Tool("Ctrl", "Transform", {"Input": Conn("Tremolio"), "Size": own("Ctrl.Zoom/100"), **ctrl_values(c)},
              controls=c),
@@ -465,7 +465,7 @@ def t_didascalie():
              "if Ctrl.OneWord>0.5 then return Text(w[k]) end\n"
              "return Text(table.concat(w,' ',1,k))")
     size = (f":local f=({T}%max(Ctrl.WordDur,1))\n"
-            f"local a={clamp01('f/3')}\n"
+            f"local a={clamp01(f'f/{F(3)}')}\n"
             f"local s={back('a', 1.6)}\n"
             f"if Ctrl.OneWord<0.5 then s=1 end\n"
             f"return 1+(max(s,0)-1)*Ctrl.Pop")
@@ -477,7 +477,7 @@ def t_didascalie():
         tx("Sorgente", "Scrivi qui la frase che vuoi far apparire parola per parola", "Bold", 0.075),
         tx("Testo", "", "Bold", 0.075, extra={"StyledText": Expr(words), **box}),
         Tool("Ctrl", "Merge", {"Background": Conn("Canvas"), "Foreground": Conn("Testo"), "Center": (0.5, 0.25),
-                               "PerformDepthMerge": 0, "Size": own(size), "Blend": Expr(clamp01(f"{R}/3")),
+                               "PerformDepthMerge": 0, "Size": own(size), "Blend": Expr(clamp01(f"{R}/{F(3)}")),
                                **ctrl_values(c)}, controls=c),
     ]
     return Macro("LDF_Didascalie", tools, "Ctrl", [
@@ -513,7 +513,7 @@ def t_numero():
     a = st(0, 8)
     size = (f":local d={T}-Ctrl.CountDur\n"
             f"local s=0.92+0.08*{snap(a)}\n"
-            "if d>=0 and d<8 then s=s*(1+Ctrl.Punch*sin(pi*d/8)) end\n"
+            f"if d>=0 and d<{F(8)} then s=s*(1+Ctrl.Punch*sin(pi*d/{F(8)})) end\n"
             "return s")
     tools = [
         tx("Prefisso", "", "Bold", 0.13), tx("Suffisso", "", "Bold", 0.13),
@@ -572,8 +572,8 @@ def t_citazione():
     c = {**RB, **GREEN_BG,
          "WriteDur": slider("Durata scrittura (frame)", 30, 1, 200, integer=True, allowed=(1, 5000))}
     x = 0.1
-    write = clamp01(f"({T}-6*Ctrl.Speed)/max(Ctrl.WriteDur*Ctrl.Speed,1)")
-    after = st("(6+Ctrl.WriteDur)", 10)
+    write = clamp01(f"({T}-{F(6)}*Ctrl.Speed)/max(Ctrl.WriteDur*Ctrl.Speed,1)")
+    after = st(f"({F(6)}+Ctrl.WriteDur)", 10)
     tools = [
         green_bg()[0],
         tx("Virgolette", "“", "Bold", 0.2, TERRA, align=-1, center_expr=Expr(

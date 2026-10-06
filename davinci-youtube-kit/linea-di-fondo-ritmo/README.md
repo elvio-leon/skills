@@ -16,6 +16,14 @@ In alternativa estrai `LineaDiFondoRitmo-completo.zip` e lancia `installa_window
 
 Nella **Effects Library** cerca **`LDF`**. Gli elementi di questo pack sono nella cartella *Linea di Fondo Ritmo*.
 
+### Progetti a 60 fps
+
+Le durate di questo pack sono in frame e sono tarate su **25 fps**: in una timeline a 60 fps le animazioni andrebbero 2,4 volte più veloci. Per i progetti a 60 fps installa **`LineaDiFondoRitmo-60fps.drfx`**: contiene gli stessi elementi con tutti i tempi riscalati, così durano gli stessi secondi. Li trovi nella cartella *Linea di Fondo Ritmo 60fps* e hanno il suffisso **60fps** nel nome (es. *LDF Zoom Social 60fps*).
+
+- Nell'Inspector i valori in frame sono già convertiti (es. Durata zoom 8 → 19 frame, Punch-In 2 → 5 frame, Battito ogni 15 → 36 frame). Se li modifichi, ragiona in frame a 60 fps: 60 frame = 1 secondo.
+- Puoi installare entrambe le versioni insieme e usare quella che corrisponde al frame rate della timeline.
+- A 30 fps usa la versione normale: le animazioni saranno solo leggermente più rapide (circa il 20%).
+
 ## Gli zoom social
 
 Trascina lo zoom **sopra la clip** (non su una traccia separata). Tutti e sei gli zoom sono lo stesso effetto con impostazioni di partenza diverse: da ognuno puoi arrivare a tutti gli altri cambiando i controlli nell'Inspector.
@@ -39,13 +47,13 @@ Trascina lo zoom **sopra la clip** (non su una traccia separata). Tutti e sei gl
 | **Zoom normale (%)** | Da dove parte (di solito 100) |
 | **Zoom massimo (%)** | Dove arriva. 110-120 discreto, 130-150 deciso, oltre 180 estremo |
 | **Inizia dopo (frame)** | Ritarda lo zoom rispetto all'inizio della clip, per farlo cadere sulla parola giusta |
-| **Durata zoom (frame)** | La velocità: 0 = istantaneo, 2-4 = scatto, 6-10 = social, 15+ = più morbido |
+| **Durata zoom (frame)** | La velocità: 0 = istantaneo, 2-4 = scatto, 6-10 = social, 15+ = più morbido (valori a 25 fps; nella versione 60fps moltiplica per 2,4) |
 | **Curva** | *Scatto* parte veloce e si ferma pulito (la più "social"); *Morbida* accelera e frena; *Accelera* parte lenta e finisce di colpo; *Lineare*; *Con rimbalzo* supera il valore e ci torna |
 | **Quantità rimbalzo** | Solo con la curva *Con rimbalzo*: 0,5 appena percepibile, 1,5 evidente, 3 cartoon |
 | **Tenuta prima del ritorno** | *Colpo* e *Battito*: quanti frame resta zoomato prima di tornare |
 | **Durata ritorno** | *Colpo*, *Battito* e *ritorno a fine clip*: velocità del ritorno |
 | **Numero di scalini** | *Zoom a scalini*: in quanti passi arriva allo zoom massimo |
-| **Frame tra scalini / battiti** | Il ritmo. A 25 fps: 12 frame circa mezzo secondo. Per andare a tempo con la musica: 60 × fps / BPM (a 120 BPM e 25 fps = 12,5) |
+| **Frame tra scalini / battiti** | Il ritmo. A 25 fps 12 frame sono circa mezzo secondo, a 60 fps ne servono 30. Per andare a tempo con la musica: 60 × fps / BPM (a 120 BPM: 12,5 a 25 fps, 30 a 60 fps) |
 | **Inclinazione (gradi)** | Ruota leggermente mentre zooma (2-4 gradi per un effetto dinamico) |
 | **Scossa all'arrivo** | Piccolo tremolio che si smorza appena lo zoom arriva. 0 = nessuno, 0,5 leggero, 1,5 forte |
 | **Sfocatura di movimento** | Mosso radiale durante lo zoom: rende lo scatto più fluido. 0 = nitido |
@@ -69,7 +77,7 @@ Per far seguire l'anello a un giocatore che si muove: in Inspector metti un keyf
 
 ## Transizioni
 
-Durate consigliate: **6-12 frame**.
+Durate consigliate: **6-12 frame** a 25 fps, **15-30 frame** a 60 fps. Le transizioni seguono la durata che dai sul taglio, quindi funzionano uguali a qualsiasi frame rate (sono incluse anche nelle edizioni 60fps per comodità).
 
 | Transizione | Uso |
 |---|---|

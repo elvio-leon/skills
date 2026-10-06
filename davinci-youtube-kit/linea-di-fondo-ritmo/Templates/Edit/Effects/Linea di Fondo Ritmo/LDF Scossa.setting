@@ -50,7 +50,7 @@
 							Expression = "0.4*Ctrl.Strength",
 						},
 						Speed = Input {
-							Expression = "Ctrl.Speed",
+							Expression = "Ctrl.Speed/1",
 						},
 						Randomness = Input { Value = 0.9, },
 						OverallStrength = Input {

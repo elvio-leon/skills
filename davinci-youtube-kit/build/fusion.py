@@ -254,3 +254,30 @@ LEN = "max(comp.RenderEnd-comp.RenderStart,1)"  # clip length in frames
 
 def clamp01(x: str) -> str:
     return f"min(max({x},0),1)"
+
+
+# Frame scale: 1 for the standard templates (timed for 25 fps), 60/25 for the
+# 60 fps editions. Set by build_all.py before each template is built.
+K = 1.0
+
+
+def F(n) -> str:
+    """A duration of ``n`` frames at 25 fps, expressed in frames of the target rate."""
+    return lua_val(round(n * K, 3))
+
+
+def scale_frame_controls(macro) -> None:
+    """Rescale every control measured in frames (defaults and slider range)."""
+    if K == 1:
+        return
+    for tool in macro.tools:
+        for key, c in list(tool.controls.items()):
+            if "frame" not in c.get("LINKS_Name", "").lower():
+                continue
+            c = tool.controls[key] = dict(c)
+            integer = c.get("INP_Integer")
+            for f in ("INP_Default", "INP_MaxScale", "INP_MaxAllowed"):
+                if f in c:
+                    c[f] = round(c[f] * K) if integer else c[f] * K
+            if isinstance(tool.inputs.get(key), (int, float)):
+                tool.inputs[key] = c["INP_Default"]

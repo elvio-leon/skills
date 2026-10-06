@@ -31,6 +31,14 @@ Per cambiare peso a un testo usa il campo **Stile** nell'Inspector: *Regular*, *
 
 Nella **Effects Library** cerca **`LDF`**: tutti gli elementi iniziano così e sono nella cartella *Linea di Fondo*.
 
+### Progetti a 60 fps
+
+Le durate di questo pack sono in frame e sono tarate su **25 fps**: in una timeline a 60 fps le animazioni andrebbero 2,4 volte più veloci. Per i progetti a 60 fps installa **`LineaDiFondo-60fps.drfx`**: contiene gli stessi elementi con tutti i tempi riscalati, così durano gli stessi secondi. Li trovi nella cartella *Linea di Fondo 60fps* e hanno il suffisso **60fps** nel nome (es. *LDF Titolo Editoriale 60fps*).
+
+- Nell'Inspector i valori in frame sono già convertiti (es. Durata uscita 15 → 36 frame). Se li modifichi, ragiona in frame a 60 fps: 60 frame = 1 secondo.
+- Puoi installare entrambe le versioni insieme e usare quella che corrisponde al frame rate della timeline.
+- A 30 fps usa la versione normale: le animazioni saranno solo leggermente più rapide (circa il 20%).
+
 ## 3. Come si usa
 
 Regola generale: **titoli** su una traccia sopra la clip, **transizioni** sul taglio, **effetti** sopra la clip. Le animazioni di entrata restano lente e uguali qualunque sia la durata; l'uscita è una dissolvenza negli ultimi frame (regolabile).
