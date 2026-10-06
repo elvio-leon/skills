@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -26,6 +27,8 @@ TIMEOUT_S = 60
 CLAUDE_MODELS = ("claude-haiku-4-5", "claude-sonnet-5-5")
 SONNET_MODEL = "claude-sonnet-5-5"
 SONNET_BETAS = ["server-side-fallback-2026-07-01"]
+# Alias -> ID esatto inviato all'API (versione fissata del modello)
+MODEL_IDS = {"claude-haiku-4-5": "claude-haiku-4-5-20251001"}
 
 PROVIDER_LABELS = {"claude": "Anthropic", "openai": "OpenAI", "gemini": "Google Gemini"}
 KEY_SETTINGS = {"claude": "anthropic_api_key", "openai": "openai_api_key", "gemini": "gemini_api_key"}
@@ -54,11 +57,13 @@ class _Raw:
     text: str
     input_tokens: int = 0
     output_tokens: int = 0
+    meta: dict | None = None      # dettagli della risposta (per la diagnostica)
 
 
 def cost_usd(model: str, input_tokens: int, output_tokens: int, prices: dict) -> float:
     """Costo in dollari dalla tabella [prezzi] (dollari per milione di token). 0 se il modello è ignoto."""
-    pair = (prices or {}).get(model)
+    prices = prices or {}
+    pair = prices.get(model) or prices.get(re.sub(r"-\d{8}$", "", model or ""))   # ID datato -> alias
     if not pair or len(pair) != 2:
         return 0.0
     return (input_tokens * float(pair[0]) + output_tokens * float(pair[1])) / 1_000_000
@@ -78,6 +83,50 @@ def _http_reason(message: str, who: str) -> str:
     if message.startswith("rate limit"):
         return f"limite di richieste {who} raggiunto"
     return message[:160]
+
+
+_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.S | re.I)
+
+
+def extract_json(text: str) -> dict:
+    """Oggetto JSON dalla risposta del modello. Accetta JSON puro, blocchi ```json ... ``` e testo
+    prima o dopo il JSON. Solleva ValueError se non trova un oggetto."""
+    text = (text or "").strip()
+    candidates = [m.group(1).strip() for m in _FENCE_RE.finditer(text)] + [text]
+    decoder = json.JSONDecoder()
+    for cand in candidates:
+        try:
+            obj = json.loads(cand)
+            if isinstance(obj, dict):
+                return obj
+        except ValueError:
+            pass
+        for i, ch in enumerate(cand):           # primo "{" da cui parte un oggetto JSON valido
+            if ch != "{":
+                continue
+            try:
+                obj, _ = decoder.raw_decode(cand, i)
+            except ValueError:
+                continue
+            if isinstance(obj, dict):
+                return obj
+    raise ValueError("nessun oggetto JSON nella risposta")
+
+
+def _api_detail(exc: Exception) -> str:
+    """Dettaglio di un errore dell'SDK Anthropic: codice HTTP, messaggio dell'API, request id."""
+    status = getattr(exc, "status_code", None)
+    body = getattr(exc, "body", None)
+    message = ""
+    if isinstance(body, dict):
+        err = body.get("error") if isinstance(body.get("error"), dict) else body
+        message = str(err.get("message") or "")
+    message = message or str(getattr(exc, "message", "") or exc)
+    request_id = getattr(exc, "request_id", None)
+    parts = [f"HTTP {status}" if status else type(exc).__name__, message[:250]]
+    if request_id:
+        parts.append(f"request id {request_id}")
+    return " | ".join(p for p in parts if p)
 
 
 class Classifier(ABC):
@@ -103,6 +152,7 @@ class Classifier(ABC):
     def classify(self, system: str, user: str) -> ClassifyResult:
         t0 = time.monotonic()
         tokens_in = tokens_out = 0
+        last_text = ""
         for attempt in (1, 2):
             try:
                 raw = self._call(system, user)
@@ -113,14 +163,16 @@ class Classifier(ABC):
                 raise
             tokens_in += raw.input_tokens
             tokens_out += raw.output_tokens
+            last_text = raw.text
             try:
-                data = validate_analysis(json.loads(raw.text))
+                data = validate_analysis(extract_json(raw.text))
             except (ValueError, ValidationError) as exc:     # JSON non valido o fuori schema
                 log.info("%s: risposta non valida (tentativo %d): %s", self.name, attempt,
                          type(exc).__name__)
                 continue
             return ClassifyResult(data, tokens_in, tokens_out, time.monotonic() - t0)
-        raise ClassifyError("risposta non valida", tokens_in, tokens_out, time.monotonic() - t0)
+        snippet = re.sub(r"\s+", " ", last_text)[:200]
+        raise ClassifyError(f"risposta non valida: «{snippet}»", tokens_in, tokens_out, time.monotonic() - t0)
 
     def _post(self, url: str, payload: dict, headers: dict) -> dict:
         client = self.client or default_client()
@@ -143,7 +195,8 @@ class ClaudeClassifier(Classifier):
 
     def __init__(self, api_key: str = "", model: str = "", client: HttpClient | None = None,
                  sdk_client=None):
-        super().__init__(api_key, model or CLAUDE_MODELS[0], client)
+        model = model or CLAUDE_MODELS[0]
+        super().__init__(api_key, MODEL_IDS.get(model, model), client)
         self._sdk = sdk_client
         self._lock = threading.Lock()
 
@@ -178,23 +231,27 @@ class ClaudeClassifier(Classifier):
             raise ClassifyError("libreria «anthropic» non installata") from None
         try:
             response = self._request(self._sdk_client(anthropic), system, user)
-        except anthropic.AuthenticationError:
-            raise ClassifyError("chiave Anthropic non valida") from None
-        except anthropic.PermissionDeniedError:
-            raise ClassifyError("accesso negato dalla chiave Anthropic") from None
-        except anthropic.NotFoundError:
-            raise ClassifyError("modello non trovato") from None
-        except anthropic.RateLimitError:
-            raise ClassifyError("limite di richieste Anthropic raggiunto") from None
+        except anthropic.AuthenticationError as exc:
+            raise ClassifyError(f"chiave Anthropic non valida ({_api_detail(exc)})") from None
+        except anthropic.PermissionDeniedError as exc:
+            raise ClassifyError(f"accesso negato dalla chiave Anthropic ({_api_detail(exc)})") from None
+        except anthropic.NotFoundError as exc:
+            raise ClassifyError(f"modello «{self.model}» non trovato ({_api_detail(exc)})") from None
+        except anthropic.RateLimitError as exc:
+            raise ClassifyError(f"limite di richieste Anthropic raggiunto ({_api_detail(exc)})") from None
         except anthropic.BadRequestError as exc:
-            detail = str(getattr(exc, "message", "") or "")[:120]
-            raise ClassifyError("richiesta rifiutata da Anthropic" + (f": {detail}" if detail else "")) from None
+            raise ClassifyError(f"richiesta rifiutata da Anthropic ({_api_detail(exc)})") from None
         except anthropic.APITimeoutError:
-            raise ClassifyError("timeout") from None
+            raise ClassifyError(f"timeout dopo {TIMEOUT_S}s") from None
         except anthropic.APIStatusError as exc:
-            raise ClassifyError(f"errore dell'API Anthropic (HTTP {getattr(exc, 'status_code', '?')})") from None
-        except anthropic.APIConnectionError:
-            raise ClassifyError("connessione ad Anthropic non riuscita") from None
+            raise ClassifyError(f"errore dell'API Anthropic ({_api_detail(exc)})") from None
+        except anthropic.APIConnectionError as exc:
+            cause = exc.__cause__ or exc.__context__
+            detail = f"{type(cause).__name__}: {cause}" if cause else str(exc)
+            raise ClassifyError(f"connessione ad Anthropic non riuscita ({detail[:250]})") from None
+        except Exception as exc:  # noqa: BLE001 - es. librerie mancanti nell'app impacchettata
+            log.exception("errore imprevisto nella chiamata ad Anthropic")
+            raise ClassifyError(f"errore interno: {type(exc).__name__}: {str(exc)[:250]}") from None
         usage = getattr(response, "usage", None)
         tokens = (int(getattr(usage, "input_tokens", 0) or 0), int(getattr(usage, "output_tokens", 0) or 0))
         stop = getattr(response, "stop_reason", None)
@@ -205,8 +262,11 @@ class ClaudeClassifier(Classifier):
         # il primo blocco "text": salta i blocchi di pensiero e di fallback
         text = next((b.text for b in response.content if getattr(b, "type", "") == "text"), None)
         if not text:
-            raise ClassifyError("risposta vuota", *tokens)
-        return _Raw(text, *tokens)
+            kinds = ", ".join(getattr(b, "type", "?") for b in response.content) or "nessuno"
+            raise ClassifyError(f"risposta vuota (stop_reason {stop}, blocchi: {kinds})", *tokens)
+        meta = {"id": getattr(response, "id", ""), "model": getattr(response, "model", ""),
+                "stop_reason": stop, "input_tokens": tokens[0], "output_tokens": tokens[1]}
+        return _Raw(text, *tokens, meta=meta)
 
 
 # --- OpenAI (HTTP) -------------------------------------------------------------------

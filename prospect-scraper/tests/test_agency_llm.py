@@ -109,7 +109,7 @@ def test_claude_haiku_request_shape_and_parsing():
     assert res.data["is_agency"] == "si" and (res.input_tokens, res.output_tokens) == (1200, 300)
     kind, kw = sdk.calls[0]
     assert kind == "messages"
-    assert kw == {"model": "claude-haiku-4-5", "max_tokens": 2000, "system": "SISTEMA",
+    assert kw == {"model": "claude-haiku-4-5-20251001", "max_tokens": 2000, "system": "SISTEMA",
                   "messages": [{"role": "user", "content": "UTENTE"}],
                   "output_config": {"format": {"type": "json_schema", "schema": SCHEMA}}}
     assert "thinking" not in kw and "temperature" not in kw
@@ -146,11 +146,11 @@ def test_claude_stop_reasons(model):
 @pytest.mark.parametrize("error, reason", [
     (api_error(anthropic.AuthenticationError, 401), "chiave Anthropic non valida"),
     (api_error(anthropic.PermissionDeniedError, 403), "accesso negato"),
-    (api_error(anthropic.NotFoundError, 404), "modello non trovato"),
+    (api_error(anthropic.NotFoundError, 404), r"modello .* non trovato"),
     (api_error(anthropic.RateLimitError, 429), "limite di richieste Anthropic raggiunto"),
     (api_error(anthropic.BadRequestError, 400), "richiesta rifiutata"),
     (anthropic.APITimeoutError(httpx.Request("POST", "https://api.anthropic.com")), "timeout"),
-    (api_error(anthropic.InternalServerError, 500), r"errore dell'API Anthropic \(HTTP 500\)"),
+    (api_error(anthropic.InternalServerError, 500), r"errore dell'API Anthropic \(HTTP 500"),
     (anthropic.APIConnectionError(request=httpx.Request("POST", "https://api.anthropic.com")), "connessione"),
 ])
 def test_claude_error_mapping(error, reason):
@@ -213,7 +213,7 @@ def test_claude_with_the_real_sdk_against_a_local_server(model, beta):
         httpd.server_close()
     assert res.data["is_agency"] == "si" and (res.input_tokens, res.output_tokens) == (10, 5)
     seen = _Echo.seen[0]
-    assert seen["key"] == "sk-test" and seen["body"]["model"] == model and seen["body"]["system"] == "sistema"
+    assert seen["key"] == "sk-test" and seen["body"]["model"] == llm.MODEL_IDS.get(model, model) and seen["body"]["system"] == "sistema"
     assert seen["body"]["output_config"]["format"]["schema"] == SCHEMA
     if beta:
         assert seen["body"]["fallbacks"] == "default" and seen["body"]["output_config"]["effort"] == "low"
@@ -336,13 +336,13 @@ def test_cost_and_registry(tmp_path, monkeypatch):
                 "PS_OPENAI_API_KEY", "OPENAI_API_KEY", "PS_GEMINI_API_KEY", "GEMINI_API_KEY"):
         monkeypatch.delenv(var, raising=False)
     default = get_classifier()
-    assert default.name == "claude" and default.model == "claude-haiku-4-5" and not default.is_configured()
+    assert default.name == "claude" and default.model == "claude-haiku-4-5-20251001" and not default.is_configured()
     from config import user_settings
     user_settings.save({"claude_model": "claude-sonnet-5-5", "anthropic_api_key": "k", "openai_api_key": "o"})
     assert get_classifier("claude").model == "claude-sonnet-5-5" and get_classifier("claude").is_configured()
-    assert get_classifier("claude", model="claude-haiku-4-5").model == "claude-haiku-4-5"
+    assert get_classifier("claude", model="claude-haiku-4-5").model == "claude-haiku-4-5-20251001"
     user_settings.save({"claude_model": "modello-inventato"})
-    assert get_classifier("claude").model == "claude-haiku-4-5"               # valore non ammesso: Haiku
+    assert get_classifier("claude").model == "claude-haiku-4-5-20251001"               # valore non ammesso: Haiku
     g = get_classifier("openai")
     assert g.name == "openai" and g.model == "gpt-5.4-mini" and g.is_configured()
     assert get_classifier("gemini").model == "gemini-2.5-flash" and not get_classifier("gemini").is_configured()

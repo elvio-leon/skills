@@ -250,6 +250,31 @@ class Pipeline:
             result.log_text = capture.text()
         return result
 
+    def requalify(self, prospect_ids: list[int], run_id: int | None, llm_provider: str | None = None,
+                  llm_model: str | None = None) -> RunResult:
+        """Rilancia solo la qualifica AI su prospect già trovati e arricchiti (nessuna nuova ricerca).
+        Le pagine dei siti vengono riscaricate; i risultati sostituiscono quelli precedenti."""
+        result = RunResult(run_id=run_id, prospect_ids=list(prospect_ids))
+        self.last_enrichment = {}
+        t0 = time.monotonic()
+        with RunLogCapture() as capture:
+            try:
+                prospects = self.db.list_prospects(ids=list(prospect_ids))
+                params = RunParams(category=AGENCY_CATEGORY, search_source=SOURCE_AGENCY,
+                                   llm_provider=llm_provider, llm_model=llm_model)
+                result.n_unique = len(prospects)
+                if self._qualify(prospects, params, result):
+                    self.msg(f"Qualifica completata in {time.monotonic() - t0:.0f}s: "
+                             + _qualify_summary(result), "success")
+                else:
+                    self.msg("Qualifica non eseguita", "warning")
+            except Exception as exc:  # noqa: BLE001
+                log.exception("riqualifica interrotta")
+                result.fatal_error = f"{type(exc).__name__}: {exc}"
+                self.msg(f"Errore imprevisto: {result.fatal_error}", "error")
+            result.log_text = capture.text()
+        return result
+
     # ------------------------------------------------------------------------
     def _run(self, params: RunParams, result: RunResult) -> None:
         t0 = time.monotonic()
@@ -446,7 +471,8 @@ class Pipeline:
                     q = fut.result()
                 except Exception as exc:  # noqa: BLE001 - qualify_site non dovrebbe sollevare
                     log.exception("qualifica interrotta per %s", p.website)
-                    q = qqualifier.failed_qualification(f"errore interno: {type(exc).__name__}", classifier)
+                    q = qqualifier.failed_qualification(f"errore interno: {type(exc).__name__}: {exc}",
+                                                        classifier)
                 self.db.save_qualification(p.id, result.run_id, q)
                 result.llm_cost_usd += q.cost_usd
                 if q.status == "ok":

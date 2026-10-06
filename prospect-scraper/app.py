@@ -24,6 +24,7 @@ from exporters.export import (prospects_to_dataframe, slugify, to_csv_bytes, to_
                               to_xlsx_multi_bytes)
 from qualify import config as qconfig
 from qualify import llm as qllm
+from qualify.diagnose import run_diagnosis
 from scrapers import web_search
 from scrapers.search import CATEGORY_PROVIDERS, PROVIDERS, available_providers, default_provider_names
 
@@ -31,7 +32,7 @@ CATEGORIES = list(CATEGORY_PROVIDERS)
 # colonne visibili in tabella (l'export contiene tutte le colonne)
 TABLE_COLUMNS = ["Company", "Website", "Country", "City", "Category", "Phone", "Email",
                  "LinkedIn", "Instagram", "Source", "Status", "Error"]
-AGENCY_TABLE_COLUMNS = ["Score", "Company", "Website", "Is agency", "SEO level", "Servizi ricorrenti",
+AGENCY_TABLE_COLUMNS = ["Score", "Motivo", "Company", "Website", "Is agency", "SEO level", "Servizi ricorrenti",
                         "Size", "Blog", "Servizi", "Verticali", "Note", "Email", "Phone", "LinkedIn",
                         "Instagram", "Country", "City", "Status", "Error"]
 SRC_LOCAL, SRC_WEB, SRC_AGENCY = "Local (OSM + Wikidata)", "Web Search", "Agenzie"
@@ -230,6 +231,16 @@ with st.sidebar:
                 st.success("Impostazioni salvate.")
             ai_ok = qllm.get_classifier(ai_provider, model=ai_model).is_configured()
             st.write(f"{AI_LABELS[ai_choice]}: " + ("✅ configurato" if ai_ok else "⚠️ chiave non configurata"))
+            if st.button("Prova connessione AI", key="ag_test_ai",
+                         help="Fa UNA chiamata di prova (costo < 0,01 $) con la chiave del campo qui sopra "
+                              "e mostra la risposta grezza o l'errore completo."):
+                with st.spinner("Chiamata di prova in corso..."):
+                    report = run_diagnosis(qllm.CLASSIFIERS[ai_provider](ai_secret, ai_model))
+                if report.get("esito") == "OK":
+                    st.success("Connessione OK: il modello ha risposto con un JSON valido.")
+                else:
+                    st.error(f"Errore: {report.get('errore') or report.get('esito')}")
+                st.json(report, expanded=True)
             st.caption(AI_HELP[ai_provider])
             price = scoring_cfg["prezzi"].get(ai_model)
             if price:
@@ -338,6 +349,7 @@ view = st.segmented_control("Mostra", [VIEW_LAST, VIEW_SAVED, VIEW_ALL],
 
 file_stem = "prospects"
 agency_view = False   # True se i prospect mostrati vengono da una ricerca Agenzie (con qualifica)
+agency_run_id = None  # id della ricerca Agenzie mostrata (per rilanciare la qualifica)
 if view == VIEW_ALL:
     prospects = db.list_prospects()
     file_stem = "prospects-tutti"
@@ -348,6 +360,7 @@ elif view == VIEW_SAVED:
     col_run, col_all = st.columns([3, 1], vertical_alignment="bottom")
     chosen = col_run.selectbox("Ricerca", runs, format_func=run_label)
     agency_view = chosen.get("category") == AGENCY_CATEGORY
+    agency_run_id = chosen["id"] if agency_view else None
     prospects = db.list_prospects(ids=db.run_prospect_ids(chosen["id"]))
     file_stem = slugify(run_title(chosen))
     def all_runs_xlsx() -> bytes:
@@ -373,6 +386,7 @@ elif view == VIEW_SAVED:
 else:  # ultima ricerca: quella appena fatta o, ad app appena aperta, l'ultima salvata
     last = runs[0] if runs else None
     agency_view = bool(last and last.get("category") == AGENCY_CATEGORY)
+    agency_run_id = last["id"] if agency_view else None
     if ss.run_ids is not None:
         prospects = db.list_prospects(ids=ss.run_ids)
     else:
@@ -395,7 +409,57 @@ if agency_view:
     df.loc[failed, "Status"] = "⚠️ failed"
     df.loc[failed, "Error"] = "qualifica: " + df.loc[failed, "Qualifica errore"]
     df.loc[excluded, "Status"] = "🚫 esclusa"
+    # "Motivo": perché manca lo score, ben visibile accanto allo score
+    not_qualified = df["Qualifica status"] == ""
+    df["Motivo"] = ""
+    df.loc[failed, "Motivo"] = "qualifica fallita: " + df.loc[failed, "Qualifica errore"]
+    df.loc[excluded, "Motivo"] = "esclusa: non è un'agenzia"
+    df.loc[not_qualified, "Motivo"] = "non qualificata" + df.loc[not_qualified, "_Error"].map(
+        lambda e: f" (sito: {e})" if e else "")
     df = df.sort_values("Score", ascending=False, na_position="last", kind="stable")   # Score decrescente
+
+    if ss.get("rq_message"):
+        level, text = ss.pop("rq_message")
+        (st.success if level == "success" else st.warning)(text)
+    n_failed = int(failed.sum())
+    if n_failed:
+        reasons = df.loc[failed, "Qualifica errore"].value_counts()
+        lines = "\n".join(f"- {reason} — **{count}**" for reason, count in reasons.head(4).items())
+        st.error(f"Qualifica fallita su **{n_failed} di {len(df)}** agenzie. Motivi:\n{lines}\n\n"
+                 "Usa «Prova connessione AI» in «Impostazioni Agenzie» per verificare chiave e credito, "
+                 "poi rilancia la qualifica qui sotto.")
+    with st.expander("Rilancia la qualifica AI su questa ricerca", expanded=bool(n_failed)):
+        st.caption("Rifà solo l'analisi AI e lo score, senza una nuova ricerca: riscarica le pagine dei siti "
+                   "e usa il modello e la chiave salvati in «Impostazioni Agenzie».")
+        rq_scope = st.radio("Agenzie da rianalizzare", ["Solo quelle senza score (fallite)", "Tutte"],
+                            horizontal=True, key="rq_scope")
+        if st.button("Rilancia qualifica", key="rq_run", type="primary"):
+            target = df[failed] if rq_scope.startswith("Solo") else df
+            ids = [int(i) for i in target["ID"].dropna()]
+            if not ids:
+                st.info("Nessuna agenzia da rianalizzare.")
+            else:
+                rq_messages: list[tuple[str, str]] = []
+                with st.status("Qualifica in corso...", expanded=True) as rq_status:
+                    rq_bar = st.empty()
+
+                    def rq_msg(text: str, level: str = "info") -> None:
+                        rq_messages.append((level, text))
+                        if level in ("warning", "error"):
+                            st.warning(text)
+                        elif level != "success":
+                            st.write(text)
+
+                    def rq_progress(done: int, total: int, label: str = "") -> None:
+                        rq_bar.progress(done / total, text=f"{done}/{total} · {label[:60]}")
+
+                    rq_result = Pipeline(db, on_message=rq_msg, on_progress=rq_progress).requalify(
+                        ids, agency_run_id)
+                final = next((t for lvl, t in reversed(rq_messages) if lvl == "success"), None)
+                ss.rq_message = ("success", final) if final else (
+                    "warning", "; ".join(t for lvl, t in rq_messages if lvl in ("warning", "error"))
+                    or rq_result.fatal_error or "Qualifica non eseguita")
+                st.rerun()
 
 c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 2])
 query = c1.text_input("Cerca nella tabella", placeholder="nome, email, città, dominio...")
@@ -450,7 +514,8 @@ event = st.dataframe(
             "Size": st.column_config.TextColumn("Team", width="small"),
             "Servizi": st.column_config.TextColumn("Servizi", width="medium"),
             "Verticali": st.column_config.TextColumn("Verticali", width="medium"),
-            "Note": st.column_config.TextColumn("Nota", width="large")} if agency_view else {}),
+            "Note": st.column_config.TextColumn("Nota", width="large"),
+            "Motivo": st.column_config.TextColumn("Motivo", width="large")} if agency_view else {}),
         "Website": link("Website", display_text=r"https?://(?:www\.)?([^/]+)"),
         "LinkedIn": link("LinkedIn", display_text=r"https?://[^/]+/(?:company/|in/)?([^/?]+)"),
         "Instagram": link("Instagram", display_text=r"https?://[^/]+/([^/?]+)"),

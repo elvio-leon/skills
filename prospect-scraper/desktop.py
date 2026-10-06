@@ -151,6 +151,17 @@ def main(argv: list[str]) -> int:
         print(f"IMPORT OK anthropic {anthropic.__version__}", flush=True)
         return 0
 
+    if "--diagnose-ai" in argv:  # una chiamata di prova al modello configurato (chiave dalle impostazioni)
+        import json
+
+        os.environ.setdefault("PS_HOME", str(data_home()))
+        from qualify import llm
+        from qualify.diagnose import run_diagnosis
+
+        print(json.dumps(run_diagnosis(llm.get_classifier()), ensure_ascii=False, indent=2,
+                         default=str), flush=True)
+        return 0
+
     if "--server" in argv:
         i = argv.index("--server")
         run_server(int(argv[i + 1]), int(argv[i + 2]))

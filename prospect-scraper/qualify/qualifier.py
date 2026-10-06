@@ -50,7 +50,8 @@ def classify_and_score(content: SiteContent, classifier: Classifier, scoring: di
         return q
     except Exception as exc:  # noqa: BLE001
         log.exception("errore imprevisto nella classificazione")
-        return failed_qualification(f"errore interno: {type(exc).__name__}", classifier, content)
+        return failed_qualification(f"errore interno: {type(exc).__name__}: {str(exc)[:250]}",
+                                    classifier, content)
     try:
         data = result.data
         score, breakdown = compute_score(data, content.blog.status, scoring)
@@ -72,7 +73,8 @@ def classify_and_score(content: SiteContent, classifier: Classifier, scoring: di
         return q
     except Exception as exc:  # noqa: BLE001
         log.exception("errore imprevisto nel calcolo dello score")
-        return failed_qualification(f"errore interno: {type(exc).__name__}", classifier, content)
+        return failed_qualification(f"errore interno nello score: {type(exc).__name__}: {str(exc)[:250]}",
+                                    classifier, content)
 
 
 def qualify_site(prospect: Prospect, client: HttpClient, classifier: Classifier, scoring: dict,

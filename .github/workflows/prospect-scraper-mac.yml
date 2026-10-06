@@ -46,6 +46,10 @@ jobs:
         run: |
           APP="dist/Prospect Scraper.app/Contents/MacOS/Prospect Scraper"
           "$APP" --check-imports
+          # chiamata reale ad Anthropic dall'app impacchettata con una chiave finta: deve arrivare un 401 vero
+          ANTHROPIC_API_KEY=sk-ant-api03-chiave-finta-di-test-0000 PS_HOME="$RUNNER_TEMP/ps-diag" \
+            "$APP" --diagnose-ai | tee diag.json
+          grep -q "HTTP 401" diag.json
           PS_HOME="$RUNNER_TEMP/ps-home" "$APP" --server 47821 $$ > server.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:47821/_stcore/health && break; sleep 1; done
           echo
