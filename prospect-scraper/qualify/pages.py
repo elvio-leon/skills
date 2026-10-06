@@ -76,8 +76,12 @@ def _depth(url: str) -> int:
     return len([s for s in urlsplit(url).path.split("/") if s])
 
 
-def select_pages(links: list[tuple[str, str]], site_domain: str, home_url: str) -> dict[str, str]:
-    """Un URL per gruppo (max 3), dal link meno profondo che contiene una parola chiave."""
+def select_pages(links: list[tuple[str, str]], site_domain: str, home_url: str,
+                 groups: dict[str, tuple[str, ...]] | None = None,
+                 max_pages: int = MAX_EXTRA_PAGES) -> dict[str, str]:
+    """Un URL per gruppo (max ``max_pages``), dal link meno profondo che contiene una parola chiave.
+    ``groups``: gruppi di parole chiave (default quelli della qualifica)."""
+    groups = groups or GROUPS
     home_key = _canonical(home_url)
     candidates: list[tuple[str, str]] = []
     for url, anchor in links:
@@ -94,8 +98,8 @@ def select_pages(links: list[tuple[str, str]], site_domain: str, home_url: str) 
         candidates.append((url, anchor))
     chosen: dict[str, str] = {}
     used: set[str] = set()
-    for kind, keywords in GROUPS.items():
-        if len(chosen) >= MAX_EXTRA_PAGES:
+    for kind, keywords in groups.items():
+        if len(chosen) >= max_pages:
             break
         hits = [(_depth(u), i, u) for i, (u, a) in enumerate(candidates)
                 if _canonical(u) not in used and _matches(keywords, u, a)]

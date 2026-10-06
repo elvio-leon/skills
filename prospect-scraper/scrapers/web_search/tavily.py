@@ -48,3 +48,14 @@ class TavilyProvider(WebSearchProvider):
                                     snippet=(item.get("content") or "").strip(), source=self.name,
                                     extra={"source_url": url, "rank": page * self.per_call + i}))
         return out
+
+    def search_profiles(self, query: str, count: int = 5, domain: str = "linkedin.com") -> list[SearchResult]:
+        # qui i domini esclusi dalla Web Search (fra cui linkedin.com) non vanno inviati
+        payload = {"query": query, "max_results": max(1, min(count, self.per_call)),
+                   "search_depth": "basic", "include_answer": False, "include_raw_content": False,
+                   "include_images": False, "include_domains": [domain]}
+        data = self.client.post_json(settings.TAVILY_API_URL, payload,
+                                     headers={"Authorization": f"Bearer {self.api_key}"})
+        return [SearchResult(title=(item.get("title") or "").strip(), url=(item.get("url") or "").strip(),
+                             snippet="", source=self.name, extra={"rank": i})
+                for i, item in enumerate((data or {}).get("results") or [], start=1) if item.get("url")]

@@ -107,6 +107,8 @@ def _bundle_imports() -> None:  # pragma: no cover - mai eseguita
     import anthropic  # noqa: F401  (qualifica agenzie con Claude)
     import qualify.blog, qualify.config, qualify.llm, qualify.models, qualify.pages  # noqa: F401,E401
     import qualify.prompt, qualify.qualifier, qualify.schema, qualify.scoring  # noqa: F401,E401
+    import decision_makers.email, decision_makers.extract, decision_makers.finder  # noqa: F401,E401
+    import decision_makers.linkedin, decision_makers.models  # noqa: F401,E401
 
 
 # --- processo principale: finestra ----------------------------------------------
@@ -146,6 +148,7 @@ def main(argv: list[str]) -> int:
     if "--check-imports" in argv:  # usato dalla build: le librerie caricate solo al bisogno ci sono?
         import anthropic
 
+        import decision_makers.finder  # noqa: F401
         import qualify.llm  # noqa: F401
         import qualify.qualifier  # noqa: F401
         print(f"IMPORT OK anthropic {anthropic.__version__}", flush=True)

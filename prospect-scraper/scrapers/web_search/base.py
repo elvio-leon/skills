@@ -47,3 +47,8 @@ class WebSearchProvider(ABC):
     @abstractmethod
     def search_page(self, query: str, count: int, page: int, country_code: str) -> list[SearchResult]:
         """Esattamente UNA chiamata API. ``page`` parte da 0. Solleva in caso di errore."""
+
+    def search_profiles(self, query: str, count: int = 5, domain: str = "linkedin.com") -> list[SearchResult]:
+        """UNA chiamata API per cercare profili su ``domain`` (la query contiene già ``site:``).
+        Si usano solo URL e titoli dei risultati: le pagine non vengono mai aperte."""
+        return self.search_page(query, count, 0, "")

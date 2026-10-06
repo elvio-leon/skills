@@ -61,10 +61,10 @@ class FakeClassifier(Classifier):
     def is_configured(self) -> bool:
         return self.configured
 
-    def _call(self, system, user) -> _Raw:  # non usato: classify è ridefinito
+    def _call(self, system, user, schema=None) -> _Raw:  # non usato: classify è ridefinito
         raise NotImplementedError
 
-    def classify(self, system: str, user: str) -> ClassifyResult:
+    def classify(self, system: str, user: str, schema=None, validator=None) -> ClassifyResult:
         self.calls.append((system, user))
         domain = user.splitlines()[0].replace("Dominio:", "").strip()
         behavior = self.behaviors.get(domain, analysis())

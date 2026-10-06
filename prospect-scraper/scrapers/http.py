@@ -18,6 +18,14 @@ from utils.logging import get_logger
 
 log = get_logger("http")
 
+# Siti che il programma non apre MAI (si usano solo URL e titoli dei risultati di ricerca).
+NEVER_OPEN = ("linkedin.com",)
+
+
+def never_open(url: str) -> bool:
+    host = (urlsplit(url if "//" in url else f"//{url}").hostname or "").lower().rstrip(".")
+    return any(host == d or host.endswith("." + d) for d in NEVER_OPEN)
+
 
 class FetchError(Exception):
     """Errore di rete/HTTP con messaggio leggibile per l'utente."""
@@ -207,6 +215,8 @@ class HttpClient:
         headers: dict | None = None,
         timeout: float | None = None,
     ) -> Page:
+        if never_open(url):
+            raise FetchError("le pagine linkedin.com non vengono mai aperte")
         if check_robots and not self.robots_allowed(url):
             raise FetchError("bloccato da robots.txt")
         self.throttle(url, min_interval)
@@ -234,6 +244,8 @@ class HttpClient:
                  min_interval: float | None = None, timeout: float | None = None,
                  headers: dict | None = None):
         """Chiamata ad API JSON (GET, o POST se ``data`` è valorizzato)."""
+        if never_open(url):
+            raise FetchError("le pagine linkedin.com non vengono mai aperte")
         self.throttle(url, min_interval)
         log.debug("API %s %s", url, params or "")
         if data is not None:

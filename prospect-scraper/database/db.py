@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from config import settings
+from decision_makers.models import OUTREACH_STATES, DecisionMaker
 from models.prospect import Prospect
 from qualify.models import Qualification
 from utils.deduplication import dedup_key
@@ -195,3 +196,36 @@ class Database:
                 f"SELECT * FROM agency_qualifications WHERE prospect_id IN ({','.join('?' * len(ids))})",
                 list(ids)).fetchall()
         return {r["prospect_id"]: Qualification.from_row(dict(r)) for r in rows}
+
+    # --- decisori e outreach ------------------------------------------------------
+    def save_decision_maker(self, prospect_id: int, dm: DecisionMaker) -> None:
+        row = {**dm.to_row(), "prospect_id": prospect_id}
+        cols = ", ".join(row)
+        with self.connect() as conn:
+            conn.execute(f"INSERT OR REPLACE INTO decision_makers ({cols}) "
+                         f"VALUES ({', '.join(':' + c for c in row)})", row)
+
+    def get_decision_makers(self, ids: list[int]) -> dict[int, DecisionMaker]:
+        if not ids:
+            return {}
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM decision_makers WHERE prospect_id IN ({','.join('?' * len(ids))})",
+                list(ids)).fetchall()
+        return {r["prospect_id"]: DecisionMaker.from_row(dict(r)) for r in rows}
+
+    def set_outreach(self, prospect_id: int, stato: str) -> None:
+        if stato not in OUTREACH_STATES:
+            raise ValueError(f"stato outreach non valido: {stato}")
+        with self.connect() as conn:
+            conn.execute("INSERT OR REPLACE INTO outreach (prospect_id, stato, updated_at) VALUES (?, ?, ?)",
+                         (prospect_id, stato, now_iso()))
+
+    def get_outreach(self, ids: list[int]) -> dict[int, str]:
+        if not ids:
+            return {}
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"SELECT prospect_id, stato FROM outreach WHERE prospect_id IN ({','.join('?' * len(ids))})",
+                list(ids)).fetchall()
+        return {r["prospect_id"]: r["stato"] for r in rows}

@@ -89,3 +89,37 @@ CREATE TABLE IF NOT EXISTS agency_qualifications (
     latency_s          REAL,
     qualified_at       TEXT
 );
+
+-- Decisore delle agenzie (pulsante "Trova contatti"): una riga per prospect.
+CREATE TABLE IF NOT EXISTS decision_makers (
+    prospect_id         INTEGER PRIMARY KEY REFERENCES prospects(id) ON DELETE CASCADE,
+    status              TEXT,                -- trovato | non_trovato | fallito
+    error               TEXT,
+    nome                TEXT,
+    cognome             TEXT,
+    ruolo               TEXT,
+    source_url          TEXT,
+    evidence            TEXT,
+    linkedin_url        TEXT,
+    linkedin_title      TEXT,
+    linkedin_confidence TEXT,                -- alta | media | non trovato | non cercato: motivo
+    email               TEXT,
+    email_source        TEXT,                -- sito | ipotesi
+    email_verified      INTEGER,
+    pages_used          TEXT,
+    llm_provider        TEXT,
+    llm_model           TEXT,
+    input_tokens        INTEGER,
+    output_tokens       INTEGER,
+    cost_usd            REAL,
+    latency_s           REAL,
+    web_calls           INTEGER,
+    found_at            TEXT
+);
+
+-- Stato del contatto commerciale, modificabile dalla tabella (da contattare, contattato, ...).
+CREATE TABLE IF NOT EXISTS outreach (
+    prospect_id INTEGER PRIMARY KEY REFERENCES prospects(id) ON DELETE CASCADE,
+    stato       TEXT NOT NULL,
+    updated_at  TEXT
+);

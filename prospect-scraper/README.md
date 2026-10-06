@@ -218,6 +218,31 @@ Le qualifiche fallite (sito non raggiungibile, errore dell'AI…) compaiono come
 richiedono JavaScript hanno poco testo e danno più "dubbio"; la dimensione del team è spesso "non determinabile";
 il blog si rileva solo se è linkato dalla home.
 
+### Contatti dei decisori («Trova contatti»)
+
+Nei risultati di una ricerca Agenzie (anche vecchia, da *Ricerche salvate*: nessuna nuova ricerca) il riquadro
+**👤 Trova contatti dei decisori** lavora sulle righe spuntate (✓) oppure su tutte quelle con **score ≥ 50**,
+solo per le agenzie con *Agenzia = si*. Quelle già cercate vengono saltate (spunta *Ricalcola* per rifarle).
+Per ogni agenzia:
+
+1. **Decisore** — riscarica home (footer compreso), chi siamo, team e contatti (robots.txt e pausa per sito
+   come sempre) e l'AI scelta in *Impostazioni Agenzie* estrae titolare / founder / CEO / managing director
+   (poi soci e partner). Se ce n'è più di uno vince il ruolo più alto. Il nome viene accettato **solo se nome e
+   cognome compaiono davvero nel testo del sito**; altrimenti "non trovato" (niente nomi inventati).
+2. **LinkedIn** — una ricerca Web Search (Tavily, 1 credito): `"Nome Cognome" "Agenzia" site:linkedin.com/in`.
+   Si usano **solo URL e titolo dei risultati**: le pagine linkedin.com non vengono mai aperte (il client HTTP
+   le rifiuta). Si prende il primo profilo `/in/` il cui titolo contiene il cognome; confidenza **alta** se il
+   titolo contiene anche il nome dell'agenzia o il ruolo, altrimenti **media**.
+3. **Email** — prima l'email nominativa trovata sul sito (es. `mario.rossi@`, `m.rossi@`, `mario@` sul dominio
+   dell'agenzia) → *sito (verificata)*; altrimenti l'ipotesi `nome@dominio` → *ipotesi – da verificare*.
+   Nessuna verifica SMTP, nessun servizio esterno.
+
+Colonne nuove (tabella ed export): **Decisore, Ruolo, LinkedIn decisore, Confidenza LinkedIn, Email decisore,
+Fonte email, Stato outreach**; nell'export anche pagina e citazione da cui viene il decisore e il titolo del
+risultato LinkedIn. **Stato outreach** (da contattare / contattato / risposto / call / no) si cambia direttamente
+nella tabella, viene salvato subito nel database e si può filtrare. Costo indicativo con Haiku 4.5: ≈ 0,007 $ di
+AI + 1 ricerca web per agenzia.
+
 ## Configurazione
 
 Tutti i parametri sono in `config/settings.py` e si possono sovrascrivere con variabili
@@ -291,6 +316,7 @@ prospect-scraper/
 ├── config/user_settings.py   impostazioni dell'utente (chiavi API) in user_settings.json
 ├── config/agency_blacklist.txt, agency_scoring.toml   valori predefiniti di blacklist e pesi (Agenzie)
 ├── qualify/                  Agenzie: pagine, blog, schema/prompt/provider AI (Claude, OpenAI, Gemini), score
+├── decision_makers/          Agenzie: decisore dal sito (AI + verifica), LinkedIn da risultati di ricerca, email
 ├── database/db.py, schema.sql
 ├── scrapers/
 │   ├── http.py               client HTTP: rate limit, retry, robots.txt, errori

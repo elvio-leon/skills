@@ -11,6 +11,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from decision_makers.models import (EMAIL_GUESS, EMAIL_SITE, OUTREACH_DEFAULT, STATUS_FAILED,
+                                    STATUS_NOT_FOUND, DecisionMaker)
 from models.prospect import Prospect
 from qualify.models import Qualification
 
@@ -27,7 +29,8 @@ COLUMNS: list[tuple[str, str]] = [
     ("first_seen", "First seen"), ("last_seen", "Last seen"), ("id", "ID"),
 ]
 LABELS = dict(COLUMNS)
-URL_LABELS = {"Website", "LinkedIn", "Instagram", "Facebook", "YouTube", "X / Twitter", "Source URL"}
+URL_LABELS = {"Website", "LinkedIn", "Instagram", "Facebook", "YouTube", "X / Twitter", "Source URL",
+              "LinkedIn decisore", "Pagina decisore"}
 
 _PHONE_LIKE = re.compile(r"^\+[\d\s().;/-]+$")
 
@@ -58,8 +61,38 @@ QUAL_BACK: list[tuple[str, object]] = [
 ]
 
 
+
+# Colonne del decisore (pulsante «Trova contatti»): le prime vanno dopo quelle della qualifica.
+def _decisore(dm: DecisionMaker) -> str:
+    if dm.status == STATUS_NOT_FOUND:
+        return "non trovato"
+    if dm.status == STATUS_FAILED:
+        return f"errore: {dm.error}"
+    return dm.full_name
+
+
+EMAIL_SOURCE_LABELS = {EMAIL_SITE: "sito (verificata)", EMAIL_GUESS: "ipotesi – da verificare"}
+
+DM_FRONT: list[tuple[str, object]] = [
+    ("Decisore", _decisore), ("Ruolo", lambda d: d.ruolo),
+    ("LinkedIn decisore", lambda d: d.linkedin_url),
+    ("Confidenza LinkedIn", lambda d: d.linkedin_confidence if d.status != STATUS_FAILED else ""),
+    ("Email decisore", lambda d: d.email),
+    ("Fonte email", lambda d: EMAIL_SOURCE_LABELS.get(d.email_source, d.email_source)),
+]
+DM_BACK: list[tuple[str, object]] = [
+    ("Pagina decisore", lambda d: d.source_url), ("Prova decisore", lambda d: d.evidence),
+    ("Titolo risultato LinkedIn", lambda d: d.linkedin_title),
+    ("Contatti cercati il", lambda d: d.found_at),
+]
+
+
 def prospects_to_dataframe(prospects: list[Prospect],
-                           qualifications: dict[int, Qualification] | None = None) -> pd.DataFrame:
+                           qualifications: dict[int, Qualification] | None = None,
+                           decision_makers: dict[int, DecisionMaker] | None = None,
+                           outreach: dict[int, str] | None = None) -> pd.DataFrame:
+    """Con ``qualifications`` (ricerca Agenzie) aggiunge le colonne della qualifica, del decisore e
+    lo «Stato outreach» (default «da contattare»)."""
     rows = [{label: getattr(p, field) or "" for field, label in COLUMNS} for p in prospects]
     headers = [label for _, label in COLUMNS]
     if qualifications is not None:
@@ -68,7 +101,14 @@ def prospects_to_dataframe(prospects: list[Prospect],
             q = qualifications.get(p.id)
             for label, getter in extra:
                 row[label] = getter(q) if q is not None else None
-        headers = (headers[:1] + [h for h, _ in QUAL_FRONT] + headers[1:] + [h for h, _ in QUAL_BACK])
+        decision_makers, outreach = decision_makers or {}, outreach or {}
+        for row, p in zip(rows, prospects):
+            dm = decision_makers.get(p.id)
+            for label, getter in DM_FRONT + DM_BACK:
+                row[label] = getter(dm) if dm is not None else ""
+            row["Stato outreach"] = outreach.get(p.id, OUTREACH_DEFAULT)
+        front = [h for h, _ in QUAL_FRONT] + [h for h, _ in DM_FRONT] + ["Stato outreach"]
+        headers = (headers[:1] + front + headers[1:] + [h for h, _ in QUAL_BACK] + [h for h, _ in DM_BACK])
     df = pd.DataFrame(rows, columns=headers)
     df["ID"] = pd.to_numeric(df["ID"], errors="coerce").astype("Int64")
     if qualifications is not None:
@@ -78,6 +118,19 @@ def prospects_to_dataframe(prospects: list[Prospect],
             if label not in ("Score", "Costo AI ($)"):
                 df[label] = df[label].fillna("")
     return df
+
+
+def outreach_changes(before: pd.DataFrame, after: pd.DataFrame) -> dict[int, str]:
+    """Righe in cui lo «Stato outreach» è stato cambiato nella tabella: {id prospect: nuovo stato}.
+    ``before`` e ``after`` hanno le stesse righe nello stesso ordine (colonne "ID" e "Stato outreach")."""
+    if "Stato outreach" not in before or "Stato outreach" not in after or len(before) != len(after):
+        return {}
+    changes = {}
+    for pid, old, new in zip(before["ID"].tolist(), before["Stato outreach"].tolist(),
+                             after["Stato outreach"].tolist()):
+        if new and new != old and pid is not None and not pd.isna(pid):
+            changes[int(pid)] = new
+    return changes
 
 
 def _safe_cell(value):

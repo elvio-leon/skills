@@ -5,6 +5,7 @@ Avvio: doppio clic su "Avvia Prospect Scraper" (vedi README) oppure ``streamlit 
 
 from __future__ import annotations
 
+import hashlib
 import os
 import signal
 import subprocess
@@ -20,7 +21,8 @@ from config import settings, user_settings
 from core.pipeline import (AGENCY_CATEGORY, MODE_BOTH, MODE_ENRICH, MODE_SEARCH, MODES, SOURCE_AGENCY,
                            SOURCE_WEB, WEB_CATEGORY, Pipeline, RunParams)
 from database.db import Database
-from exporters.export import (prospects_to_dataframe, slugify, to_csv_bytes, to_xlsx_bytes,
+from decision_makers.models import OUTREACH_STATES
+from exporters.export import (outreach_changes, prospects_to_dataframe, slugify, to_csv_bytes, to_xlsx_bytes,
                               to_xlsx_multi_bytes)
 from qualify import config as qconfig
 from qualify import llm as qllm
@@ -32,9 +34,13 @@ CATEGORIES = list(CATEGORY_PROVIDERS)
 # colonne visibili in tabella (l'export contiene tutte le colonne)
 TABLE_COLUMNS = ["Company", "Website", "Country", "City", "Category", "Phone", "Email",
                  "LinkedIn", "Instagram", "Source", "Status", "Error"]
-AGENCY_TABLE_COLUMNS = ["Score", "Motivo", "Company", "Website", "Is agency", "SEO level", "Servizi ricorrenti",
-                        "Size", "Blog", "Servizi", "Verticali", "Note", "Email", "Phone", "LinkedIn",
-                        "Instagram", "Country", "City", "Status", "Error"]
+AGENCY_TABLE_COLUMNS = ["Seleziona", "Score", "Motivo", "Company", "Website", "Decisore", "Ruolo",
+                        "LinkedIn decisore", "Confidenza LinkedIn", "Email decisore", "Fonte email",
+                        "Stato outreach", "Is agency", "SEO level", "Servizi ricorrenti", "Size", "Blog",
+                        "Servizi", "Verticali", "Note", "Email", "Phone", "LinkedIn", "Instagram", "Country",
+                        "City", "Status", "Error"]
+CONTACTS_MIN_SCORE = 50          # «Trova contatti» su tutte le agenzie con score >= 50
+EST_CONTACT_TOKENS_IN, EST_CONTACT_TOKENS_OUT = 6000, 300   # stima per agenzia (decisore)
 SRC_LOCAL, SRC_WEB, SRC_AGENCY = "Local (OSM + Wikidata)", "Web Search", "Agenzie"
 # Scelte AI della ricerca Agenzie: chiave = voce di [llm] nei pesi (claude, claude_alt, openai, gemini)
 AI_LABELS = {"claude": "Claude Haiku 4.5 (economico)", "claude_alt": "Claude Sonnet 5.5 (più accurato)",
@@ -399,8 +405,12 @@ if not prospects:
     st.info("Nessun prospect. Imposta la ricerca nella barra laterale e premi **CERCA PROSPECT**.")
     st.stop()
 
-quals = db.get_qualifications([p.id for p in prospects]) if agency_view else None
-df = prospects_to_dataframe(prospects, quals)
+ids_shown = [p.id for p in prospects]
+quals = db.get_qualifications(ids_shown) if agency_view else None
+if agency_view:
+    df = prospects_to_dataframe(prospects, quals, db.get_decision_makers(ids_shown), db.get_outreach(ids_shown))
+else:
+    df = prospects_to_dataframe(prospects, quals)
 df["Status"] = df["Status"].map(lambda s: STATUS_LABELS.get(s, s))
 if agency_view:
     # esiti della qualifica nella tabella; l'export conserva lo status e l'errore originali
@@ -418,9 +428,10 @@ if agency_view:
         lambda e: f" (sito: {e})" if e else "")
     df = df.sort_values("Score", ascending=False, na_position="last", kind="stable")   # Score decrescente
 
-    if ss.get("rq_message"):
-        level, text = ss.pop("rq_message")
-        (st.success if level == "success" else st.warning)(text)
+    for msg_key in ("rq_message", "dm_message"):
+        if ss.get(msg_key):
+            level, text = ss.pop(msg_key)
+            (st.success if level == "success" else st.warning)(text)
     n_failed = int(failed.sum())
     if n_failed:
         reasons = df.loc[failed, "Qualifica errore"].value_counts()
@@ -472,13 +483,19 @@ with c5:
 
 view_df = df
 if agency_view:
-    f1, f2, _f3 = st.columns([2, 2, 6])
+    f1, f2, f3, f4 = st.columns([2, 2, 2, 4])
     min_score = f1.slider("Score minimo", 0, 100, 0)
-    show_excluded = f2.checkbox("Mostra escluse", value=False)
+    outreach_filter = f2.multiselect("Stato outreach", OUTREACH_STATES, key="outreach_filter")
+    show_excluded = f3.checkbox("Mostra escluse", value=False)
+    only_dm = f3.checkbox("Solo con decisore", value=False)
     if not show_excluded:
         view_df = view_df[view_df["Qualifica status"] != "excluded"]
     if min_score > 0:
         view_df = view_df[view_df["Score"].fillna(-1) >= min_score]
+    if outreach_filter:
+        view_df = view_df[view_df["Stato outreach"].isin(outreach_filter)]
+    if only_dm:
+        view_df = view_df[(view_df["Ruolo"] != "") | (view_df["Email decisore"] != "")]
 if query:
     mask = view_df.astype(str).apply(lambda col: col.str.contains(query, case=False, regex=False)).any(axis=1)
     view_df = view_df[mask]
@@ -500,14 +517,26 @@ m2.metric("Con email", int((view_df["Email"] != "").sum()))
 m3.metric("Con telefono", int((view_df["Phone"] != "").sum()))
 m4.metric("Falliti", int(view_df["Status"].str.contains("failed").sum()))
 
+contacts_bar = st.container() if agency_view else None   # «Trova contatti», riempito dopo la selezione
 export_bar = st.container()   # pulsanti di export sopra la tabella, riempiti dopo la selezione
 
 link = st.column_config.LinkColumn
-event = st.dataframe(
-    view_df,
-    column_order=AGENCY_TABLE_COLUMNS if agency_view else TABLE_COLUMNS,
+agency_columns = [c for c in AGENCY_TABLE_COLUMNS                     # «Motivo» solo se c'è qualcosa da dire
+                  if c != "Motivo" or (agency_view and (view_df["Motivo"] != "").any())]
+table_args = dict(
+    column_order=agency_columns if agency_view else TABLE_COLUMNS,
     column_config={
-        **({"Score": st.column_config.NumberColumn("Score", format="%d"),
+        **({"Seleziona": st.column_config.CheckboxColumn(
+                "✓", width="small", help="Seleziona le righe per «Trova contatti» o per l'export"),
+            "Stato outreach": st.column_config.SelectboxColumn(
+                "Stato outreach", options=OUTREACH_STATES, required=True, width="small",
+                help="Modificabile: viene salvato subito"),
+            "Decisore": st.column_config.TextColumn("Decisore", width="medium"),
+            "LinkedIn decisore": link("LinkedIn decisore", display_text=r"https?://[^/]+/in/([^/?]+)"),
+            "Confidenza LinkedIn": st.column_config.TextColumn("Conf. LinkedIn", width="small"),
+            "Email decisore": st.column_config.TextColumn("Email decisore", width="medium"),
+            "Fonte email": st.column_config.TextColumn("Fonte email", width="medium"),
+            "Score": st.column_config.NumberColumn("Score", format="%d"),
             "Is agency": st.column_config.TextColumn("Agenzia", width="small"),
             "SEO level": st.column_config.TextColumn("SEO", width="small"),
             "Servizi ricorrenti": st.column_config.TextColumn("Ricorrenti", width="small"),
@@ -525,12 +554,26 @@ event = st.dataframe(
     hide_index=True,
     width="stretch",
     height=min(38 + 35 * len(view_df), 600),
-    on_select="rerun",
-    selection_mode="multi-row",
-    key="results_table",
 )
-
-selected = event.selection.rows if event and event.selection else []
+if agency_view:
+    # tabella modificabile: solo «Seleziona» e «Stato outreach». La chiave dipende dalle righe mostrate,
+    # così una modifica non può finire sulla riga sbagliata quando cambiano filtri o ordinamento.
+    view_df.insert(0, "Seleziona", False)
+    rows_key = hashlib.md5(",".join(str(i) for i in view_df["ID"].tolist()).encode()).hexdigest()[:12]
+    edited = st.data_editor(view_df, disabled=[c for c in view_df.columns if c not in ("Seleziona", "Stato outreach")],
+                            key=f"agency_table_{rows_key}", **table_args)
+    changed = outreach_changes(view_df, edited)
+    for pid, stato in changed.items():
+        db.set_outreach(pid, stato)
+    if changed:
+        st.toast(f"Stato outreach salvato ({len(changed)})")
+        st.rerun()
+    selected = [i for i, v in enumerate(edited["Seleziona"].tolist()) if v]
+    view_df = edited.drop(columns=["Seleziona"])
+else:
+    event = st.dataframe(view_df, on_select="rerun", selection_mode="multi-row", key="results_table",
+                         **table_args)
+    selected = event.selection.rows if event and event.selection else []
 export_df = view_df.iloc[selected] if selected else view_df
 if agency_view:
     export_df = export_df.assign(Status=export_df["_Status"], Error=export_df["_Error"]).drop(
@@ -545,8 +588,59 @@ with export_bar:
                   mime="text/csv", container=b1)
     export_button("DOWNLOAD XLSX", lambda: to_xlsx_bytes(export_df), f"{name}.xlsx", key="exp_xlsx",
                   primary=True, mime=XLSX_MIME, container=b2)
-    b3.caption(f"Export: {scope}. Seleziona righe nella tabella per esportare solo quelle; "
-               "il file include tutte le colonne.")
+    how = "Spunta ✓ le righe" if agency_view else "Seleziona righe nella tabella"
+    b3.caption(f"Export: {scope}. {how} per esportare solo quelle; il file include tutte le colonne.")
+
+# Agenzie: contatti dei decisori (sulle righe selezionate o su tutte quelle con score >= 50)
+if agency_view:
+    eligible = df[(df["Is agency"] == "si") & (df["Score"].fillna(-1) >= CONTACTS_MIN_SCORE)]
+    selected_ids = [int(i) for i in view_df.iloc[selected]["ID"].dropna()] if selected else []
+    with contacts_bar, st.expander("👤 Trova contatti dei decisori", expanded=True):
+        contacts_model = qllm.model_for(qllm.provider_name())
+        contacts_price = qconfig.load_scoring().get("prezzi", {}).get(contacts_model)
+        est_text = ""
+        if contacts_price:
+            est = (EST_CONTACT_TOKENS_IN * contacts_price[0] + EST_CONTACT_TOKENS_OUT * contacts_price[1]) / 1e6
+            est_text = f" Costo stimato ≈ {est:.3f} $ di AI".replace(".", ",") + " + 1 ricerca web per agenzia."
+        st.caption("Solo agenzie con «Agenzia = si». Decisore (titolare, founder, CEO, managing director) dalle "
+                   "pagine del sito con l'AI, verificato sul testo; profilo LinkedIn dai soli risultati di ricerca "
+                   "(le pagine LinkedIn non vengono aperte); email nominativa trovata sul sito oppure ipotesi "
+                   "nome@dominio da verificare." + est_text)
+        k1, k2, k3 = st.columns([2, 2, 2], vertical_alignment="center")
+        dm_force = k3.checkbox("Ricalcola anche quelle già cercate", key="dm_force")
+        # già cercate = decisore trovato o «non trovato» (quelle in errore vengono ritentate)
+        searched = (eligible["Decisore"] != "") & ~eligible["Decisore"].str.startswith("errore")
+        n_todo = len(eligible) if dm_force else int((~searched).sum())
+        dm_sel = k1.button(f"Trova contatti ({len(selected_ids)} selezionate)", key="dm_selected",
+                           disabled=not selected_ids, width="stretch")
+        dm_all = k2.button(f"Trova contatti (score ≥ {CONTACTS_MIN_SCORE}: {n_todo} da cercare)", key="dm_score",
+                           type="primary", disabled=not n_todo, width="stretch")
+        if int(searched.sum()) and not dm_force:
+            st.caption(f"{int(searched.sum())} agenzie con score ≥ {CONTACTS_MIN_SCORE} sono già state cercate: "
+                       "spunta «Ricalcola» per rifarle.")
+        if dm_sel or dm_all:
+            target_ids = selected_ids if dm_sel else [int(i) for i in eligible["ID"].dropna()]
+            dm_messages: list[tuple[str, str]] = []
+            with st.status("Ricerca contatti in corso...", expanded=True):
+                dm_bar = st.empty()
+
+                def dm_msg(text: str, level: str = "info") -> None:
+                    dm_messages.append((level, text))
+                    if level in ("warning", "error"):
+                        st.warning(text)
+                    elif level != "success":
+                        st.write(text)
+
+                def dm_progress(done: int, total: int, label: str = "") -> None:
+                    dm_bar.progress(done / total, text=f"{done}/{total} · {label[:60]}")
+
+                dm_result = Pipeline(db, on_message=dm_msg, on_progress=dm_progress).find_contacts(
+                    target_ids, force=dm_force)
+            final = next((t for lvl, t in reversed(dm_messages) if lvl == "success"), None)
+            ss.dm_message = ("success", final) if final else (
+                "warning", "; ".join(t for lvl, t in dm_messages if lvl in ("warning", "error"))
+                or dm_result.fatal_error or "Ricerca contatti non eseguita")
+            st.rerun()
 
 # App desktop: conferma del salvataggio (vale anche per l'export di tutte le ricerche)
 if settings.DESKTOP and ss.get("last_export"):

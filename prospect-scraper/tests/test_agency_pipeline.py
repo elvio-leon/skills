@@ -139,8 +139,12 @@ def test_agency_pipeline_end_to_end(env, srv, monkeypatch):
     assert cols[:2] == ["Company", "Score"] and cols[2:12] == [
         "Is agency", "SEO level", "Servizi ricorrenti", "Size", "Blog", "Ultimo post blog", "Servizi",
         "Servizi (altro)", "Verticali", "Note"]
-    assert cols[-9:] == ["Qualifica status", "Qualifica errore", "Prova agenzia", "Prova SEO", "Prova ricorrenti",
-                         "Prova team", "Pagine analizzate", "Modello AI", "Costo AI ($)"]
+    assert cols[12:19] == ["Decisore", "Ruolo", "LinkedIn decisore", "Confidenza LinkedIn", "Email decisore",
+                           "Fonte email", "Stato outreach"]
+    assert cols[-13:] == ["Qualifica status", "Qualifica errore", "Prova agenzia", "Prova SEO", "Prova ricorrenti",
+                          "Prova team", "Pagine analizzate", "Modello AI", "Costo AI ($)", "Pagina decisore",
+                          "Prova decisore", "Titolo risultato LinkedIn", "Contatti cercati il"]
+    assert set(df["Stato outreach"]) == {"da contattare"} and set(df["Decisore"]) == {""}
     rows = list(csv.DictReader(io.StringIO(to_csv_bytes(df).decode("utf-8-sig"))))
     r_rosso = next(r for r in rows if r["Domain"] == HOST_ROSSO)
     assert r_rosso["Score"] == "80" and r_rosso["Servizi"] == "siti_web, seo" and r_rosso["Qualifica status"] == "ok"

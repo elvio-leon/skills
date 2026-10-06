@@ -146,16 +146,21 @@ class Classifier(ABC):
         return bool(self.api_key)
 
     @abstractmethod
-    def _call(self, system: str, user: str) -> _Raw:
-        """Una chiamata al modello. Solleva ``ClassifyError``."""
+    def _call(self, system: str, user: str, schema: dict | None = None) -> _Raw:
+        """Una chiamata al modello (``schema``: JSON schema della risposta, default quello della
+        qualifica). Solleva ``ClassifyError``."""
 
-    def classify(self, system: str, user: str) -> ClassifyResult:
+    def classify(self, system: str, user: str, schema: dict | None = None,
+                 validator=None) -> ClassifyResult:
+        """Chiamata + validazione. Senza argomenti usa schema e validazione della qualifica agenzie;
+        altri compiti (es. il decisore) passano il proprio ``schema`` e ``validator``."""
+        validator = validator or validate_analysis
         t0 = time.monotonic()
         tokens_in = tokens_out = 0
         last_text = ""
         for attempt in (1, 2):
             try:
-                raw = self._call(system, user)
+                raw = self._call(system, user, schema) if schema is not None else self._call(system, user)
             except ClassifyError as exc:
                 exc.input_tokens += tokens_in
                 exc.output_tokens += tokens_out
@@ -165,7 +170,7 @@ class Classifier(ABC):
             tokens_out += raw.output_tokens
             last_text = raw.text
             try:
-                data = validate_analysis(extract_json(raw.text))
+                data = validator(extract_json(raw.text))
             except (ValueError, ValidationError) as exc:     # JSON non valido o fuori schema
                 log.info("%s: risposta non valida (tentativo %d): %s", self.name, attempt,
                          type(exc).__name__)
@@ -212,25 +217,26 @@ class ClaudeClassifier(Classifier):
                                                 max_retries=2)
             return self._sdk
 
-    def _request(self, sdk, system: str, user: str):
+    def _request(self, sdk, system: str, user: str, schema: dict | None = None):
+        schema = schema or SCHEMA
         messages = [{"role": "user", "content": user}]
         if self.model == SONNET_MODEL:
             # Sonnet: pensiero adattivo (predefinito), sforzo basso, fallback lato server
             return sdk.beta.messages.create(
                 model=self.model, max_tokens=8000, betas=list(SONNET_BETAS), fallbacks="default",
                 system=system, messages=messages,
-                output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}})
+                output_config={"effort": "low", "format": {"type": "json_schema", "schema": schema}})
         return sdk.messages.create(
             model=self.model, max_tokens=2000, system=system, messages=messages,
-            output_config={"format": {"type": "json_schema", "schema": SCHEMA}})
+            output_config={"format": {"type": "json_schema", "schema": schema}})
 
-    def _call(self, system: str, user: str) -> _Raw:
+    def _call(self, system: str, user: str, schema: dict | None = None) -> _Raw:
         try:
             import anthropic
         except ImportError:
             raise ClassifyError("libreria «anthropic» non installata") from None
         try:
-            response = self._request(self._sdk_client(anthropic), system, user)
+            response = self._request(self._sdk_client(anthropic), system, user, schema)
         except anthropic.AuthenticationError as exc:
             raise ClassifyError(f"chiave Anthropic non valida ({_api_detail(exc)})") from None
         except anthropic.PermissionDeniedError as exc:
@@ -275,12 +281,13 @@ class OpenAIClassifier(Classifier):
     label = "OpenAI"
     who = "OpenAI"
 
-    def _call(self, system: str, user: str) -> _Raw:
+    def _call(self, system: str, user: str, schema: dict | None = None) -> _Raw:
+        name = "agency_qualification" if schema is None else "structured_answer"
         payload = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "response_format": {"type": "json_schema", "json_schema": {
-                "name": "agency_qualification", "strict": True, "schema": SCHEMA}},
+                "name": name, "strict": True, "schema": schema or SCHEMA}},
             "reasoning_effort": "low",
             "max_completion_tokens": 4000,
         }
@@ -314,12 +321,12 @@ class GeminiClassifier(Classifier):
     label = "Gemini"
     who = "Google"
 
-    def _call(self, system: str, user: str) -> _Raw:
+    def _call(self, system: str, user: str, schema: dict | None = None) -> _Raw:
         payload = {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": {"responseMimeType": "application/json",
-                                 "responseJsonSchema": SCHEMA, "maxOutputTokens": 4000,
+                                 "responseJsonSchema": schema or SCHEMA, "maxOutputTokens": 4000,
                                  "thinkingConfig": {"thinkingBudget": 512}},
         }
         url = f"{settings.GEMINI_API_URL.rstrip('/')}/models/{self.model}:generateContent"

@@ -11,6 +11,9 @@ from urllib.parse import urlsplit
 
 from config import settings, user_settings
 from database.db import Database, now_iso
+from decision_makers import finder as dm_finder
+from decision_makers.models import STATUS_FOUND as DM_FOUND
+from decision_makers.models import STATUS_NOT_FOUND as DM_NOT_FOUND
 from models.prospect import STATUS_ENRICHED, STATUS_FAILED, STATUS_FOUND, STATUS_NO_WEBSITE, Prospect
 from qualify import config as qconfig
 from qualify import llm as qllm
@@ -78,6 +81,25 @@ class RunResult:
     n_qual_failed: int = 0
     n_excluded: int = 0         # non sono agenzie (is_agency = no)
     llm_cost_usd: float = 0.0
+
+
+@dataclass
+class ContactsResult:
+    """Esito di «Trova contatti» (decisori delle agenzie)."""
+
+    n_targets: int = 0          # agenzie elaborate
+    n_found: int = 0            # decisore trovato
+    n_not_found: int = 0
+    n_failed: int = 0
+    n_linkedin: int = 0         # profili LinkedIn trovati
+    n_email_site: int = 0       # email nominative trovate sul sito
+    n_email_guess: int = 0      # email ipotizzate (da verificare)
+    n_skipped_not_agency: int = 0
+    n_skipped_done: int = 0     # già cercate (senza "ricalcola")
+    web_calls: int = 0
+    llm_cost_usd: float = 0.0
+    log_text: str = ""
+    fatal_error: str = ""
 
 
 MessageFn = Callable[[str, str], None]          # (testo, livello: info|warning|error|success)
@@ -274,6 +296,81 @@ class Pipeline:
                 self.msg(f"Errore imprevisto: {result.fatal_error}", "error")
             result.log_text = capture.text()
         return result
+
+    def find_contacts(self, prospect_ids: list[int], force: bool = False, llm_provider: str | None = None,
+                      llm_model: str | None = None, web_provider: str | None = None) -> ContactsResult:
+        """Decisore, LinkedIn ed email per le agenzie già qualificate con is_agency = "si"
+        (nessuna nuova ricerca). Con ``force`` rifà anche quelle già cercate."""
+        result = ContactsResult()
+        t0 = time.monotonic()
+        with RunLogCapture() as capture:
+            try:
+                if self._find_contacts(list(prospect_ids), force, llm_provider, llm_model, web_provider, result):
+                    self.msg(f"Contatti cercati in {time.monotonic() - t0:.0f}s: " + _contacts_summary(result),
+                             "success")
+            except Exception as exc:  # noqa: BLE001
+                log.exception("ricerca contatti interrotta")
+                result.fatal_error = f"{type(exc).__name__}: {exc}"
+                self.msg(f"Errore imprevisto: {result.fatal_error}", "error")
+            result.log_text = capture.text()
+        return result
+
+    def _find_contacts(self, ids: list[int], force: bool, llm_provider: str | None, llm_model: str | None,
+                       web_provider: str | None, result: ContactsResult) -> bool:
+        quals = self.db.get_qualifications(ids)
+        done = self.db.get_decision_makers(ids) if not force else {}
+        todo: list[Prospect] = []
+        for p in self.db.list_prospects(ids=ids):
+            q = quals.get(p.id)
+            if not p.website or q is None or q.is_agency != "si":
+                result.n_skipped_not_agency += 1
+            elif p.id in done and done[p.id].status in (DM_FOUND, DM_NOT_FOUND):
+                result.n_skipped_done += 1
+            else:
+                todo.append(p)
+        if result.n_skipped_not_agency:
+            self.msg(f"{_plural(result.n_skipped_not_agency, 'riga saltata', 'righe saltate')}: "
+                     "solo agenzie qualificate con «Agenzia = si»", "info")
+        if result.n_skipped_done:
+            self.msg(f"{_plural(result.n_skipped_done, 'agenzia già cercata', 'agenzie già cercate')}: "
+                     "spunta «Ricalcola» per rifarle", "info")
+        if not todo:
+            self.msg("Nessuna agenzia su cui cercare i contatti", "warning")
+            return False
+        classifier = qllm.get_classifier(llm_provider, self.client, llm_model)
+        if not classifier.is_configured():
+            self.msg("AI non configurata: inserisci la chiave API in «Impostazioni Agenzie»", "warning")
+            return False
+        provider = web_search.get_provider(web_provider, self.client)
+        if not provider.is_configured():
+            self.msg("Web Search non configurata: i profili LinkedIn non verranno cercati", "warning")
+        prices = qconfig.load_scoring().get("prezzi", {})
+        result.n_targets = len(todo)
+        self.msg("Finding decision makers...", "info")
+        workers = max(1, min(MAX_QUALIFY_WORKERS, settings.MAX_WORKERS, len(todo)))
+        n = 0
+        with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="contacts") as pool:
+            futures = {pool.submit(dm_finder.find_decision_maker, p, self.client, classifier, provider,
+                                   prices): p for p in todo}
+            for fut in as_completed(futures):
+                p = futures[fut]
+                dm = fut.result()          # find_decision_maker non solleva
+                self.db.save_decision_maker(p.id, dm)
+                result.llm_cost_usd += dm.cost_usd
+                result.web_calls += dm.web_calls
+                if dm.status == DM_FOUND:
+                    result.n_found += 1
+                    result.n_linkedin += bool(dm.linkedin_url)
+                    result.n_email_site += dm.email_verified
+                    result.n_email_guess += bool(dm.email) and not dm.email_verified
+                elif dm.status == DM_NOT_FOUND:
+                    result.n_not_found += 1
+                else:
+                    result.n_failed += 1
+                    log.info("contatti falliti %s: %s", p.website, dm.error)
+                n += 1
+                self.progress(n, len(todo), p.company_name or p.domain or p.website)
+        return True
 
     # ------------------------------------------------------------------------
     def _run(self, params: RunParams, result: RunResult) -> None:
@@ -504,3 +601,16 @@ def _qualify_summary(result: RunResult) -> str:
                       _plural(result.n_excluded, "esclusa", "escluse"),
                       _plural(result.n_qual_failed, "fallita", "fallite"),
                       f"costo AI {cost_text.replace('.', ',')} $"])
+
+
+def _contacts_summary(r: ContactsResult) -> str:
+    cost = r.llm_cost_usd
+    cost_text = (f"{cost:.3f}" if cost < 0.01 else f"{cost:.2f}").replace(".", ",")
+    return ", ".join([_plural(r.n_found, "decisore trovato", "decisori trovati"),
+                      _plural(r.n_not_found, "non trovato", "non trovati"),
+                      _plural(r.n_failed, "fallita", "fallite"),
+                      _plural(r.n_linkedin, "profilo LinkedIn", "profili LinkedIn"),
+                      _plural(r.n_email_site, "email dal sito", "email dal sito"),
+                      _plural(r.n_email_guess, "email ipotizzata", "email ipotizzate"),
+                      f"{_plural(r.web_calls, 'ricerca web', 'ricerche web')}",
+                      f"costo AI {cost_text} $"])
