@@ -33,8 +33,9 @@ jobs:
 
       - name: Test automatici
         run: |
-          # i siti di prova usano 127.0.0.2-10: su macOS vanno aggiunti al loopback
+          # i siti di prova usano 127.0.0.2-15: su macOS vanno aggiunti al loopback
           for i in $(seq 2 10); do sudo ifconfig lo0 alias 127.0.0.$i up; done
+          for i in $(seq 11 15); do sudo ifconfig lo0 alias 127.0.0.$i up; done
           python3 -m pip install -r requirements.txt pytest
           python3 -m pytest
 
@@ -44,6 +45,7 @@ jobs:
       - name: Smoke test del server impacchettato
         run: |
           APP="dist/Prospect Scraper.app/Contents/MacOS/Prospect Scraper"
+          "$APP" --check-imports
           PS_HOME="$RUNNER_TEMP/ps-home" "$APP" --server 47821 $$ > server.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:47821/_stcore/health && break; sleep 1; done
           echo

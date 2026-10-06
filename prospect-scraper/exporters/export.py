@@ -12,6 +12,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from models.prospect import Prospect
+from qualify.models import Qualification
 
 # (campo, intestazione leggibile) nell'ordine di esportazione
 COLUMNS: list[tuple[str, str]] = [
@@ -31,10 +32,51 @@ URL_LABELS = {"Website", "LinkedIn", "Instagram", "Facebook", "YouTube", "X / Tw
 _PHONE_LIKE = re.compile(r"^\+[\d\s().;/-]+$")
 
 
-def prospects_to_dataframe(prospects: list[Prospect]) -> pd.DataFrame:
+# Colonne della qualifica agenzie: (intestazione, funzione). Le prime vanno dopo "Company",
+# le altre in fondo (solo se ``qualifications`` è passato).
+def _join(values) -> str:
+    return ", ".join(str(v) for v in values or [])
+
+
+QUAL_FRONT: list[tuple[str, object]] = [
+    ("Score", lambda q: q.score), ("Is agency", lambda q: q.is_agency),
+    ("SEO level", lambda q: q.seo_level), ("Servizi ricorrenti", lambda q: q.servizi_ricorrenti),
+    ("Size", lambda q: q.size_signal), ("Blog", lambda q: q.blog_status),
+    ("Ultimo post blog", lambda q: q.blog_last_post), ("Servizi", lambda q: _join(q.servizi)),
+    ("Servizi (altro)", lambda q: q.servizi_altro), ("Verticali", lambda q: _join(q.verticali)),
+    ("Note", lambda q: q.note),
+]
+QUAL_BACK: list[tuple[str, object]] = [
+    ("Qualifica status", lambda q: q.status), ("Qualifica errore", lambda q: q.error),
+    ("Prova agenzia", lambda q: q.evidence.get("agenzia", "")),
+    ("Prova SEO", lambda q: q.evidence.get("seo", "")),
+    ("Prova ricorrenti", lambda q: q.evidence.get("ricorrenti", "")),
+    ("Prova team", lambda q: q.evidence.get("team", "")),
+    ("Pagine analizzate", lambda q: _join(q.pages_used)),
+    ("Modello AI", lambda q: q.llm_model),
+    ("Costo AI ($)", lambda q: round(q.cost_usd, 5) if q.llm_model else None),
+]
+
+
+def prospects_to_dataframe(prospects: list[Prospect],
+                           qualifications: dict[int, Qualification] | None = None) -> pd.DataFrame:
     rows = [{label: getattr(p, field) or "" for field, label in COLUMNS} for p in prospects]
-    df = pd.DataFrame(rows, columns=[label for _, label in COLUMNS])
+    headers = [label for _, label in COLUMNS]
+    if qualifications is not None:
+        extra = QUAL_FRONT + QUAL_BACK
+        for row, p in zip(rows, prospects):
+            q = qualifications.get(p.id)
+            for label, getter in extra:
+                row[label] = getter(q) if q is not None else None
+        headers = (headers[:1] + [h for h, _ in QUAL_FRONT] + headers[1:] + [h for h, _ in QUAL_BACK])
+    df = pd.DataFrame(rows, columns=headers)
     df["ID"] = pd.to_numeric(df["ID"], errors="coerce").astype("Int64")
+    if qualifications is not None:
+        df["Score"] = pd.to_numeric(df["Score"], errors="coerce").astype("Int64")
+        df["Costo AI ($)"] = pd.to_numeric(df["Costo AI ($)"], errors="coerce")
+        for label, _ in QUAL_FRONT + QUAL_BACK:       # niente None/NaN nei testi: celle vuote
+            if label not in ("Score", "Costo AI ($)"):
+                df[label] = df[label].fillna("")
     return df
 
 

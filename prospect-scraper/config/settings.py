@@ -50,6 +50,10 @@ SEARXNG_URL = _env("SEARXNG_URL", "")
 # --- Web Search (scoperta di aziende digitali tramite API di ricerca web) --------
 TAVILY_API_URL = _env("TAVILY_API_URL", "https://api.tavily.com/search")
 BRAVE_API_URL = _env("BRAVE_API_URL", "https://api.search.brave.com/res/v1/web/search")
+# --- Agenzie: API dei modelli AI (qualifica) ---------------------------------------
+OPENAI_API_URL = _env("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
+# URL base dell'API Gemini: la richiesta va a <base>/models/<modello>:generateContent
+GEMINI_API_URL = _env("GEMINI_API_URL", "https://generativelanguage.googleapis.com/v1beta")
 # Tetto di chiamate API per ricerca (ogni chiamata consuma 1 credito del provider).
 WEB_MAX_API_CALLS = _env("WEB_MAX_API_CALLS", 5)
 

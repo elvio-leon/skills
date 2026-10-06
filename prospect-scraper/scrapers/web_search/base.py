@@ -26,6 +26,7 @@ class WebSearchReport:
     queries: list[str] = field(default_factory=list)     # query esatte inviate
     errors: list[str] = field(default_factory=list)
     provider: str = ""
+    filtered: int = 0                                    # risultati scartati dal filtro extra (blacklist)
 
 
 class WebSearchProvider(ABC):

@@ -7,6 +7,10 @@ pandas>=2.1
 openpyxl>=3.1
 phonenumbers>=8.13
 
+# Agenzie (qualifica con AI): SDK ufficiale Claude (importato solo quando serve).
+# OpenAI e Gemini usano chiamate HTTP dirette, senza altre librerie.
+anthropic>=1.11
+
 # Opzionale: rendering delle pagine che richiedono JavaScript.
 #   pip install playwright && playwright install chromium
 # playwright>=1.45

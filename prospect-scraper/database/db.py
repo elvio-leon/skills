@@ -10,6 +10,7 @@ from pathlib import Path
 
 from config import settings
 from models.prospect import Prospect
+from qualify.models import Qualification
 from utils.deduplication import dedup_key
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
@@ -176,3 +177,21 @@ class Database:
                 (limit,),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    # --- qualifica agenzie ------------------------------------------------------
+    def save_qualification(self, prospect_id: int, run_id: int | None, q: Qualification) -> None:
+        """Inserisce o sostituisce la qualifica del prospect."""
+        row = {**q.to_row(), "prospect_id": prospect_id, "run_id": run_id}
+        cols = ", ".join(row)
+        with self.connect() as conn:
+            conn.execute(f"INSERT OR REPLACE INTO agency_qualifications ({cols}) "
+                         f"VALUES ({', '.join(':' + c for c in row)})", row)
+
+    def get_qualifications(self, ids: list[int]) -> dict[int, Qualification]:
+        if not ids:
+            return {}
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM agency_qualifications WHERE prospect_id IN ({','.join('?' * len(ids))})",
+                list(ids)).fetchall()
+        return {r["prospect_id"]: Qualification.from_row(dict(r)) for r in rows}

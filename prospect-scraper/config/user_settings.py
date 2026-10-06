@@ -22,12 +22,29 @@ DEFAULTS: dict[str, str] = {
     "tavily_api_key": "",
     "brave_api_key": "",
     "searxng_url": "",
+    # Agenzie (qualifica con AI)
+    "llm_provider": "claude",
+    "claude_model": "claude-haiku-4-5",
+    "anthropic_api_key": "",
+    "openai_api_key": "",
+    "gemini_api_key": "",
 }
 _ENV_NAMES = {
     "web_provider": "PS_WEB_PROVIDER",
     "tavily_api_key": "PS_TAVILY_API_KEY",
     "brave_api_key": "PS_BRAVE_API_KEY",
     "searxng_url": "PS_SEARXNG_URL",
+    "llm_provider": "PS_LLM_PROVIDER",
+    "claude_model": "PS_CLAUDE_MODEL",
+    "anthropic_api_key": "PS_ANTHROPIC_API_KEY",
+    "openai_api_key": "PS_OPENAI_API_KEY",
+    "gemini_api_key": "PS_GEMINI_API_KEY",
+}
+# Variabili d'ambiente "standard" dei provider: usate solo se manca sia PS_* sia il file (es. CI).
+_ENV_FALLBACKS = {
+    "anthropic_api_key": "ANTHROPIC_API_KEY",
+    "openai_api_key": "OPENAI_API_KEY",
+    "gemini_api_key": "GEMINI_API_KEY",
 }
 
 
@@ -59,6 +76,8 @@ def get(key: str, default: str = "") -> str:
     value = (load().get(key) or "").strip()
     if not value and key == "searxng_url":
         value = (settings.SEARXNG_URL or "").strip()
+    if not value and key in _ENV_FALLBACKS:
+        value = os.environ.get(_ENV_FALLBACKS[key], "").strip()
     return value or default
 
 

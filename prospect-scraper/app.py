@@ -17,11 +17,13 @@ import pandas as pd
 import streamlit as st
 
 from config import settings, user_settings
-from core.pipeline import (MODE_BOTH, MODE_ENRICH, MODE_SEARCH, MODES, SOURCE_WEB, WEB_CATEGORY,
-                           Pipeline, RunParams)
+from core.pipeline import (AGENCY_CATEGORY, MODE_BOTH, MODE_ENRICH, MODE_SEARCH, MODES, SOURCE_AGENCY,
+                           SOURCE_WEB, WEB_CATEGORY, Pipeline, RunParams)
 from database.db import Database
 from exporters.export import (prospects_to_dataframe, slugify, to_csv_bytes, to_xlsx_bytes,
                               to_xlsx_multi_bytes)
+from qualify import config as qconfig
+from qualify import llm as qllm
 from scrapers import web_search
 from scrapers.search import CATEGORY_PROVIDERS, PROVIDERS, available_providers, default_provider_names
 
@@ -29,7 +31,19 @@ CATEGORIES = list(CATEGORY_PROVIDERS)
 # colonne visibili in tabella (l'export contiene tutte le colonne)
 TABLE_COLUMNS = ["Company", "Website", "Country", "City", "Category", "Phone", "Email",
                  "LinkedIn", "Instagram", "Source", "Status", "Error"]
-SRC_LOCAL, SRC_WEB = "Local (OSM + Wikidata)", "Web Search"
+AGENCY_TABLE_COLUMNS = ["Score", "Company", "Website", "Is agency", "SEO level", "Servizi ricorrenti",
+                        "Size", "Blog", "Servizi", "Verticali", "Note", "Email", "Phone", "LinkedIn",
+                        "Instagram", "Country", "City", "Status", "Error"]
+SRC_LOCAL, SRC_WEB, SRC_AGENCY = "Local (OSM + Wikidata)", "Web Search", "Agenzie"
+# Scelte AI della ricerca Agenzie: chiave = voce di [llm] nei pesi (claude, claude_alt, openai, gemini)
+AI_LABELS = {"claude": "Claude Haiku 4.5 (economico)", "claude_alt": "Claude Sonnet 5.5 (più accurato)",
+             "openai": "OpenAI GPT-5.4 mini", "gemini": "Google Gemini 2.5 Flash"}
+AI_HELP = {
+    "claude": "Chiave Anthropic: https://platform.claude.com/settings/keys.",
+    "openai": "Chiave OpenAI: https://platform.openai.com/api-keys",
+    "gemini": "Chiave Google Gemini: https://aistudio.google.com/apikey",
+}
+EST_TOKENS_IN, EST_TOKENS_OUT, EST_TOKENS_OUT_THINKING = 8000, 800, 2000   # stima per agenzia
 WEB_PROVIDER_LABELS = {"tavily": "Tavily (consigliato, gratuito)", "brave": "Brave Search",
                        "searxng": "SearXNG (istanza propria)"}
 WEB_PROVIDER_HELP = {
@@ -121,7 +135,7 @@ ss.setdefault("run_had_errors", False)
 with st.sidebar:
     st.header("Ricerca")
     ss.setdefault("search_source", SRC_LOCAL)
-    source = st.segmented_control("Fonte", [SRC_LOCAL, SRC_WEB], key="search_source") or SRC_LOCAL
+    source = st.segmented_control("Fonte", [SRC_LOCAL, SRC_WEB, SRC_AGENCY], key="search_source") or SRC_LOCAL
     if source == SRC_LOCAL:
         category = st.selectbox("Tipo di ricerca", CATEGORIES, index=0)
         keyword = st.text_input("Keyword", placeholder="es. hotel 4 stelle Palermo, SaaS Italia")
@@ -148,7 +162,7 @@ with st.sidebar:
                 st.caption("Ricerca web generica non attiva: imposta `PS_SEARXNG_URL` (vedi README).")
             st.caption(f"Max {settings.MAX_PAGES_PER_DOMAIN} pagine/sito · {settings.MAX_WORKERS} siti in parallelo "
                        f"· timeout {settings.REQUEST_TIMEOUT}s · pausa {settings.REQUEST_DELAY}s")
-    else:
+    elif source == SRC_WEB:
         category = WEB_CATEGORY
         keyword = st.text_input("Keyword", placeholder="es. SaaS B2B, startup fintech, magazine online",
                                 key="web_keyword")
@@ -181,6 +195,63 @@ with st.sidebar:
             st.write(f"{web_label}: " + ("✅ configurato" if web_ok else "⚠️ non configurato"))
             st.caption(WEB_PROVIDER_HELP[web_provider])
             st.caption(f"Ogni ricerca usa 1-{settings.WEB_MAX_API_CALLS} chiamate API (1 credito ciascuna).")
+    else:
+        category = AGENCY_CATEGORY
+        keyword = st.text_input("Keyword", placeholder="es. agenzia web marketing, agenzia di comunicazione",
+                                key="ag_keyword")
+        location = st.text_input("Località", placeholder="es. Milano, Lombardia, Italia", key="ag_location")
+        max_results = st.select_slider("Numero risultati", options=settings.RESULT_OPTIONS,
+                                       value=settings.DEFAULT_RESULTS, key="ag_max_results")
+        mode = MODE_BOTH
+        urls_text, providers, force_refresh = "", None, False
+        ag_web_ok, ag_web_label = web_search.web_search_status()
+        scoring_cfg, scoring_error = qconfig.load_scoring_with_error()
+        saved_llm = user_settings.get("llm_provider", "claude")
+        saved_choice = ("claude_alt" if saved_llm == "claude"
+                        and user_settings.get("claude_model") == scoring_cfg["llm"]["claude_alt"]
+                        else saved_llm if saved_llm in AI_LABELS else "claude")
+        saved_provider_ok = qllm.get_classifier(
+            "claude" if saved_choice.startswith("claude") else saved_choice,
+            model=scoring_cfg["llm"][saved_choice]).is_configured()
+        with st.expander("Impostazioni Agenzie", expanded=not (ag_web_ok and saved_provider_ok)):
+            st.write(f"Web Search ({ag_web_label}): " + ("✅ configurata" if ag_web_ok else "⚠️ non configurata"))
+            if not ag_web_ok:
+                st.caption("Configura la Web Search in Fonte → Web Search → «Impostazioni Web Search».")
+            ai_choice = st.selectbox("Modello AI", list(AI_LABELS), index=list(AI_LABELS).index(saved_choice),
+                                     format_func=AI_LABELS.get, key="ag_llm_choice")
+            ai_provider = "claude" if ai_choice.startswith("claude") else ai_choice
+            ai_model = scoring_cfg["llm"][ai_choice]
+            ai_key_setting = qllm.KEY_SETTINGS[ai_provider]
+            ai_secret = st.text_input("Chiave API", value=user_settings.load().get(ai_key_setting, ""),
+                                      type="password", key=f"ag_secret_{ai_provider}")
+            if st.button("Salva", key="ag_save"):
+                user_settings.save({"llm_provider": ai_provider, ai_key_setting: ai_secret,
+                                    **({"claude_model": ai_model} if ai_provider == "claude" else {})})
+                st.success("Impostazioni salvate.")
+            ai_ok = qllm.get_classifier(ai_provider, model=ai_model).is_configured()
+            st.write(f"{AI_LABELS[ai_choice]}: " + ("✅ configurato" if ai_ok else "⚠️ chiave non configurata"))
+            st.caption(AI_HELP[ai_provider])
+            price = scoring_cfg["prezzi"].get(ai_model)
+            if price:
+                out_tokens = EST_TOKENS_OUT_THINKING if ai_choice == "claude_alt" else EST_TOKENS_OUT
+                est = (EST_TOKENS_IN * price[0] + out_tokens * price[1]) / 1_000_000
+                st.caption(f"Costo stimato: ≈ {est:.3f} $ per agenzia ({EST_TOKENS_IN} token in + "
+                           f"{out_tokens} out). I testi delle pagine vengono inviati al provider scelto.")
+            ai_blacklist = st.text_area("Blacklist", value=qconfig.blacklist_text(), height=200, key="ag_blacklist",
+                                        help="Sezioni [domini] e [frasi]; una voce per riga, # per i commenti.")
+            if st.button("Salva blacklist", key="ag_save_blacklist"):
+                qconfig.save_blacklist_text(ai_blacklist)
+                st.success("Blacklist salvata.")
+            if scoring_error:
+                st.warning(f"Il file dei pesi non è valido, uso quelli predefiniti: {scoring_error}")
+            ai_scoring = st.text_area("Pesi dello score", value=qconfig.scoring_text(), height=300,
+                                      key="ag_scoring")
+            if st.button("Salva pesi", key="ag_save_scoring"):
+                try:
+                    qconfig.save_scoring_text(ai_scoring)
+                    st.success("Pesi salvati.")
+                except ValueError as exc:
+                    st.error(f"Pesi non salvati: {exc}")
 
     run_clicked = st.button("CERCA PROSPECT", type="primary", width="stretch")
 
@@ -202,6 +273,10 @@ if run_clicked:
     elif source == SRC_WEB and not web_search.web_search_status(web_provider)[0]:
         st.sidebar.error("Web Search non configurata: inserisci la chiave API in "
                          "«Impostazioni Web Search» e premi Salva.")
+    elif source == SRC_AGENCY and not ag_web_ok:
+        st.sidebar.error("Web Search non configurata: configurala in Fonte → Web Search.")
+    elif source == SRC_AGENCY and not ai_ok:
+        st.sidebar.error("Chiave AI non configurata: inseriscila in «Impostazioni Agenzie» e premi Salva.")
     elif source == SRC_LOCAL and mode != MODE_ENRICH and not providers:
         st.sidebar.error("Seleziona almeno una fonte.")
     else:
@@ -225,6 +300,8 @@ if run_clicked:
                 progress_bar.progress(done / total, text=f"{done}/{total} · {label[:60]}")
 
             web_args = {"search_source": SOURCE_WEB, "web_provider": web_provider} if source == SRC_WEB else {}
+            if source == SRC_AGENCY:
+                web_args = {"search_source": SOURCE_AGENCY, "llm_provider": ai_provider, "llm_model": ai_model}
             params = RunParams(category=category, keyword=keyword.strip(), location=location.strip(),
                                max_results=max_results, mode=mode, providers=providers or None,
                                urls=urls, force_refresh=force_refresh, **web_args)
@@ -235,7 +312,8 @@ if run_clicked:
         ss.run_ids = result.prospect_ids
         ss.run_messages = messages
         ss.run_log = result.log_text
-        ss.run_had_errors = bool(result.fatal_error or result.n_failed or result.provider_errors)
+        ss.run_had_errors = bool(result.fatal_error or result.n_failed or result.n_qual_failed
+                                 or result.provider_errors)
         ss.pop("all_runs_xlsx", None)   # l'export di tutte le ricerche va rigenerato
         ss.pop("last_export", None)
         ss["view"] = "Ultima ricerca"
@@ -259,6 +337,7 @@ view = st.segmented_control("Mostra", [VIEW_LAST, VIEW_SAVED, VIEW_ALL],
                             label_visibility="collapsed", key="view") or VIEW_LAST
 
 file_stem = "prospects"
+agency_view = False   # True se i prospect mostrati vengono da una ricerca Agenzie (con qualifica)
 if view == VIEW_ALL:
     prospects = db.list_prospects()
     file_stem = "prospects-tutti"
@@ -268,13 +347,17 @@ elif view == VIEW_SAVED:
         st.stop()
     col_run, col_all = st.columns([3, 1], vertical_alignment="bottom")
     chosen = col_run.selectbox("Ricerca", runs, format_func=run_label)
+    agency_view = chosen.get("category") == AGENCY_CATEGORY
     prospects = db.list_prospects(ids=db.run_prospect_ids(chosen["id"]))
     file_stem = slugify(run_title(chosen))
     def all_runs_xlsx() -> bytes:
         """Un file Excel con un foglio per ogni ricerca salvata."""
-        return to_xlsx_multi_bytes({
-            run_title(r): prospects_to_dataframe(db.list_prospects(ids=db.run_prospect_ids(r["id"])))
-            for r in runs})
+        def frame(r: dict) -> pd.DataFrame:
+            items = db.list_prospects(ids=db.run_prospect_ids(r["id"]))
+            quals = db.get_qualifications([p.id for p in items]) if r.get("category") == AGENCY_CATEGORY else None
+            return prospects_to_dataframe(items, quals)
+
+        return to_xlsx_multi_bytes({run_title(r): frame(r) for r in runs})
 
     all_name = f"prospects-tutte-le-ricerche-{datetime.now():%Y%m%d}.xlsx"
     with col_all:
@@ -289,6 +372,7 @@ elif view == VIEW_SAVED:
                                    mime=XLSX_MIME, width="stretch", type="primary")
 else:  # ultima ricerca: quella appena fatta o, ad app appena aperta, l'ultima salvata
     last = runs[0] if runs else None
+    agency_view = bool(last and last.get("category") == AGENCY_CATEGORY)
     if ss.run_ids is not None:
         prospects = db.list_prospects(ids=ss.run_ids)
     else:
@@ -301,8 +385,17 @@ if not prospects:
     st.info("Nessun prospect. Imposta la ricerca nella barra laterale e premi **CERCA PROSPECT**.")
     st.stop()
 
-df = prospects_to_dataframe(prospects)
+quals = db.get_qualifications([p.id for p in prospects]) if agency_view else None
+df = prospects_to_dataframe(prospects, quals)
 df["Status"] = df["Status"].map(lambda s: STATUS_LABELS.get(s, s))
+if agency_view:
+    # esiti della qualifica nella tabella; l'export conserva lo status e l'errore originali
+    df["_Status"], df["_Error"] = df["Status"], df["Error"]
+    failed, excluded = df["Qualifica status"] == "failed", df["Qualifica status"] == "excluded"
+    df.loc[failed, "Status"] = "⚠️ failed"
+    df.loc[failed, "Error"] = "qualifica: " + df.loc[failed, "Qualifica errore"]
+    df.loc[excluded, "Status"] = "🚫 esclusa"
+    df = df.sort_values("Score", ascending=False, na_position="last", kind="stable")   # Score decrescente
 
 c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 2])
 query = c1.text_input("Cerca nella tabella", placeholder="nome, email, città, dominio...")
@@ -314,6 +407,14 @@ with c5:
     only_phone = st.checkbox("Solo con telefono")
 
 view_df = df
+if agency_view:
+    f1, f2, _f3 = st.columns([2, 2, 6])
+    min_score = f1.slider("Score minimo", 0, 100, 0)
+    show_excluded = f2.checkbox("Mostra escluse", value=False)
+    if not show_excluded:
+        view_df = view_df[view_df["Qualifica status"] != "excluded"]
+    if min_score > 0:
+        view_df = view_df[view_df["Score"].fillna(-1) >= min_score]
 if query:
     mask = view_df.astype(str).apply(lambda col: col.str.contains(query, case=False, regex=False)).any(axis=1)
     view_df = view_df[mask]
@@ -340,8 +441,16 @@ export_bar = st.container()   # pulsanti di export sopra la tabella, riempiti do
 link = st.column_config.LinkColumn
 event = st.dataframe(
     view_df,
-    column_order=TABLE_COLUMNS,
+    column_order=AGENCY_TABLE_COLUMNS if agency_view else TABLE_COLUMNS,
     column_config={
+        **({"Score": st.column_config.NumberColumn("Score", format="%d"),
+            "Is agency": st.column_config.TextColumn("Agenzia", width="small"),
+            "SEO level": st.column_config.TextColumn("SEO", width="small"),
+            "Servizi ricorrenti": st.column_config.TextColumn("Ricorrenti", width="small"),
+            "Size": st.column_config.TextColumn("Team", width="small"),
+            "Servizi": st.column_config.TextColumn("Servizi", width="medium"),
+            "Verticali": st.column_config.TextColumn("Verticali", width="medium"),
+            "Note": st.column_config.TextColumn("Nota", width="large")} if agency_view else {}),
         "Website": link("Website", display_text=r"https?://(?:www\.)?([^/]+)"),
         "LinkedIn": link("LinkedIn", display_text=r"https?://[^/]+/(?:company/|in/)?([^/?]+)"),
         "Instagram": link("Instagram", display_text=r"https?://[^/]+/([^/?]+)"),
@@ -358,6 +467,9 @@ event = st.dataframe(
 
 selected = event.selection.rows if event and event.selection else []
 export_df = view_df.iloc[selected] if selected else view_df
+if agency_view:
+    export_df = export_df.assign(Status=export_df["_Status"], Error=export_df["_Error"]).drop(
+        columns=["_Status", "_Error"])
 export_df = export_df.assign(Status=export_df["Status"].map(
     lambda s: next((k for k, v in STATUS_LABELS.items() if v == s), s)))
 scope = f"{len(selected)} righe selezionate" if selected else f"{len(export_df)} righe (filtri applicati)"

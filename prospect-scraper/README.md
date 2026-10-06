@@ -156,6 +156,68 @@ Città, paese, email e telefono arrivano solo dall'enrichment del sito (se attiv
 
 Nuovi provider: vedi la docstring di `scrapers/web_search/__init__.py`.
 
+## Agenzie (qualifica con AI)
+
+Pensata per trovare **agenzie italiane di marketing e web** a cui proporre servizi SEO / AI search in
+white label, e dare a ciascuna un **punteggio da 0 a 100** (più alto = più adatta). Nella barra laterale
+scegli **Fonte → Agenzie**. Le altre due fonti (Local e Web Search) non cambiano.
+
+Flusso: **ricerca web → blacklist → contatti dal sito → pagine servizi / chi siamo / portfolio → AI → score**.
+
+1. la Web Search trova i siti (serve la chiave Tavily/Brave, vedi sopra);
+2. la **blacklist** scarta directory, classifiche e portali ("le migliori agenzie…", clutch.co, ecc.)
+   *prima* di contare i risultati: la ricerca continua fino a raggiungere il numero richiesto;
+3. l'enrichment legge home e pagine di contatto (email, telefono, social);
+4. per ogni sito si leggono la home e al più **una pagina per gruppo** (servizi, chi siamo, portfolio),
+   riusando i testi già scaricati; lo stato del **blog** si ricava in modo deterministico (feed RSS o
+   pagina del blog: una sola richiesta, attivo se l'ultimo articolo ha meno di ~6 mesi);
+5. l'AI compila una scheda (è un'agenzia? servizi, livello SEO, servizi ricorrenti, dimensione del team,
+   verticali, una nota con un aggancio per il primo messaggio) con una citazione come prova;
+6. lo **score** si calcola con pesi modificabili.
+
+Rispetta `robots.txt` e le pause per host come il resto dell'app; **LinkedIn non viene mai visitato**.
+
+**Modelli AI** (scegli in *Impostazioni Agenzie*; costi indicativi per agenzia, ~8000 token in ingresso):
+
+| Modello | Costo per agenzia | Note |
+|---|---|---|
+| **Claude Haiku 4.5** (predefinito) | ≈ 0,01 $ | economico, ottimo per schede strutturate |
+| **Claude Sonnet 5.5** | ≈ 0,03 $ | più accurato (conta anche il ragionamento: ~2000 token in uscita) |
+| OpenAI GPT-5.4 mini | ≈ 0,01 $ | chiamate HTTP dirette |
+| Google Gemini 2.5 Flash | ≈ 0,005 $ | chiamate HTTP dirette |
+
+Le chiavi si ottengono su https://platform.claude.com/settings/keys, https://platform.openai.com/api-keys,
+https://aistudio.google.com/apikey. Si inseriscono in **Impostazioni Agenzie → Chiave API → Salva**
+(file `user_settings.json`, permessi `0600`, mai in log o export) oppure con le variabili
+`PS_ANTHROPIC_API_KEY` / `ANTHROPIC_API_KEY`, `PS_OPENAI_API_KEY` / `OPENAI_API_KEY`,
+`PS_GEMINI_API_KEY` / `GEMINI_API_KEY`, `PS_LLM_PROVIDER`, `PS_CLAUDE_MODEL`.
+**I testi delle pagine del sito (max ~20.000 caratteri per agenzia) vengono inviati al provider scelto.**
+Senza chiave la ricerca funziona comunque (solo scoperta e contatti) e l'app avvisa che la qualifica è saltata.
+
+**Blacklist e pesi** si modificano in *Impostazioni Agenzie* (Blacklist, Pesi dello score) oppure direttamente
+nei file della cartella dei dati: `agency_blacklist.txt` (sezioni `[domini]` e `[frasi]`; le frasi valgono per
+titolo e percorso dell'URL) e `agency_scoring.toml` (tomllib). Alla prima volta vengono copiati dai valori
+predefiniti in `config/`. Un file dei pesi non valido non viene salvato dall'app; se lo rompi a mano si usano
+i pesi predefiniti e l'app lo segnala.
+
+**Score** (somma, limitata tra 0 e 100; valori predefiniti):
+
+| Segnale | Punti |
+|---|---|
+| SEO: assente / accennata / strutturata | 40 / 25 / 0 |
+| Servizi ricorrenti (social, ADV, manutenzione, canoni): sì / no | 25 / 0 |
+| Team: 1 / 2-5 / 6-20 / 20+ / non determinabile | 5 / 15 / 25 / 5 / 0 |
+| Blog: assente / fermo / attivo / non determinabile | 10 / 10 / 0 / 0 |
+| Agenzia: sì / dubbio (−20) / **no = esclusa**, senza score | 0 / −20 / – |
+
+La tabella è ordinata per score decrescente; ci sono il filtro **Score minimo** e l'opzione **Mostra escluse**.
+Le qualifiche fallite (sito non raggiungibile, errore dell'AI…) compaiono come "⚠️ failed" con il motivo in
+*Error* ("qualifica: …"). L'export CSV/XLSX contiene tutte le colonne della scheda, le prove, i modelli e il costo.
+
+**Limiti:** l'AI legge solo poche pagine e può sbagliare (controlla sempre la citazione di prova); i siti che
+richiedono JavaScript hanno poco testo e danno più "dubbio"; la dimensione del team è spesso "non determinabile";
+il blog si rileva solo se è linkato dalla home.
+
 ## Configurazione
 
 Tutti i parametri sono in `config/settings.py` e si possono sovrascrivere con variabili
@@ -227,6 +289,8 @@ prospect-scraper/
 ├── core/pipeline.py          orchestrazione ricerca → dedup → DB → enrichment
 ├── config/settings.py        parametri
 ├── config/user_settings.py   impostazioni dell'utente (chiavi API) in user_settings.json
+├── config/agency_blacklist.txt, agency_scoring.toml   valori predefiniti di blacklist e pesi (Agenzie)
+├── qualify/                  Agenzie: pagine, blog, schema/prompt/provider AI (Claude, OpenAI, Gemini), score
 ├── database/db.py, schema.sql
 ├── scrapers/
 │   ├── http.py               client HTTP: rate limit, retry, robots.txt, errori

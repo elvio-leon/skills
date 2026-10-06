@@ -60,3 +60,32 @@ CREATE TABLE IF NOT EXISTS run_prospects (
     prospect_id  INTEGER NOT NULL REFERENCES prospects(id) ON DELETE CASCADE,
     PRIMARY KEY (run_id, prospect_id)
 );
+
+-- Qualifica delle agenzie (ricerca "Agenzie"): una riga per prospect, liste/dizionari come JSON.
+CREATE TABLE IF NOT EXISTS agency_qualifications (
+    prospect_id        INTEGER PRIMARY KEY REFERENCES prospects(id) ON DELETE CASCADE,
+    run_id             INTEGER,
+    status             TEXT,                -- ok | failed | excluded
+    error              TEXT,
+    is_agency          TEXT,
+    servizi            TEXT,
+    servizi_altro      TEXT,
+    seo_level          TEXT,
+    servizi_ricorrenti TEXT,
+    verticali          TEXT,
+    size_signal        TEXT,
+    blog_status        TEXT,
+    blog_last_post     TEXT,
+    note               TEXT,
+    score              INTEGER,
+    score_breakdown    TEXT,
+    evidence           TEXT,
+    pages_used         TEXT,
+    llm_provider       TEXT,
+    llm_model          TEXT,
+    input_tokens       INTEGER,
+    output_tokens      INTEGER,
+    cost_usd           REAL,
+    latency_s          REAL,
+    qualified_at       TEXT
+);

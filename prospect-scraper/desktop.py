@@ -104,6 +104,9 @@ def _bundle_imports() -> None:  # pragma: no cover - mai eseguita
     import bs4, lxml.etree, openpyxl, pandas, phonenumbers, requests  # noqa: F401,E401
     import app  # noqa: F401
     import core.pipeline, database.db, exporters.export, scrapers.search, scrapers.website  # noqa: F401,E401
+    import anthropic  # noqa: F401  (qualifica agenzie con Claude)
+    import qualify.blog, qualify.config, qualify.llm, qualify.models, qualify.pages  # noqa: F401,E401
+    import qualify.prompt, qualify.qualifier, qualify.schema, qualify.scoring  # noqa: F401,E401
 
 
 # --- processo principale: finestra ----------------------------------------------
@@ -140,6 +143,14 @@ def log_tail(home: Path) -> str:
 
 
 def main(argv: list[str]) -> int:
+    if "--check-imports" in argv:  # usato dalla build: le librerie caricate solo al bisogno ci sono?
+        import anthropic
+
+        import qualify.llm  # noqa: F401
+        import qualify.qualifier  # noqa: F401
+        print(f"IMPORT OK anthropic {anthropic.__version__}", flush=True)
+        return 0
+
     if "--server" in argv:
         i = argv.index("--server")
         run_server(int(argv[i + 1]), int(argv[i + 2]))

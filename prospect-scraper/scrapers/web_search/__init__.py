@@ -19,7 +19,7 @@ from config import settings, user_settings
 from scrapers.http import HttpClient
 from scrapers.web_search.base import WebSearchProvider, WebSearchReport
 from scrapers.web_search.brave import BraveProvider
-from scrapers.web_search.discovery import discover
+from scrapers.web_search.discovery import ExtraFilter, discover
 from scrapers.web_search.searxng import SearXNGWebProvider
 from scrapers.web_search.tavily import TavilyProvider
 
@@ -58,9 +58,11 @@ def web_search_status(name: str | None = None) -> tuple[bool, str]:
 
 def run_web_search(keyword: str, location: str, max_results: int, provider_name: str | None = None,
                    client: HttpClient | None = None,
-                   provider: WebSearchProvider | None = None) -> WebSearchReport:
+                   provider: WebSearchProvider | None = None,
+                   extra_filter: ExtraFilter | None = None) -> WebSearchReport:
     """Esegue la Web Search. Se il provider non è configurato non fa nessuna chiamata."""
     provider = provider or get_provider(provider_name, client)
     if not provider.is_configured():
         return WebSearchReport(provider=provider.name, errors=[NOT_CONFIGURED_MESSAGE])
-    return discover(provider, keyword, location, max_results, settings.WEB_MAX_API_CALLS)
+    return discover(provider, keyword, location, max_results, settings.WEB_MAX_API_CALLS,
+                    extra_filter=extra_filter)

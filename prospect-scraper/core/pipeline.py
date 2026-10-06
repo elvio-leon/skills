@@ -12,6 +12,9 @@ from urllib.parse import urlsplit
 from config import settings, user_settings
 from database.db import Database, now_iso
 from models.prospect import STATUS_ENRICHED, STATUS_FAILED, STATUS_FOUND, STATUS_NO_WEBSITE, Prospect
+from qualify import config as qconfig
+from qualify import llm as qllm
+from qualify import qualifier as qqualifier
 from scrapers import contacts, social, web_search
 from scrapers.company import company_name_from_title
 from scrapers.http import HttpClient, default_client
@@ -33,6 +36,10 @@ MODES = [MODE_SEARCH, MODE_ENRICH, MODE_BOTH]
 SOURCE_LOCAL = "local"
 SOURCE_WEB = "web"
 WEB_CATEGORY = "Web Search"
+# Agenzie italiane da qualificare con l'AI (Web Search + blacklist + qualifica)
+SOURCE_AGENCY = "agency"
+AGENCY_CATEGORY = "Agenzie"
+MAX_QUALIFY_WORKERS = 3
 
 _SOCIAL_FIELDS = ("linkedin", "instagram", "facebook", "twitter", "youtube")
 _EXTRA_FIELDS = ("city", "address", "postal_code", "country", "region", "email", *_SOCIAL_FIELDS)
@@ -50,6 +57,9 @@ class RunParams:
     force_refresh: bool = False
     search_source: str = SOURCE_LOCAL
     web_provider: str | None = None     # solo per SOURCE_WEB (None = quello nelle impostazioni)
+    llm_provider: str | None = None     # solo per SOURCE_AGENCY (None = quello nelle impostazioni)
+    llm_model: str | None = None        # solo per SOURCE_AGENCY (None = il modello delle impostazioni)
+    qualify: bool = True                # solo per SOURCE_AGENCY: False = niente qualifica con l'AI
 
 
 @dataclass
@@ -64,6 +74,10 @@ class RunResult:
     provider_errors: dict[str, str] = field(default_factory=dict)
     log_text: str = ""
     fatal_error: str = ""
+    n_qualified: int = 0        # agenzie qualificate (ricerca Agenzie)
+    n_qual_failed: int = 0
+    n_excluded: int = 0         # non sono agenzie (is_agency = no)
+    llm_cost_usd: float = 0.0
 
 
 MessageFn = Callable[[str, str], None]          # (testo, livello: info|warning|error|success)
@@ -129,12 +143,13 @@ def _web_website(url: str, domain: str) -> str:
     return f"{scheme}://{domain}/"
 
 
-def web_result_to_prospect(r: SearchResult, params: RunParams, query: str) -> Prospect:
+def web_result_to_prospect(r: SearchResult, params: RunParams, query: str,
+                           category: str = WEB_CATEGORY) -> Prospect:
     """Converte un risultato della Web Search in prospect: solo dominio, sito e testo del
     risultato. Città, paese, email e telefono restano vuoti (li trova l'enrichment)."""
     extra = dict(r.extra or {})
     domain = registrable_domain(r.url) or ""
-    p = Prospect(source=r.source, search_query=query, category=WEB_CATEGORY, domain=domain)
+    p = Prospect(source=r.source, search_query=query, category=category, domain=domain)
     p.website = _web_website(r.url, domain) if domain else ""
     p.company_name = (company_name_from_title(r.title, domain) or domain).strip()[:200]
     p.raw_data["name_source"] = "title"    # provvisorio: il sito può dichiarare il nome vero
@@ -220,9 +235,11 @@ class Pipeline:
         self.crawler = crawler or WebsiteCrawler(self.client)
         self.msg = on_message or (lambda text, level="info": None)
         self.progress = on_progress or (lambda done, total, label="": None)
+        self.last_enrichment: dict[int, EnrichmentResult] = {}   # id prospect -> esito (riusato dalla qualifica)
 
     def run(self, params: RunParams) -> RunResult:
         result = RunResult()
+        self.last_enrichment = {}
         with RunLogCapture() as capture:
             try:
                 self._run(params, result)
@@ -240,13 +257,17 @@ class Pipeline:
         result.run_id = self.db.start_run(
             mode=params.mode, category=params.category, keyword=params.keyword,
             location=params.location, max_results=params.max_results,
-            providers=(self._web_provider_name(params) if params.search_source == SOURCE_WEB
-                       else ",".join(params.providers or [])),
+            providers=self._providers_label(params),
         )
         prospects: list[Prospect] = []
 
-        if params.search_source == SOURCE_WEB and params.mode in (MODE_SEARCH, MODE_BOTH):
-            prospects = self._web_discovery(params, result)
+        agency = params.search_source == SOURCE_AGENCY
+        if params.search_source in (SOURCE_WEB, SOURCE_AGENCY) and params.mode in (MODE_SEARCH, MODE_BOTH):
+            if agency:
+                prospects = self._web_discovery(params, result, extra_filter=_blacklist_filter(),
+                                                category=AGENCY_CATEGORY)
+            else:
+                prospects = self._web_discovery(params, result)
         elif params.mode in (MODE_SEARCH, MODE_BOTH):
             self.msg("Searching...", "info")
             request = SearchRequest(keyword=params.keyword, location=params.location,
@@ -276,6 +297,9 @@ class Pipeline:
 
         if params.mode in (MODE_ENRICH, MODE_BOTH):
             self._enrich(saved, params, result)
+        qualified = False
+        if agency and params.qualify and params.mode == MODE_BOTH:
+            qualified = self._qualify(saved, params, result)
 
         self.db.finish_run(result.run_id, n_found=result.n_found, n_unique=result.n_unique,
                            n_enriched=result.n_enriched, n_failed=result.n_failed)
@@ -285,18 +309,40 @@ class Pipeline:
             summary += f", {result.n_enriched} arricchiti, {result.n_failed} falliti"
             if result.n_cached:
                 summary += f", {result.n_cached} dalla cache"
+        if qualified:
+            summary += ", " + _qualify_summary(result)
         self.msg(summary, "success")
 
     @staticmethod
     def _web_provider_name(params: RunParams) -> str:
         return params.web_provider or user_settings.get("web_provider", "tavily")
 
-    def _web_discovery(self, params: RunParams, result: RunResult) -> list[Prospect]:
+    def _providers_label(self, params: RunParams) -> str:
+        """Fonti registrate nella ricerca: provider web (+ modello AI per le agenzie)."""
+        if params.search_source == SOURCE_WEB:
+            return self._web_provider_name(params)
+        if params.search_source == SOURCE_AGENCY:
+            names = [self._web_provider_name(params)]
+            if params.qualify:
+                try:
+                    names.append(qllm.get_classifier(params.llm_provider, self.client, params.llm_model).model)
+                except Exception:  # noqa: BLE001 - solo un'etichetta
+                    log.exception("modello AI non determinabile")
+            return ",".join(names)
+        return ",".join(params.providers or [])
+
+    def _web_discovery(self, params: RunParams, result: RunResult,
+                       extra_filter: Callable[[SearchResult], str | None] | None = None,
+                       category: str = WEB_CATEGORY) -> list[Prospect]:
         """Scoperta via Web Search: un prospect per dominio aziendale trovato."""
         provider = web_search.get_provider(params.web_provider, self.client)
         self.msg(f"Searching the web ({provider.label})...", "info")
-        report = web_search.run_web_search(params.keyword, params.location, params.max_results,
-                                           provider=provider)
+        if extra_filter is None:
+            report = web_search.run_web_search(params.keyword, params.location, params.max_results,
+                                               provider=provider)
+        else:
+            report = web_search.run_web_search(params.keyword, params.location, params.max_results,
+                                               provider=provider, extra_filter=extra_filter)
         if report.errors:
             result.provider_errors = {provider.name: "; ".join(report.errors)}
         for err in report.errors:
@@ -304,8 +350,13 @@ class Pipeline:
         result.n_found = len(report.results)
         self.msg(f"Found {report.raw_count} results, {result.n_found} domini aziendali "
                  f"({report.api_calls} ricerche API)", "info")
+        if report.filtered:
+            self.msg(f"{report.filtered} risultati scartati dalla blacklist", "info")
         fallback = report.queries[0] if report.queries else params.keyword
-        return [web_result_to_prospect(r, params, (r.extra or {}).get("query") or fallback)
+        if category == WEB_CATEGORY:
+            return [web_result_to_prospect(r, params, (r.extra or {}).get("query") or fallback)
+                    for r in report.results]
+        return [web_result_to_prospect(r, params, (r.extra or {}).get("query") or fallback, category)
                 for r in report.results]
 
     def _enrich_targets(self, params: RunParams) -> list[Prospect]:
@@ -356,6 +407,7 @@ class Pipeline:
             for fut in as_completed(futures):
                 p = futures[fut]
                 res = fut.result()
+                self.last_enrichment[p.id] = res
                 apply_enrichment(p, res)
                 self.db.save(p)
                 done += 1
@@ -365,3 +417,64 @@ class Pipeline:
                     result.n_failed += 1
                     log.info("enrichment fallito %s: %s", p.website, p.error_message)
                 self.progress(done, total, p.company_name or p.domain or p.website)
+
+    # ------------------------------------------------------------------------
+    def _qualify(self, prospects: list[Prospect], params: RunParams, result: RunResult) -> bool:
+        """Qualifica con l'AI le agenzie arricchite. Restituisce True se la qualifica è partita.
+        Non cambia ``prospects.status``: gli esiti stanno in ``agency_qualifications``."""
+        classifier = qllm.get_classifier(params.llm_provider, self.client, params.llm_model)
+        if not classifier.is_configured():
+            self.msg("Qualifica non configurata: inserisci la chiave API in «Impostazioni Agenzie»",
+                     "warning")
+            return False
+        todo = [p for p in prospects if p.website and p.status == STATUS_ENRICHED]
+        if not todo:
+            self.msg("Nessuna agenzia da qualificare", "info")
+            return False
+        scoring, scoring_error = qconfig.load_scoring_with_error()
+        if scoring_error:
+            self.msg(f"Pesi dello score non validi ({scoring_error}): uso quelli predefiniti", "warning")
+        self.msg("Qualifying agencies...", "info")
+        workers = max(1, min(MAX_QUALIFY_WORKERS, settings.MAX_WORKERS, len(todo)))
+        done = 0
+        with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="qualify") as pool:
+            futures = {pool.submit(qqualifier.qualify_site, p, self.client, classifier, scoring,
+                                   self.last_enrichment.get(p.id)): p for p in todo}
+            for fut in as_completed(futures):
+                p = futures[fut]
+                try:
+                    q = fut.result()
+                except Exception as exc:  # noqa: BLE001 - qualify_site non dovrebbe sollevare
+                    log.exception("qualifica interrotta per %s", p.website)
+                    q = qqualifier.failed_qualification(f"errore interno: {type(exc).__name__}", classifier)
+                self.db.save_qualification(p.id, result.run_id, q)
+                result.llm_cost_usd += q.cost_usd
+                if q.status == "ok":
+                    result.n_qualified += 1
+                elif q.status == "excluded":
+                    result.n_excluded += 1
+                else:
+                    result.n_qual_failed += 1
+                    log.info("qualifica fallita %s: %s", p.website, q.error)
+                done += 1
+                self.progress(done, len(todo), p.company_name or p.domain or p.website)
+        return True
+
+
+def _blacklist_filter() -> Callable[[SearchResult], str | None]:
+    """Filtro della scoperta: motivo dello scarto per i risultati in blacklist."""
+    blacklist = qconfig.load_blacklist()
+    return lambda r: blacklist.match(r.url, r.title)
+
+
+def _plural(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
+def _qualify_summary(result: RunResult) -> str:
+    cost = result.llm_cost_usd
+    cost_text = f"{cost:.3f}" if cost < 0.01 else f"{cost:.2f}"
+    return ", ".join([_plural(result.n_qualified, "qualificata", "qualificate"),
+                      _plural(result.n_excluded, "esclusa", "escluse"),
+                      _plural(result.n_qual_failed, "fallita", "fallite"),
+                      f"costo AI {cost_text.replace('.', ',')} $"])

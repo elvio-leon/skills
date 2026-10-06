@@ -1,0 +1,44 @@
+# Pesi dello score delle agenzie (0-100). Modificabili: salva e rilancia la ricerca.
+[seo_level]
+assente = 40
+accennata = 25
+strutturata = 0
+
+[servizi_ricorrenti]
+si = 25
+no = 0
+
+[size_signal]
+"1" = 5
+"2-5" = 15
+"6-20" = 25
+"20+" = 5
+"non determinabile" = 0
+
+[blog]
+assente = 10
+fermo = 10
+attivo = 0
+"non determinabile" = 0
+
+[is_agency]
+si = 0
+dubbio = -20
+# "no" = esclusa dallo score (non configurabile)
+
+[limiti]
+min = 0
+max = 100
+
+[llm]
+# modelli usati per la qualifica (id esatti delle API)
+claude = "claude-haiku-4-5"
+claude_alt = "claude-sonnet-5-5"
+openai = "gpt-5.4-mini"
+gemini = "gemini-2.5-flash"
+
+[prezzi]  # dollari per 1 milione di token: [input, output]
+"claude-haiku-4-5" = [1.0, 5.0]
+"claude-sonnet-5-5" = [2.0, 10.0]
+"gpt-5.4-mini" = [0.75, 4.5]
+"gemini-2.5-flash" = [0.30, 2.50]

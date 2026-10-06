@@ -60,6 +60,8 @@ class EnrichmentResult:
     socials: dict[str, list[str]] = field(default_factory=dict)
     jsonld: dict = field(default_factory=dict)
     rendered_js: bool = False
+    # Testi delle pagine analizzate (chiave = URL canonico), riusati dalla qualifica delle agenzie.
+    page_texts: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass
@@ -121,6 +123,38 @@ def parse_page(page: Page) -> ParsedPage:
         tag.decompose()
     text = clean_text(text_soup.get_text(" "))
     return ParsedPage(url=page.final_url, soup=soup, html=html, text=text, links=links)
+
+
+PAGE_TEXT_MAX_CHARS = 20_000
+
+
+def feed_links(soup: BeautifulSoup, base_url: str) -> list[str]:
+    """URL dei feed RSS/Atom dichiarati nell'<head> (esclusi i feed dei commenti)."""
+    out: list[str] = []
+    for tag in soup.find_all("link", href=True):
+        rel = tag.get("rel") or []
+        rel = rel if isinstance(rel, list) else [rel]
+        kind = (tag.get("type") or "").lower()
+        if "alternate" not in [r.lower() for r in rel] or kind not in (
+                "application/rss+xml", "application/atom+xml"):
+            continue
+        if "comment" in f"{tag.get('title', '')} {tag['href']}".lower():
+            continue
+        try:
+            url = urljoin(base_url, tag["href"].strip())
+        except ValueError:
+            continue
+        if url.startswith(("http://", "https://")) and url not in out:
+            out.append(url)
+    return out
+
+
+def page_text_entry(p: ParsedPage, home: bool = False) -> dict:
+    """Voce di ``EnrichmentResult.page_texts``: titolo, testo visibile e (solo home) link e feed."""
+    title = clean_text(p.soup.title.get_text(" ")) if p.soup.title else ""
+    return {"url": p.url, "title": title, "text": p.text[:PAGE_TEXT_MAX_CHARS],
+            "links": list(p.links) if home else [],
+            "feeds": feed_links(p.soup, p.url) if home else []}
 
 
 def render_with_playwright(url: str) -> Page | None:
@@ -242,6 +276,7 @@ class WebsiteCrawler:
 
         pages = [parsed]
         res.pages_visited.append(parsed.url)
+        res.page_texts[_canonical(parsed.url)] = page_text_entry(parsed, home=True)
         visited = {_canonical(parsed.url), _canonical(home)}
 
         # --- pagine candidate: link della home (per URL o anchor text) ---
@@ -292,6 +327,7 @@ class WebsiteCrawler:
             sp = parse_page(sub)
             pages.append(sp)
             res.pages_visited.append(sp.url)
+            res.page_texts[_canonical(sp.url)] = page_text_entry(sp)
             visited.add(_canonical(sp.url))
             if prio <= 1:
                 enqueue(sp.links)  # es. "contatti" linkata solo da "chi siamo"

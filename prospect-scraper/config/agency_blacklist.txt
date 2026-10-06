@@ -1,0 +1,66 @@
+# Blacklist della ricerca Agenzie. Modificabile: salva e rilancia la ricerca.
+# Una voce per riga, le righe che iniziano con # sono commenti.
+#
+# [domini]  siti scartati (vale anche per i sottodomini): directory, portali, social...
+# [frasi]   testo scartato se compare nel TITOLO del risultato o nel percorso dell'URL
+#           (nell'URL i trattini - e _ valgono come spazi). Maiuscole/minuscole non contano.
+
+[domini]
+clutch.co
+sortlist.com
+sortlist.it
+paginegialle.it
+paginebianche.it
+cribis.com
+ensun.io
+designrush.com
+goodfirms.co
+trustpilot.com
+linkedin.com
+facebook.com
+instagram.com
+aranzulla.it
+upcity.com
+themanifest.com
+techbehemoths.com
+agencyspotter.com
+expertise.com
+semrush.com
+google.com
+youtube.com
+x.com
+twitter.com
+tiktok.com
+wikipedia.org
+glassdoor.it
+glassdoor.com
+indeed.com
+infojobs.it
+europages.it
+kompass.com
+ufficiocamerale.it
+reportaziende.it
+informazione-aziende.it
+registroimprese.it
+atoka.io
+yelp.it
+prontopro.it
+starofservice.it
+fiverr.com
+upwork.com
+malt.it
+addlance.com
+
+[frasi]
+migliori agenzie
+le migliori
+classifica
+top 10
+top 20
+top agenzie
+elenco agenzie
+lista agenzie
+agenzie a confronto
+best agencies
+ranking
+come scegliere
