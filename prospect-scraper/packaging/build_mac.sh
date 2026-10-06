@@ -47,7 +47,15 @@ codesign --verify --deep --strict --verbose=2 "$APP"
 echo "::group::DMG"
 cp -R "$APP" "$B/dmg/"
 ln -s /Applications "$B/dmg/Applications"
-hdiutil create -volname "$NAME" -srcfolder "$B/dmg" -ov -format UDZO "$ROOT/dist/ProspectScraper.dmg"
+# sui runner di GitHub hdiutil fallisce a volte con "Resource busy": qualche tentativo, poi errore
+for attempt in 1 2 3 4 5; do
+  if hdiutil create -volname "$NAME" -srcfolder "$B/dmg" -ov -format UDZO "$ROOT/dist/ProspectScraper.dmg"; then
+    break
+  fi
+  [ "$attempt" = 5 ] && exit 1
+  echo "hdiutil non riuscito (tentativo $attempt), riprovo tra 10 secondi"
+  sleep 10
+done
 echo "::endgroup::"
 
 du -sh "$APP" "$ROOT/dist/ProspectScraper.dmg"
