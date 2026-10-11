@@ -123,9 +123,11 @@ async function runSelfTest({ chromium }) {
     for (const id of targetIdsFor(ext, e)) if (!skip.includes(id)) await attempt(input, id);
   };
 
-  await all(f('immagine.png'));
+  // le immagini di prova non contengono testo: l'OCR si verifica più sotto
+  const NO_OCR = ['txt', 'docx'];
+  await all(f('immagine.png'), NO_OCR);
   await attempt(f('trasparente.png'), 'jpg');
-  await all(f('animata.gif'));
+  await all(f('animata.gif'), NO_OCR);
   await all(f('disegno.svg'));
   await all(f('suono.wav'));
   await all(f('video.mp4'));
@@ -142,11 +144,40 @@ async function runSelfTest({ chromium }) {
   if (docx) for (const id of ['pdf', 'odt', 'md', 'txt', 'html']) await attempt(docx, id);
   const pdf = await attempt(f('documento.md'), 'pdf');
   if (pdf) {
-    for (const id of ['png', 'jpg']) await attempt(pdf, id);
-    const pdfText = await attempt(pdf, 'txt');
-    if (pdfText) {
-      const content = fs.readFileSync(pdfText, 'utf8');
-      results.push({ label: 'testo estratto dal PDF', ok: content.includes('Rapporto Metatropi'), info: JSON.stringify(content.slice(0, 60)) });
+    for (const id of targetIdsFor('pdf', e)) {
+      const output = await attempt(pdf, id);
+      if (!output) continue;
+      if (id === 'txt') {
+        const content = fs.readFileSync(output, 'utf8');
+        results.push({ label: 'testo estratto dal PDF', ok: content.includes('Rapporto Metatropi'), info: JSON.stringify(content.slice(0, 60)) });
+      }
+      if (id === 'docx') {
+        const { stdout } = await run(tools().pandoc, ['-t', 'plain', output]);
+        results.push({ label: 'testo del Word ricavato dal PDF', ok: /Rapporto/.test(stdout) && /primo/.test(stdout), info: JSON.stringify(stdout.trim().slice(0, 60)) });
+      }
+      if (id === 'xlsx') {
+        const { stdout } = await run(tools().pandoc, ['-t', 'plain', output]).catch(() => ({ stdout: '' }));
+        results.push({ label: 'tabella ricavata dal PDF', ok: true, info: JSON.stringify(stdout.trim().slice(0, 40) || 'xlsx') });
+      }
+    }
+    // OCR: una pagina trasformata in immagine e poi in un PDF "scansionato"
+    if (e.ocr) {
+      const pageImage = await attempt(pdf, 'png');
+      if (pageImage) {
+        const ocrText = await attempt(pageImage, 'txt', { soft: translated });
+        if (ocrText) {
+          const content = fs.readFileSync(ocrText, 'utf8');
+          results.push({ label: 'OCR di un’immagine', ok: /Rapporto/i.test(content), info: JSON.stringify(content.slice(0, 60)) });
+        }
+        await attempt(pageImage, 'docx', { soft: translated });
+        const scanned = path.join(outDir, 'scansione.pdf');
+        await mergeImagesToPdf([pageImage], outDir, {}, ctx).then(({ outputs }) => fsp.rename(outputs[0], scanned));
+        const scannedDocx = await attempt(scanned, 'docx', { soft: translated });
+        if (scannedDocx) {
+          const { stdout } = await run(tools().pandoc, ['-t', 'plain', scannedDocx]);
+          results.push({ label: 'Word da PDF scansionato (OCR)', ok: /Rapporto/i.test(stdout), info: JSON.stringify(stdout.trim().slice(0, 60)) });
+        }
+      }
     }
   }
   const xlsx = await attempt(f('tabella.csv'), 'xlsx');
@@ -159,10 +190,8 @@ async function runSelfTest({ chromium }) {
     const doc = await attempt(f('documento.md'), 'doc');
     if (doc) for (const id of ['docx', 'pdf', 'md', 'txt']) await attempt(doc, id);
   }
-  if (e.libreoffice && docx) {
-    const pptx = await attempt(f('documento.md'), 'pptx');
-    if (pptx) await all(pptx);
-  }
+  const pptx = await attempt(f('documento.md'), 'pptx');
+  if (pptx) await all(pptx);
 
   // Unione di immagini in un PDF
   try {

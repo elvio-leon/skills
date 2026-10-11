@@ -10,6 +10,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { tools, run, moveFile, ConversionError } = require('./tools');
 const { familyOf, normExt } = require('./formats');
+const py = require('./pytools');
 
 const PANDOC_READERS = {
   md: 'markdown', html: 'html', docx: 'docx', odt: 'odt', rtf: 'rtf', epub: 'epub',
@@ -142,6 +143,14 @@ async function convertDocument(input, out, targetId, opts, ctx) {
   const family = familyOf(rawExt);
   const title = path.basename(input, path.extname(input));
 
+  // PowerPoint senza LibreOffice (o verso formati di testo): si estraggono testo, tabelle e immagini
+  if (family === 'slides' && !(t.libreoffice && ['pdf', 'pptx', 'odp'].includes(targetId))) {
+    if (ext !== 'pptx' || !t.python) {
+      throw new ConversionError('Per questo formato serve LibreOffice (gratuito): installalo da libreoffice.org');
+    }
+    return pptxViaMarkdown(input, out, targetId, opts, ctx, title);
+  }
+
   const useLibreOffice =
     t.libreoffice &&
     (family === 'slides' || family === 'pages' ||
@@ -207,4 +216,32 @@ async function convertDocument(input, out, targetId, opts, ctx) {
   return outputs;
 }
 
-module.exports = { convertDocument, libreoffice, readTextSmart, escapeHtml, DOC_PRINT_CSS };
+async function pptxViaMarkdown(input, out, targetId, opts, ctx, title) {
+  const dir = path.join(ctx.tmp, 'slide');
+  const stdout = await py.python('pptx', [input, dir], ctx, 'Impossibile leggere la presentazione');
+  const md = path.join(dir, `${title}.md`);
+  await fsp.rename(py.lastLine(stdout), md);
+  const step = { ...ctx, onProgress: null };
+  if (targetId === 'md') {
+    // passando da Word le immagini finiscono in una cartella accanto al file
+    const docx = path.join(ctx.tmp, `${title}.docx`);
+    await convertDocument(md, docx, 'docx', opts, step);
+    return convertDocument(docx, out, 'md', opts, step);
+  }
+  return convertDocument(md, out, targetId, opts, step);
+}
+
+// Testo semplice (es. da OCR) -> qualunque formato di documento
+async function fromPlainText(text, out, targetId, title, opts, ctx) {
+  const clean = String(text).replace(/\r\n?/g, '\n').replace(/\n?\f\n?/g, '\n\n').trim();
+  if (!clean) throw new ConversionError('Non è stato trovato alcun testo');
+  if (targetId === 'txt') {
+    await fsp.writeFile(out, `${clean}\n`);
+    return [out];
+  }
+  const txt = path.join(ctx.tmp, `${title}.txt`);
+  await fsp.writeFile(txt, clean);
+  return convertDocument(txt, out, targetId, opts, ctx);
+}
+
+module.exports = { convertDocument, fromPlainText, libreoffice, readTextSmart, escapeHtml, DOC_PRINT_CSS };

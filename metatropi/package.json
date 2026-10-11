@@ -1,7 +1,7 @@
 {
   "name": "metatropi",
   "productName": "Metatropi",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Convertitore universale di file che funziona interamente in locale",
   "main": "src/main.js",
   "private": true,
@@ -39,7 +39,8 @@
       "!node_modules/pdfjs-dist/types/**",
       "!node_modules/pdfjs-dist/web/**",
       "!node_modules/pdfjs-dist/image_decoders/**",
-      "!**/*.map"
+      "!**/*.map",
+      "!src/native/**"
     ],
     "extraResources": [
       {
@@ -52,6 +53,9 @@
       }
     ],
     "asar": true,
+    "asarUnpack": [
+      "src/py/**"
+    ],
     "publish": null,
     "mac": {
       "category": "public.app-category.utilities",

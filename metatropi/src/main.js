@@ -223,6 +223,8 @@ function registerIpc() {
         libreoffice: !!t.libreoffice,
         sips: !!t.sips,
         textutil: !!t.textutil,
+        python: !!t.python,
+        ocr: !!t.ocr,
       },
       categories: CATEGORY_LABELS,
     };

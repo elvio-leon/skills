@@ -123,18 +123,21 @@ function targetIdsFor(ext, env) {
   const family = familyOf(ext);
   const self = normExt(ext);
   const lo = !!env.libreoffice;
+  const ocr = env.ocr ? ['txt', 'docx'] : [];
   let ids = [];
   switch (family) {
     case 'image':
+      if (env.ffmpeg) ids = [...IMAGE_OUT.filter((t) => t !== 'heic' || env.mac), ...ocr];
+      break;
     case 'svg':
       if (env.ffmpeg) ids = IMAGE_OUT.filter((t) => t !== 'heic' || env.mac);
-      else if (family === 'svg') ids = ['png', 'pdf'];
+      else ids = ['png', 'pdf'];
       break;
     case 'imageMac':
-      if (env.mac) ids = IMAGE_OUT.slice();
+      if (env.mac) ids = [...IMAGE_OUT, ...ocr];
       break;
     case 'gif':
-      if (env.ffmpeg) ids = [...IMAGE_OUT.filter((t) => t !== 'heic' || env.mac), 'mp4', 'webm'];
+      if (env.ffmpeg) ids = [...IMAGE_OUT.filter((t) => t !== 'heic' || env.mac), 'mp4', 'webm', ...ocr];
       break;
     case 'audio':
       if (env.ffmpeg) ids = AUDIO_OUT.slice();
@@ -155,15 +158,24 @@ function targetIdsFor(ext, env) {
       break;
     case 'slides':
       if (lo) ids = ['pdf', 'pptx', 'odp'];
+      // Dai .pptx si estraggono testo, tabelle e immagini anche senza LibreOffice
+      if (self === 'pptx' && env.python && env.pandoc) ids = [...new Set([...ids, 'pdf', 'docx', 'odt', 'html', 'md', 'txt', 'epub'])];
       break;
     case 'sheet':
       ids = SHEET_OUT.slice();
+      if (env.pandoc) ids.push('docx', 'odt');
       break;
     case 'data':
       ids = ['json', 'yaml', 'csv', 'xlsx', 'ods'];
       break;
     case 'pdf':
       ids = ['png', 'jpg', 'txt'];
+      if (env.python) {
+        ids.unshift('docx');
+        if (env.pandoc) ids.push('odt', 'rtf', 'html', 'md', 'epub', 'pptx');
+        if (env.mac) ids.push('doc');
+        ids.push('xlsx', 'csv', 'ods');
+      }
       break;
     case 'subtitle':
       if (env.ffmpeg) ids = ['srt', 'vtt', 'ass'];
@@ -171,13 +183,41 @@ function targetIdsFor(ext, env) {
     default:
       ids = [];
   }
+  // Qualunque cosa diventi un PDF può diventare anche un'immagine per pagina
+  if (['doc', 'docLegacy', 'pages'].includes(family) && ids.includes('pdf')) ids.push('png', 'jpg');
+  if (family === 'slides' && lo) ids.push('png', 'jpg');
   // Ricomprimere nello stesso formato ha senso solo per i media (qualità/dimensioni)
   const recompress = ['image', 'gif', 'audio', 'video'].includes(family);
-  return ids.filter((id) => recompress || TARGETS[id].ext !== self);
+  return [...new Set(ids)].filter((id) => recompress || TARGETS[id].ext !== self);
 }
 
+// Descrizioni più precise quando il significato dipende dal file di partenza
+const OCR_HINTS = { txt: 'Testo riconosciuto (OCR)', docx: 'Testo riconosciuto (OCR)' };
+const PAGE_IMAGES = { png: 'Un’immagine per pagina', jpg: 'Un’immagine per pagina' };
+const HINTS = {
+  image: OCR_HINTS,
+  imageMac: OCR_HINTS,
+  gif: OCR_HINTS,
+  doc: PAGE_IMAGES,
+  docLegacy: PAGE_IMAGES,
+  pages: PAGE_IMAGES,
+  slides: { png: 'Un’immagine per slide', jpg: 'Un’immagine per slide', docx: 'Testo, tabelle e immagini delle slide', md: 'Testo delle slide', txt: 'Solo il testo delle slide' },
+  sheet: { docx: 'Tabelle in un documento Word', odt: 'Tabelle in un documento ODT' },
+  pdf: {
+    docx: 'Modificabile, mantiene l’impaginazione',
+    txt: 'Solo il testo (OCR se è una scansione)',
+    xlsx: 'Le tabelle del PDF, una per foglio',
+    ods: 'Le tabelle del PDF, una per foglio',
+    csv: 'Le tabelle del PDF',
+    pptx: 'Una slide per pagina',
+    ...PAGE_IMAGES,
+  },
+};
+
 function describeTargets(ext, env) {
-  return targetIdsFor(ext, env).map((id) => ({ id, ...TARGETS[id] }));
+  const hints = { ...(HINTS[familyOf(ext)] || {}) };
+  if (familyOf(ext) === 'slides' && !env.libreoffice) hints.pdf = 'Testo e immagini delle slide';
+  return targetIdsFor(ext, env).map((id) => ({ id, ...TARGETS[id], ...(hints[id] ? { hint: hints[id] } : {}) }));
 }
 
 module.exports = {

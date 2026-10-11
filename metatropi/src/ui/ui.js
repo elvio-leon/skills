@@ -18,17 +18,18 @@ const CATEGORY_ICON = {
   sheet: 'i-sheet', pdf: 'i-pdf', slides: 'i-slides', subtitle: 'i-subtitle',
 };
 // Gruppo di uscita più naturale per ciascuna categoria di partenza
-const NATURAL_GROUP = { image: 'image', video: 'video', audio: 'audio', doc: 'doc', sheet: 'sheet', pdf: 'image', slides: 'doc', subtitle: 'subtitle' };
-const RECOMMENDED = new Set(['jpg', 'mp4', 'mp3', 'pdf', 'xlsx', 'srt']);
+const NATURAL_GROUP = { image: 'image', video: 'video', audio: 'audio', doc: 'doc', sheet: 'sheet', pdf: 'doc', slides: 'doc', subtitle: 'subtitle' };
+// Il formato più richiesto per ciascun tipo di file di partenza
+const RECOMMENDED = { image: 'jpg', video: 'mp4', audio: 'mp3', doc: 'pdf', pdf: 'docx', sheet: 'xlsx', slides: 'pdf', subtitle: 'srt' };
 
 const FORMAT_CARDS = [
-  { cat: 'image', title: 'Immagini', text: 'JPG, PNG, WebP, AVIF, HEIC, GIF, TIFF, SVG, PSD, RAW' },
+  { cat: 'pdf', title: 'PDF', text: 'In Word, Excel, PowerPoint, immagini o testo (anche scansioni)' },
+  { cat: 'image', title: 'Immagini', text: 'JPG, PNG, WebP, AVIF, HEIC, SVG, RAW → anche testo con l’OCR' },
   { cat: 'video', title: 'Video', text: 'MP4, MOV, MKV, WebM, AVI → anche GIF e solo audio' },
   { cat: 'audio', title: 'Audio', text: 'MP3, AAC, ALAC, WAV, FLAC, AIFF, OGG, Opus' },
-  { cat: 'doc', title: 'Documenti', text: 'Word, ODT, RTF, Markdown, HTML, EPUB → PDF' },
+  { cat: 'doc', title: 'Documenti', text: 'Word, ODT, RTF, Markdown, HTML, EPUB → PDF o immagini' },
   { cat: 'sheet', title: 'Fogli e dati', text: 'Excel, Numbers, ODS, CSV, JSON, YAML' },
-  { cat: 'pdf', title: 'PDF', text: 'In immagini (una per pagina) o in testo' },
-  { cat: 'slides', title: 'Presentazioni', text: 'PowerPoint, Keynote, ODP → PDF', needsLO: true },
+  { cat: 'slides', title: 'Presentazioni', text: 'PowerPoint → PDF, Word, testo. Keynote con LibreOffice' },
   { cat: 'subtitle', title: 'Sottotitoli', text: 'SRT, WebVTT, ASS' },
 ];
 
@@ -461,7 +462,7 @@ function renderTiles() {
     h('span', { class: 'tile-label' }, c.label),
     h('span', { class: 'tile-hint' }, c.hint || ''),
     corner,
-    RECOMMENDED.has(c.id) && !selected && !partialApply ? h('span', { class: 'rec' }, 'Consigliato') : null);
+    c.files.every((f) => RECOMMENDED[f.category] === c.id) && !selected ? h('span', { class: 'rec' }, 'Consigliato') : null);
   }));
   if (!chips.size) {
     note.hidden = false;
@@ -657,8 +658,9 @@ function renderEngines() {
   const items = [
     ['Audio, video e immagini', e.ffmpeg],
     ['Documenti', e.pandoc],
+    ['PDF → Word ed Excel', e.python],
   ];
-  if (state.env.platform === 'darwin') items.push(['Formati Apple (HEIC, RAW, DOC)', e.sips && e.textutil]);
+  if (state.env.platform === 'darwin') items.push(['OCR', e.ocr], ['Formati Apple (HEIC, RAW, DOC)', e.sips && e.textutil]);
   const el = $('engines');
   el.replaceChildren(...items.map(([name, ok]) => h('span', { class: `engine${ok ? '' : ' off'}` }, name)));
   el.append(e.libreoffice

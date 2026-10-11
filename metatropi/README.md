@@ -11,17 +11,22 @@ senza mai sovrascrivere nulla.
 
 | Categoria | Da | A |
 |---|---|---|
-| Immagini | JPG, PNG, WebP, AVIF, HEIC, GIF, TIFF, BMP, ICO, SVG, PSD, RAW (DNG, CR2, CR3, NEF, ARW…) | JPG, PNG, WebP, AVIF, HEIC, GIF, TIFF, BMP, ICO, PDF |
+| PDF | PDF (anche scansioni, con OCR) | **Word (DOCX)**, DOC, ODT, RTF, HTML, Markdown, EPUB, TXT, **Excel/ODS/CSV** (le tabelle), **PowerPoint** (una slide per pagina), PNG/JPG (una per pagina) |
+| Immagini | JPG, PNG, WebP, AVIF, HEIC, GIF, TIFF, BMP, ICO, SVG, PSD, RAW (DNG, CR2, CR3, NEF, ARW…) | JPG, PNG, WebP, AVIF, HEIC, GIF, TIFF, BMP, ICO, PDF, **TXT/Word con l'OCR** |
 | Video | MP4, MOV, MKV, WebM, AVI, M4V, WMV, FLV, MPEG, 3GP, TS | MP4, MOV, MKV, WebM, AVI, GIF animata, solo audio |
 | Audio | MP3, WAV, AAC/M4A, FLAC, OGG, Opus, AIFF, WMA, AMR, CAF | MP3, M4A (AAC), ALAC, WAV, FLAC, AIFF, OGG, Opus |
-| Documenti | DOCX, DOC, ODT, RTF, Markdown, HTML, TXT, EPUB, LaTeX, RST, Org, Jupyter | PDF, DOCX, DOC, ODT, RTF, HTML, Markdown, TXT, EPUB, LaTeX, RST, PPTX |
-| Fogli e dati | XLSX, XLS, ODS, Numbers, CSV, TSV, JSON, YAML | XLSX, ODS, CSV, TSV, JSON, YAML, HTML, Markdown, PDF |
-| PDF | PDF | PNG o JPG (una immagine per pagina), TXT |
+| Documenti | DOCX, DOC, ODT, RTF, Markdown, HTML, TXT, EPUB, LaTeX, RST, Org, Jupyter | PDF, DOCX, DOC, ODT, RTF, HTML, Markdown, TXT, EPUB, LaTeX, RST, PPTX, PNG/JPG |
+| Presentazioni | PPTX | PDF, Word, ODT, HTML, Markdown, TXT, EPUB (testo, tabelle e immagini delle slide) |
+| Presentazioni* | PPTX, PPT, ODP, Keynote, Pages | PDF fedele all'originale, PPTX, ODP, PNG/JPG per slide |
+| Fogli e dati | XLSX, XLS, ODS, Numbers, CSV, TSV, JSON, YAML | XLSX, ODS, CSV, TSV, JSON, YAML, HTML, Markdown, PDF, Word, ODT |
 | Sottotitoli | SRT, VTT, ASS, SSA | SRT, VTT, ASS |
-| Presentazioni* | PPTX, PPT, ODP, Keynote, Pages | PDF, PPTX, ODP, DOCX |
 
 \* Richiede [LibreOffice](https://www.libreoffice.org) (gratuito). Se è installato,
 Metatropi lo usa automaticamente anche per avere PDF più fedeli da Word ed Excel.
+
+Motori inclusi: ffmpeg, pandoc, un Python portatile con
+[pdf2docx](https://github.com/ArtifexSoftware/pdf2docx) e PyMuPDF (PDF → Word ed
+Excel), il riconoscimento del testo di macOS (Vision) per l'OCR.
 
 Opzioni: qualità e dimensione massima delle immagini, unione di più immagini in
 un solo PDF, bitrate audio, qualità e risoluzione video, conversione video
@@ -33,11 +38,11 @@ Ogni build riuscita pubblica i DMG nella Release del repository, scaricabile
 senza account GitHub:
 
 - **Mac con chip Apple** (M1, M2, M3, M4…):
-  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.0.0/Metatropi-1.0.0-arm64.dmg
+  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.1.0/Metatropi-1.1.0-arm64.dmg
 - **Mac con processore Intel**:
-  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.0.0/Metatropi-1.0.0-x64.dmg
+  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.1.0/Metatropi-1.1.0-x64.dmg
 
-Pagina della release: https://github.com/elvio-leon/skills/releases/tag/metatropi-v1.0.0
+Pagina della release: https://github.com/elvio-leon/skills/releases/tag/metatropi-v1.1.0
 
 I DMG vengono creati da GitHub Actions su un Mac (workflow
 `.github/workflows/metatropi-macos.yml`). Quando cambi `version` in

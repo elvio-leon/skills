@@ -146,9 +146,36 @@ function workbookToHtml(wb, title) {
 }
 
 async function convertSheet(input, out, targetId, opts, ctx) {
-  const { tmp, chromium, signal } = ctx;
   const title = path.basename(input, path.extname(input));
-  let { data, wb } = await readInput(input);
+  return convertWorkbook(await readInput(input), title, out, targetId, opts, ctx);
+}
+
+// Numeri scritti all'italiana o all'inglese ("12.500", "3,14", "1,234.5") -> numero
+function coerceNumber(value) {
+  if (typeof value !== 'string') return value;
+  const v = value.trim().replace(/^€\s*|\s*€$/g, '');
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) return Number(v.replace(/\./g, '').replace(',', '.'));
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(v)) return Number(v.replace(/,/g, ''));
+  if (/^-?\d+,\d+$/.test(v)) return Number(v.replace(',', '.'));
+  if (/^-?(0|[1-9]\d{0,14})(\.\d+)?$/.test(v)) return Number(v);
+  return value;
+}
+
+// Tabelle estratte da un PDF -> cartella di lavoro, una tabella per foglio
+function tablesToWorkbook(tables) {
+  const wb = XLSX.utils.book_new();
+  const used = new Set();
+  for (const table of tables) {
+    const rows = table.rows.map((r, i) => (i === 0 ? r : r.map(coerceNumber)));
+    const name = tables.length === 1 ? 'Tabella' : `Tabella ${table.index}${table.page ? ` (pag. ${table.page})` : ''}`;
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), safeSheetName(name, used));
+  }
+  return wb;
+}
+
+async function convertWorkbook(source, title, out, targetId, opts, ctx) {
+  const { tmp, chromium, signal } = ctx;
+  let { data, wb } = source;
   const getWb = () => (wb = wb || dataToWorkbook(data));
   const getData = () => (data !== null && data !== undefined ? data : workbookToData(getWb()));
 
@@ -189,6 +216,12 @@ async function convertSheet(input, out, targetId, opts, ctx) {
       await fsp.writeFile(out, `${parts.join('\n\n')}\n`);
       return [out];
     }
+    case 'docx':
+    case 'odt': {
+      const html = path.join(tmp, `${title}.html`);
+      await fsp.writeFile(html, workbookToHtml(getWb(), title));
+      return require('./docs').convertDocument(html, out, targetId, opts, ctx);
+    }
     case 'pdf': {
       const html = path.join(tmp, 'foglio.html');
       await fsp.writeFile(html, workbookToHtml(getWb(), title));
@@ -200,4 +233,4 @@ async function convertSheet(input, out, targetId, opts, ctx) {
   }
 }
 
-module.exports = { convertSheet, detectDelimiter };
+module.exports = { convertSheet, convertWorkbook, tablesToWorkbook, coerceNumber, detectDelimiter };

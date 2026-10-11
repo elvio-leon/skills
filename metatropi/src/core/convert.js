@@ -7,10 +7,11 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const { TARGETS, familyOf, normExt, targetIdsFor } = require('./formats');
-const { env, tools, makeTempDir, removeDir, ConversionError } = require('./tools');
+const { env, tools, run, makeTempDir, removeDir, ConversionError } = require('./tools');
 const media = require('./media');
 const docs = require('./docs');
 const sheets = require('./sheets');
+const py = require('./pytools');
 
 // Percorsi di uscita già assegnati a conversioni in corso (evita collisioni in parallelo)
 const reserved = new Set();
@@ -76,6 +77,10 @@ async function convertImage(input, out, targetId, opts, ctx) {
     await imagesToPdf([input], out, opts, ctx);
     return [out];
   }
+  if (targetId === 'txt' || targetId === 'docx') {
+    const text = await py.ocr(input, ctx);
+    return docs.fromPlainText(text, out, targetId, path.basename(input, path.extname(input)), opts, ctx);
+  }
   if (targetId === 'mp4' || targetId === 'webm') {
     await media.convertVideo(input, out, targetId, opts, ctx);
     return [out];
@@ -136,7 +141,75 @@ async function imagesToPdf(inputs, out, opts, ctx) {
   await chromium.htmlToPdf(htmlFile, out, { preferCSSPageSize: true, margins: { top: 0, bottom: 0, left: 0, right: 0 }, signal });
 }
 
+// Avanzamento di una fase all'interno di un intervallo (es. 0..0.8)
+function phase(ctx, from, to) {
+  return { ...ctx, root: ctx.root || ctx, onProgress: ctx.onProgress ? (p) => ctx.onProgress(from + (to - from) * p) : null };
+}
+
+// PDF -> Word: pdf2docx per i PDF con testo, OCR per le scansioni
+async function pdfToDocx(input, out, opts, ctx) {
+  const title = path.basename(input, path.extname(input));
+  if (tools().ocr && (await py.isScannedPdf(input, ctx))) {
+    const text = await py.ocr(input, phase(ctx, 0, 0.9));
+    await docs.fromPlainText(text, out, 'docx', title, opts, { ...ctx, onProgress: null });
+    return;
+  }
+  await py.python('docx', [input, out], ctx, 'Impossibile convertire il PDF in Word');
+}
+
+const VIA_DOCX = new Set(['odt', 'rtf', 'html', 'md', 'epub', 'doc']);
+
 async function convertPdf(input, out, targetId, opts, ctx) {
+  const title = path.basename(input, path.extname(input));
+  if (targetId === 'docx') {
+    await pdfToDocx(input, out, opts, ctx);
+    return [out];
+  }
+  if (VIA_DOCX.has(targetId)) {
+    const docx = path.join(ctx.tmp, `${title}.docx`);
+    await pdfToDocx(input, docx, opts, phase(ctx, 0, 0.85));
+    return docs.convertDocument(docx, out, targetId, opts, { ...ctx, onProgress: null });
+  }
+  if (['xlsx', 'ods', 'csv'].includes(targetId)) {
+    const json = path.join(ctx.tmp, 'tabelle.json');
+    await py.python('tables', [input, json], ctx, 'Impossibile leggere le tabelle del PDF');
+    const tables = JSON.parse(await fsp.readFile(json, 'utf8'));
+    if (!tables.length) throw new ConversionError('Nel PDF non sono state trovate tabelle');
+    return sheets.convertWorkbook({ data: null, wb: sheets.tablesToWorkbook(tables) }, title, out, targetId, opts, ctx);
+  }
+  if (targetId === 'pptx') return pdfToSlides(input, out, opts, ctx);
+  if (targetId === 'txt' && tools().ocr && (await py.isScannedPdf(input, ctx))) {
+    return docs.fromPlainText(await py.ocr(input, ctx), out, 'txt', title, opts, ctx);
+  }
+  return renderPdf(input, out, targetId, opts, ctx);
+}
+
+// Ogni pagina diventa una slide (come immagine)
+async function pdfToSlides(input, out, opts, ctx) {
+  const { chromium, tmp, signal } = ctx;
+  const data = await fsp.readFile(input);
+  const { docId, numPages } = await chromium.engine('pdf-open', { data });
+  const dir = path.join(tmp, 'slide');
+  await fsp.mkdir(dir, { recursive: true });
+  const parts = [];
+  try {
+    for (let p = 1; p <= numPages; p++) {
+      throwIfAborted(signal);
+      const bytes = await chromium.engine('pdf-render', { docId, page: p, scale: 2, mime: 'image/png' });
+      await fsp.writeFile(path.join(dir, `pagina-${p}.png`), Buffer.from(bytes));
+      parts.push(`![](pagina-${p}.png)`);
+      if (ctx.onProgress) ctx.onProgress((p / numPages) * 0.9);
+    }
+  } finally {
+    chromium.engine('pdf-close', { docId }).catch(() => {});
+  }
+  const md = path.join(dir, 'slide.md');
+  await fsp.writeFile(md, `${parts.join('\n\n---\n\n')}\n`);
+  await run(tools().pandoc, ['-f', 'markdown', '-t', 'pptx', '--resource-path', dir, '-o', out, md], { signal, cwd: dir });
+  return [out];
+}
+
+async function renderPdf(input, out, targetId, opts, ctx) {
   const { chromium, onProgress } = ctx;
   const data = await fsp.readFile(input);
   const { docId, numPages } = await chromium.engine('pdf-open', { data });
@@ -162,7 +235,7 @@ async function convertPdf(input, out, targetId, opts, ctx) {
       await fsp.mkdir(dir);
       const digits = String(numPages).length;
       files = Array.from({ length: numPages }, (_, i) => path.join(dir, `pagina-${String(i + 1).padStart(digits, '0')}.${ext}`));
-      ctx.createdDir = dir;
+      (ctx.root || ctx).createdDir = dir;
     }
     for (let p = 1; p <= numPages; p++) {
       throwIfAborted(ctx.signal);
@@ -172,7 +245,7 @@ async function convertPdf(input, out, targetId, opts, ctx) {
       await fsp.writeFile(files[p - 1], Buffer.from(bytes));
       if (onProgress) onProgress(p / numPages);
     }
-    return numPages === 1 ? files : [ctx.createdDir];
+    return numPages === 1 ? files : [path.dirname(files[0])];
   } finally {
     chromium.engine('pdf-close', { docId }).catch(() => {});
   }
@@ -206,6 +279,12 @@ async function route(input, out, targetId, opts, ctx) {
     case 'docLegacy':
     case 'pages':
     case 'slides':
+      if (targetId === 'png' || targetId === 'jpg') {
+        // prima in PDF, poi un'immagine per pagina
+        const pdf = path.join(ctx.tmp, `${path.basename(input, path.extname(input))}.pdf`);
+        await docs.convertDocument(input, pdf, 'pdf', opts, phase(ctx, 0, 0.5));
+        return renderPdf(pdf, out, targetId, opts, phase(ctx, 0.5, 1));
+      }
       return docs.convertDocument(input, out, targetId, opts, ctx);
     case 'sheet':
     case 'data':

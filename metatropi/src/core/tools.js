@@ -28,14 +28,20 @@ function which(name) {
   return null;
 }
 
-// Cerca prima i binari inclusi nell'app, poi quelli scaricati in sviluppo,
-// infine quelli installati nel sistema.
-function bundledBinary(name) {
+// Cerca prima i binari inclusi nell'app, poi quelli scaricati in sviluppo
+// (vendor/), infine — se consentito — quelli installati nel sistema.
+function bundledBinary(name, { systemFallback = true } = {}) {
   const candidates = [];
   if (process.resourcesPath) candidates.push(path.join(process.resourcesPath, 'bin', name));
   candidates.push(path.join(__dirname, '..', '..', 'vendor', `${process.platform}-${process.arch}`, name));
   for (const p of candidates) if (isExecutable(p)) return p;
-  return which(name);
+  return systemFallback ? which(path.basename(name)) : null;
+}
+
+// Gli script Python vanno letti da fuori dell'archivio asar
+function pythonScript() {
+  const script = path.join(__dirname, '..', 'py', 'metatropi_tools.py');
+  return script.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
 }
 
 function findLibreOffice() {
@@ -52,6 +58,9 @@ function tools() {
     cachedTools = {
       ffmpeg: bundledBinary('ffmpeg'),
       pandoc: bundledBinary('pandoc'),
+      // Python con pdf2docx e PyMuPDF: solo quello incluso nell'app
+      python: bundledBinary(path.join('python', 'bin', 'python3'), { systemFallback: false }),
+      ocr: IS_MAC ? bundledBinary('ocr', { systemFallback: false }) : null,
       libreoffice: findLibreOffice(),
       sips: IS_MAC && isExecutable('/usr/bin/sips') ? '/usr/bin/sips' : null,
       textutil: IS_MAC && isExecutable('/usr/bin/textutil') ? '/usr/bin/textutil' : null,
@@ -72,6 +81,8 @@ function env() {
     ffmpeg: !!t.ffmpeg,
     pandoc: !!t.pandoc,
     libreoffice: !!t.libreoffice,
+    python: !!t.python,
+    ocr: !!t.ocr,
   };
 }
 
@@ -164,6 +175,7 @@ async function moveFile(from, to) {
 
 module.exports = {
   IS_MAC,
+  pythonScript,
   tools,
   refreshTools,
   env,

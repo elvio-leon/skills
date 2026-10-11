@@ -37,7 +37,11 @@ jobs:
       - name: Installa le dipendenze
         run: npm install --no-audit --no-fund
 
-      - name: Scarica ffmpeg e pandoc per macOS ${{ matrix.arch }}
+      - name: Installa Rosetta (per la build Intel)
+        if: matrix.arch == 'x64'
+        run: softwareupdate --install-rosetta --agree-to-license || true
+
+      - name: Prepara i motori (ffmpeg, pandoc, Python, OCR) per macOS ${{ matrix.arch }}
         run: node scripts/fetch-binaries.mjs --platform darwin --arch ${{ matrix.arch }}
 
       - name: Crea il DMG
@@ -51,12 +55,12 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP"
           codesign -dv "$APP/Contents/Resources/bin/ffmpeg"
           codesign -dv "$APP/Contents/Resources/bin/pandoc"
+          codesign -dv "$APP/Contents/Resources/bin/ocr"
+          codesign -dv "$APP/Contents/Resources/bin/python/bin/python3.12"
+          du -sh "$APP" "$APP/Contents/Resources/bin/"*
 
       - name: Autodiagnosi dell'app impacchettata
         run: |
-          if [ "${{ matrix.arch }}" = "x64" ]; then
-            softwareupdate --install-rosetta --agree-to-license >/dev/null 2>&1 || true
-          fi
           APP="$(find dist -maxdepth 2 -name 'Metatropi.app' -type d | head -1)"
           "$APP/Contents/MacOS/Metatropi" --selftest
 
