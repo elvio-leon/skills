@@ -68,16 +68,42 @@ jobs:
           compression-level: 0
 
   release:
-    name: Pubblica la release
-    if: startsWith(github.ref, 'refs/tags/metatropi-v')
+    name: Pubblica i DMG nella Release
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: metatropi/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Leggi la versione
+        id: version
+        run: echo "version=$(node -p "require('./metatropi/package.json').version")" >> "$GITHUB_OUTPUT"
+
       - uses: actions/download-artifact@v4
         with:
           path: dmg
           merge-multiple: true
+
       - uses: softprops/action-gh-release@v2
         with:
-          name: Metatropi ${{ github.ref_name }}
+          tag_name: metatropi-v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Metatropi ${{ steps.version.outputs.version }}
           files: dmg/*.dmg
+          overwrite_files: true
+          make_latest: true
+          body: |
+            Convertitore universale per macOS che lavora interamente in locale.
+
+            **Scarica il file giusto per il tuo Mac** (menu  → Informazioni su questo Mac):
+            - Chip Apple (M1, M2, M3, M4…): `Metatropi-${{ steps.version.outputs.version }}-arm64.dmg`
+            - Processore Intel: `Metatropi-${{ steps.version.outputs.version }}-x64.dmg`
+
+            **Installazione:** apri il DMG e trascina Metatropi in Applicazioni.
+
+            **Primo avvio:** l'app non è ancora firmata da Apple, quindi macOS la blocca.
+            Vai in Impostazioni di Sistema → Privacy e sicurezza → **Apri comunque**.
+            In alternativa, da Terminale: `xattr -dr com.apple.quarantine /Applications/Metatropi.app`

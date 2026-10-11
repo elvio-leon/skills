@@ -29,18 +29,19 @@ rapida senza ricodifica, DPI per PDF → immagine, separatore CSV.
 
 ## Scaricare il DMG
 
-Il DMG viene creato da GitHub Actions su un Mac (workflow
-`.github/workflows/metatropi-macos.yml`):
+Ogni build riuscita pubblica i DMG nella Release del repository, scaricabile
+senza account GitHub:
 
-1. Apri la scheda **Actions** del repository → **Metatropi (macOS)** →
-   l'ultima esecuzione verde.
-2. In fondo, sotto **Artifacts**, scarica:
-   - `Metatropi-macOS-arm64` per i Mac con chip Apple (M1, M2, M3, M4…);
-   - `Metatropi-macOS-x64` per i Mac con processore Intel.
-3. Estrai lo zip e apri il `.dmg`, poi trascina Metatropi in **Applicazioni**.
+- **Mac con chip Apple** (M1, M2, M3, M4…):
+  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.0.0/Metatropi-1.0.0-arm64.dmg
+- **Mac con processore Intel**:
+  https://github.com/elvio-leon/skills/releases/download/metatropi-v1.0.0/Metatropi-1.0.0-x64.dmg
 
-Per pubblicare una release con il DMG scaricabile da un link fisso basta creare
-un tag `metatropi-v1.0.0` (o successivo) e fare push del tag.
+Pagina della release: https://github.com/elvio-leon/skills/releases/tag/metatropi-v1.0.0
+
+I DMG vengono creati da GitHub Actions su un Mac (workflow
+`.github/workflows/metatropi-macos.yml`). Quando cambi `version` in
+`package.json`, la build successiva crea una nuova release con quel numero.
 
 ### Primo avvio
 
