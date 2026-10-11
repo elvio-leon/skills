@@ -33,7 +33,7 @@ if (fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === wanted && fs.exis
   process.exit(0);
 }
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'convertitutto-bin-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'metatropi-bin-'));
 
 function download(url, file) {
   console.log(`↓ ${url}`);

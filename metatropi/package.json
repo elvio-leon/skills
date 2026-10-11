@@ -1,6 +1,6 @@
 {
-  "name": "convertitutto",
-  "productName": "Convertitutto",
+  "name": "metatropi",
+  "productName": "Metatropi",
   "version": "1.0.0",
   "description": "Convertitore universale di file che funziona interamente in locale",
   "main": "src/main.js",
@@ -24,8 +24,8 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "it.seoperstartup.convertitutto",
-    "productName": "Convertitutto",
+    "appId": "it.seoperstartup.metatropi",
+    "productName": "Metatropi",
     "copyright": "© 2026 Elvio Leon",
     "directories": {
       "output": "dist",
@@ -65,8 +65,8 @@
       "minimumSystemVersion": "12.0"
     },
     "dmg": {
-      "title": "Convertitutto ${version}",
-      "artifactName": "Convertitutto-${version}-${arch}.${ext}",
+      "title": "Metatropi ${version}",
+      "artifactName": "Metatropi-${version}-${arch}.${ext}",
       "contents": [
         {
           "x": 150,

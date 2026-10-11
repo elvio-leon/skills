@@ -67,7 +67,7 @@ function createWindow() {
     minWidth: 860,
     minHeight: 600,
     show: false,
-    title: 'Convertitutto',
+    title: 'Metatropi',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0a0c11' : '#f5f6fa',
     webPreferences: {

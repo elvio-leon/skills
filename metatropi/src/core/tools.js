@@ -133,7 +133,7 @@ function run(cmd, args, { cwd, signal, onStdout, onStderr, env: extraEnv, input,
 }
 
 async function makeTempDir() {
-  return fsp.mkdtemp(path.join(os.tmpdir(), 'convertitutto-'));
+  return fsp.mkdtemp(path.join(os.tmpdir(), 'metatropi-'));
 }
 
 async function removeDir(dir) {

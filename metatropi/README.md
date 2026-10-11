@@ -1,4 +1,4 @@
-# Convertitutto
+# Metatropi
 
 Convertitore universale per macOS che lavora **interamente in locale**: nessun
 file viene caricato su internet.
@@ -21,7 +21,7 @@ senza mai sovrascrivere nulla.
 | Presentazioni* | PPTX, PPT, ODP, Keynote, Pages | PDF, PPTX, ODP, DOCX |
 
 \* Richiede [LibreOffice](https://www.libreoffice.org) (gratuito). Se è installato,
-Convertitutto lo usa automaticamente anche per avere PDF più fedeli da Word ed Excel.
+Metatropi lo usa automaticamente anche per avere PDF più fedeli da Word ed Excel.
 
 Opzioni: qualità e dimensione massima delle immagini, unione di più immagini in
 un solo PDF, bitrate audio, qualità e risoluzione video, conversione video
@@ -30,17 +30,17 @@ rapida senza ricodifica, DPI per PDF → immagine, separatore CSV.
 ## Scaricare il DMG
 
 Il DMG viene creato da GitHub Actions su un Mac (workflow
-`.github/workflows/convertitutto-macos.yml`):
+`.github/workflows/metatropi-macos.yml`):
 
-1. Apri la scheda **Actions** del repository → **Convertitutto (macOS)** →
+1. Apri la scheda **Actions** del repository → **Metatropi (macOS)** →
    l'ultima esecuzione verde.
 2. In fondo, sotto **Artifacts**, scarica:
-   - `Convertitutto-macOS-arm64` per i Mac con chip Apple (M1, M2, M3, M4…);
-   - `Convertitutto-macOS-x64` per i Mac con processore Intel.
-3. Estrai lo zip e apri il `.dmg`, poi trascina Convertitutto in **Applicazioni**.
+   - `Metatropi-macOS-arm64` per i Mac con chip Apple (M1, M2, M3, M4…);
+   - `Metatropi-macOS-x64` per i Mac con processore Intel.
+3. Estrai lo zip e apri il `.dmg`, poi trascina Metatropi in **Applicazioni**.
 
 Per pubblicare una release con il DMG scaricabile da un link fisso basta creare
-un tag `convertitutto-v1.0.0` (o successivo) e fare push del tag.
+un tag `metatropi-v1.0.0` (o successivo) e fare push del tag.
 
 ### Primo avvio
 
@@ -48,15 +48,15 @@ L'app non è firmata con un certificato Apple Developer, quindi al primo avvio
 macOS la blocca. Per aprirla:
 
 - **Impostazioni di Sistema → Privacy e sicurezza**, scorri in basso e premi
-  **Apri comunque** accanto a Convertitutto; oppure
-- da Terminale: `xattr -dr com.apple.quarantine /Applications/Convertitutto.app`
+  **Apri comunque** accanto a Metatropi; oppure
+- da Terminale: `xattr -dr com.apple.quarantine /Applications/Metatropi.app`
 
 Va fatto una sola volta.
 
 ## Sviluppo
 
 ```bash
-cd convertitutto
+cd metatropi
 npm install
 npm run fetch-binaries   # scarica ffmpeg e pandoc per il tuo sistema in vendor/
 npm start                # avvia l'app

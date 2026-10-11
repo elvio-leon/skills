@@ -1,6 +1,6 @@
 'use strict';
 
-// Autodiagnosi: `Convertitutto --selftest` genera file di prova e li converte
+// Autodiagnosi: `Metatropi --selftest` genera file di prova e li converte
 // in tutti i formati principali, stampando un resoconto. Usato dalla CI.
 
 const fs = require('fs');
@@ -11,7 +11,7 @@ const { tools, env, run } = require('./tools');
 const { targetIdsFor } = require('./formats');
 const { convertFile, mergeImagesToPdf } = require('./convert');
 
-const MD = `# Rapporto Convertitutto
+const MD = `# Rapporto Metatropi
 
 Questo è un documento di **prova** con *accenti*: àèìòù.
 
@@ -82,13 +82,13 @@ async function checkOutput(file, targetId) {
 async function runSelfTest({ chromium }) {
   const t = tools();
   const e = env();
-  console.log('Convertitutto self-test');
+  console.log('Metatropi self-test');
   console.log('Motori:', JSON.stringify(Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v || null])), null, 2));
   if (!t.ffmpeg) {
     console.error('ffmpeg non trovato: impossibile proseguire');
     return 1;
   }
-  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'convertitutto-selftest-'));
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'metatropi-selftest-'));
   const outDir = path.join(dir, 'out');
   await fsp.mkdir(outDir);
   await makeFixtures(dir);
@@ -146,7 +146,7 @@ async function runSelfTest({ chromium }) {
     const pdfText = await attempt(pdf, 'txt');
     if (pdfText) {
       const content = fs.readFileSync(pdfText, 'utf8');
-      results.push({ label: 'testo estratto dal PDF', ok: content.includes('Rapporto Convertitutto'), info: JSON.stringify(content.slice(0, 60)) });
+      results.push({ label: 'testo estratto dal PDF', ok: content.includes('Rapporto Metatropi'), info: JSON.stringify(content.slice(0, 60)) });
     }
   }
   const xlsx = await attempt(f('tabella.csv'), 'xlsx');

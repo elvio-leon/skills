@@ -1,6 +1,6 @@
 # Componenti di terze parti
 
-Convertitutto include o usa questi programmi open source. Tutto gira in locale.
+Metatropi include o usa questi programmi open source. Tutto gira in locale.
 
 | Componente | Uso | Licenza | Sorgenti |
 |---|---|---|---|

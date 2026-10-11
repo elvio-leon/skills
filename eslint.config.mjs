@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // App desktop separata (Electron), con i propri strumenti
-    "convertitutto/**",
+    "metatropi/**",
   ]),
 ]);
 
