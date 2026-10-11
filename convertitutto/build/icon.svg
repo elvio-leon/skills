@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#0EA5A4"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B5BEA"/>
+      <stop offset="1" stop-color="#0E9F9E"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="none" stroke="#fff" stroke-opacity="0.18" stroke-width="4"/>
+  <g fill="#fff">
+    <g id="arrow">
+      <path d="M258.3 419.7 A270 270 0 0 1 745.8 377" fill="none" stroke="#fff" stroke-width="58" stroke-linecap="round"/>
+      <path d="M812 338 L778 482 L679 414 Z" stroke="#fff" stroke-width="18" stroke-linejoin="round"/>
+    </g>
+    <use href="#arrow" transform="rotate(180 512 512)"/>
+  </g>
+  <rect x="417" y="392" width="190" height="240" rx="26" fill="#fff"/>
+  <rect x="455" y="447" width="114" height="22" rx="11" fill="url(#ink)"/>
+  <rect x="455" y="501" width="114" height="22" rx="11" fill="url(#ink)"/>
+  <rect x="455" y="555" width="72" height="22" rx="11" fill="url(#ink)"/>
+</svg>

@@ -1,0 +1,88 @@
+{
+  "name": "convertitutto",
+  "productName": "Convertitutto",
+  "version": "1.0.0",
+  "description": "Convertitore universale di file che funziona interamente in locale",
+  "main": "src/main.js",
+  "private": true,
+  "author": "Elvio Leon",
+  "license": "MIT",
+  "scripts": {
+    "fetch-binaries": "node scripts/fetch-binaries.mjs",
+    "start": "electron .",
+    "selftest": "electron . --selftest",
+    "dist:mac": "node scripts/fetch-binaries.mjs --platform darwin --arch arm64 && electron-builder --mac dmg --arm64 --publish never",
+    "dist:mac-intel": "node scripts/fetch-binaries.mjs --platform darwin --arch x64 && electron-builder --mac dmg --x64 --publish never"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "pdfjs-dist": "^6.4.299",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "it.seoperstartup.convertitutto",
+    "productName": "Convertitutto",
+    "copyright": "© 2026 Elvio Leon",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "!node_modules/@napi-rs/**",
+      "!node_modules/pdfjs-dist/legacy/**",
+      "!node_modules/pdfjs-dist/types/**",
+      "!node_modules/pdfjs-dist/web/**",
+      "!node_modules/pdfjs-dist/image_decoders/**",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/${platform}-${arch}",
+        "to": "bin"
+      },
+      {
+        "from": "THIRD_PARTY.md",
+        "to": "THIRD_PARTY.md"
+      }
+    ],
+    "asar": true,
+    "publish": null,
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "target": [
+        "dmg"
+      ],
+      "minimumSystemVersion": "12.0"
+    },
+    "dmg": {
+      "title": "Convertitutto ${version}",
+      "artifactName": "Convertitutto-${version}-${arch}.${ext}",
+      "contents": [
+        {
+          "x": 150,
+          "y": 190
+        },
+        {
+          "x": 410,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 560,
+        "height": 380
+      }
+    }
+  }
+}

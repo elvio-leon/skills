@@ -1,0 +1,83 @@
+name: Convertitutto (macOS)
+
+on:
+  push:
+    branches: ['**']
+    tags: ['convertitutto-v*']
+    paths:
+      - 'convertitutto/**'
+      - '.github/workflows/convertitutto-macos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: convertitutto-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: DMG ${{ matrix.arch }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
+    defaults:
+      run:
+        working-directory: convertitutto
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installa le dipendenze
+        run: npm install --no-audit --no-fund
+
+      - name: Scarica ffmpeg e pandoc per macOS ${{ matrix.arch }}
+        run: node scripts/fetch-binaries.mjs --platform darwin --arch ${{ matrix.arch }}
+
+      - name: Crea il DMG
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac dmg --${{ matrix.arch }} --publish never
+
+      - name: Verifica la firma
+        run: |
+          APP="$(find dist -maxdepth 2 -name 'Convertitutto.app' -type d | head -1)"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv "$APP/Contents/Resources/bin/ffmpeg"
+          codesign -dv "$APP/Contents/Resources/bin/pandoc"
+
+      - name: Autodiagnosi dell'app impacchettata
+        run: |
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            softwareupdate --install-rosetta --agree-to-license >/dev/null 2>&1 || true
+          fi
+          APP="$(find dist -maxdepth 2 -name 'Convertitutto.app' -type d | head -1)"
+          "$APP/Contents/MacOS/Convertitutto" --selftest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Convertitutto-macOS-${{ matrix.arch }}
+          path: convertitutto/dist/*.dmg
+          if-no-files-found: error
+          compression-level: 0
+
+  release:
+    name: Pubblica la release
+    if: startsWith(github.ref, 'refs/tags/convertitutto-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dmg
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Convertitutto ${{ github.ref_name }}
+          files: dmg/*.dmg
