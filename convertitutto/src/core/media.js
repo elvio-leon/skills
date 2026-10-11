@@ -157,7 +157,12 @@ async function sips(input, out, format, { quality, maxSize, signal } = {}) {
   if (quality && (format === 'heic' || format === 'jpeg')) args.push('-s', 'formatOptions', String(quality));
   if (maxSize) args.push('-Z', String(maxSize));
   args.push(input, '--out', out);
-  await run(bin, args, { signal });
+  try {
+    await run(bin, args, { signal });
+  } catch (err) {
+    if (err.cancelled) throw err;
+    throw new ConversionError('macOS non è riuscito a elaborare questa immagine', err.details);
+  }
   if (!fs.existsSync(out)) throw new ConversionError('sips non ha prodotto alcun file');
 }
 

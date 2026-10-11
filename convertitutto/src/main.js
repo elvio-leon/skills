@@ -62,14 +62,14 @@ const pendingOpen = [];
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1080,
-    height: 760,
-    minWidth: 780,
-    minHeight: 560,
+    width: 1160,
+    height: 780,
+    minWidth: 860,
+    minHeight: 600,
     show: false,
     title: 'Convertitutto',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1c1e' : '#f5f5f7',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0a0c11' : '#f5f6fa',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       sandbox: true,

@@ -2,61 +2,153 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:">
   <title>Convertitutto</title>
   <link rel="stylesheet" href="ui.css">
 </head>
 <body>
+  <div class="backdrop" aria-hidden="true"></div>
+
   <header class="titlebar">
     <div class="brand">
-      <img src="icon.svg" alt="" class="brand-icon">
+      <img src="icon.svg" alt="" class="brand-icon" width="24" height="24">
       <span class="brand-name">Convertitutto</span>
     </div>
-    <div class="tagline">
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 2.5 3.8v3.6c0 3.3 2.3 6.2 5.5 7.1 3.2-.9 5.5-3.8 5.5-7.1V3.8L8 1.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.6 8.1 1.6 1.6 3.3-3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Tutto in locale: i tuoi file non lasciano mai il Mac
+    <div class="titlebar-right">
+      <span class="badge-offline" title="Nessun file viene inviato su internet">
+        <svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>
+        Offline · 100% sul tuo Mac
+      </span>
     </div>
   </header>
 
-  <main>
+  <main id="app">
+    <!-- Stato vuoto -->
     <section id="empty" class="empty">
-      <button id="dropzone" class="dropzone" type="button">
-        <svg viewBox="0 0 64 64" class="drop-icon" aria-hidden="true">
-          <rect x="10" y="6" width="34" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
-          <rect x="22" y="16" width="34" height="44" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="3"/>
-          <path d="M39 30v18m-7-7 7 7 7-7" fill="none" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <div class="hero">
+        <h1>Converti qualsiasi file.<br><span class="grad-text">Senza internet.</span></h1>
+        <p class="lead">Foto, video, musica, documenti e fogli di calcolo: tutto resta sul tuo Mac.</p>
+      </div>
+
+      <button id="dropzone" class="dropzone" type="button" aria-describedby="drop-help">
+        <span class="drop-ring" aria-hidden="true"></span>
+        <span class="drop-icon" aria-hidden="true"><svg class="i"><use href="#i-upload"/></svg></span>
         <span class="drop-title">Trascina qui file o cartelle</span>
-        <span class="drop-sub">oppure <u>scegli dal Mac</u></span>
+        <span id="drop-help" class="drop-sub">oppure clicca per sceglierli · <kbd>⌘</kbd><kbd>O</kbd></span>
       </button>
-      <div class="formats" id="formats"></div>
+
+      <ol class="steps" aria-label="Come funziona">
+        <li><span class="step-n">1</span> Aggiungi i file</li>
+        <li><span class="step-n">2</span> Scegli il formato</li>
+        <li><span class="step-n">3</span> Premi Converti</li>
+      </ol>
+
+      <div id="formats" class="formats" aria-label="Formati supportati"></div>
     </section>
 
+    <!-- Area di lavoro -->
     <section id="work" class="work" hidden>
-      <div class="toolbar">
-        <div class="toolbar-label">Converti tutto in</div>
-        <div id="chips" class="chips"></div>
+      <div class="queue">
+        <div class="queue-head">
+          <div>
+            <h2 id="queue-title">File</h2>
+            <p id="queue-sub" class="muted"></p>
+          </div>
+          <div class="queue-actions">
+            <button id="add" type="button" class="btn ghost"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Aggiungi</button>
+            <button id="clear" type="button" class="btn ghost"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Svuota</button>
+          </div>
+        </div>
+        <div id="summary" class="summary" hidden role="status" aria-live="polite"></div>
+        <div id="list" class="list" role="list" aria-label="File da convertire"></div>
       </div>
-      <div class="content">
-        <div id="list" class="list" role="list"></div>
-        <aside id="options" class="options" aria-label="Opzioni"></aside>
-      </div>
+
+      <aside class="panel" aria-label="Formato e opzioni">
+        <div class="panel-scroll">
+          <section class="panel-section">
+            <h3 class="panel-title"><span class="step-n">2</span> Converti in</h3>
+            <div id="tabs" class="tabs" role="tablist" aria-label="Categorie di formato"></div>
+            <div id="tiles" class="tiles" role="group" aria-label="Formati"></div>
+            <p id="tiles-note" class="note" hidden></p>
+          </section>
+
+          <details id="options" class="panel-section options">
+            <summary>
+              <span class="panel-title"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg> Opzioni</span>
+              <span id="options-summary" class="muted small"></span>
+              <svg class="i chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </summary>
+            <div id="options-body" class="options-body"></div>
+          </details>
+
+          <section class="panel-section">
+            <h3 class="panel-title"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg> Salva in</h3>
+            <div id="dest" class="seg" role="radiogroup" aria-label="Cartella di destinazione"></div>
+            <p id="dest-path" class="muted small dest-path"></p>
+          </section>
+        </div>
+
+        <div class="panel-foot">
+          <div id="overall" class="overall" hidden>
+            <div class="overall-row"><span id="overall-label">Conversione…</span><span id="overall-count" class="muted"></span></div>
+            <div class="bar"><div id="overall-bar"></div></div>
+          </div>
+          <button id="convert" type="button" class="btn primary big" disabled>
+            <svg class="i" aria-hidden="true"><use href="#i-bolt"/></svg>
+            <span id="convert-label">Converti</span>
+            <kbd class="kbd-light">⌘↵</kbd>
+          </button>
+          <button id="cancel" type="button" class="btn danger big" hidden>Interrompi</button>
+        </div>
+      </aside>
     </section>
   </main>
 
-  <footer class="footer">
-    <div id="engines" class="engines"></div>
-    <div class="actions">
-      <button id="add" type="button" class="btn">Aggiungi file…</button>
-      <button id="clear" type="button" class="btn" hidden>Svuota elenco</button>
-      <button id="cancel" type="button" class="btn danger" hidden>Annulla</button>
-      <button id="convert" type="button" class="btn primary" disabled>Converti</button>
-    </div>
+  <footer class="statusbar">
+    <div id="engines" class="engines" aria-label="Motori di conversione"></div>
+    <div id="version" class="muted small"></div>
   </footer>
 
   <div id="overlay" class="overlay" hidden>
-    <div class="overlay-box">Rilascia per aggiungere i file</div>
+    <div class="overlay-box">
+      <svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>
+      Rilascia per aggiungere
+    </div>
   </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Icone (stile lineare 24px) -->
+  <svg width="0" height="0" class="sprite" aria-hidden="true">
+    <defs>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+      <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></symbol>
+      <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+      <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+      <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 16v-4h1.5a1.5 1.5 0 0 1 0 3H8M14 12v4M14 12h2.5M14 14h2"/></symbol>
+      <symbol id="i-slides" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 12l3-3 2 2 4-4"/></symbol>
+      <symbol id="i-subtitle" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h4M15 15h2M7 11h2M13 11h4"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
+    </defs>
+  </svg>
 
   <script src="ui.js"></script>
 </body>
