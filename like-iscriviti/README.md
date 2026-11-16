@@ -1,6 +1,9 @@
 # Mi piace + Iscriviti: overlay animato per DaVinci Resolve
 
-Overlay in stile YouTube con fondo trasparente: `like-iscriviti.mov`.
+Overlay in stile YouTube con fondo trasparente, in due versioni:
+
+- `like-iscriviti.mov`: video ProRes 4444 con alpha, descritto qui sotto;
+- `davinci/`: **template Fusion** da installare in DaVinci, con testi e colori modificabili dall'Inspector. Vedi [davinci/README.md](davinci/README.md).
 
 | | |
 |---|---|
