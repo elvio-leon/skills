@@ -38,18 +38,67 @@ local function shq(s)
   return "'" .. tostring(s):gsub("'", "'\\''") .. "'"
 end
 
+-- Esegue un comando di sistema e ne restituisce l'output.
+-- Resolve a volte toglie la libreria "io" agli script: in quel caso uso LuaJIT FFI.
+local run_cmd, RUN_METHOD
+
+if io and io.popen then
+  RUN_METHOD = "io.popen"
+  run_cmd = function(cmd)
+    local p = io.popen(cmd)
+    if not p then return "" end
+    local out = p:read("*a") or ""
+    p:close()
+    return out
+  end
+else
+  local ok_ffi, ffi = pcall(function() return require("ffi") end)
+  if not ok_ffi or type(ffi) ~= "table" then
+    ok_ffi, ffi = pcall(function() return jit and package and package.loaded and package.loaded.ffi end)
+  end
+  if ok_ffi and type(ffi) == "table" then
+    pcall(ffi.cdef, [[
+      typedef struct SC_FILE SC_FILE;
+      SC_FILE *popen(const char *command, const char *mode);
+      int pclose(SC_FILE *stream);
+      size_t fread(void *ptr, size_t size, size_t nmemb, SC_FILE *stream);
+    ]])
+    local ok_c = pcall(function() return ffi.C.popen end)
+    if ok_c then
+      RUN_METHOD = "ffi"
+      run_cmd = function(cmd)
+        local f = ffi.C.popen(cmd, "r")
+        if f == nil then return "" end
+        local buf, parts = ffi.new("char[?]", 8192), {}
+        while true do
+          local n = tonumber(ffi.C.fread(buf, 1, 8192, f))
+          if n <= 0 then break end
+          parts[#parts + 1] = ffi.string(buf, n)
+        end
+        ffi.C.pclose(f)
+        return table.concat(parts)
+      end
+    end
+  end
+end
+
+local function diagnostics()
+  local function has(f) local ok, v = pcall(f) return ok and v ~= nil and "si" or "no" end
+  return "io=" .. has(function() return io end) ..
+    " os.execute=" .. has(function() return os.execute end) ..
+    " require=" .. has(function() return require end) ..
+    " jit=" .. has(function() return jit end) ..
+    " bmd.executebg=" .. has(function() return bmd.executebg end) ..
+    " bmd.readfile=" .. has(function() return bmd.readfile end)
+end
+
 local function exec(cmd)
-  local p = io.popen(cmd .. " 2>&1")
-  if not p then return "" end
-  local out = p:read("*a") or ""
-  p:close()
-  return out
+  if not run_cmd then return "" end
+  return run_cmd(cmd .. " 2>&1")
 end
 
 local function file_exists(path)
-  local f = io.open(path, "r")
-  if f then f:close() return true end
-  return false
+  return exec("test -x " .. shq(path) .. " && echo SI"):find("SI") ~= nil
 end
 
 local function find_ffmpeg()
@@ -457,9 +506,11 @@ end
 
 local function main()
   print("SilenceCut: avvio")
-  if not io or not io.popen then
-    return alert("Questa versione di Resolve non permette agli script Lua di avviare ffmpeg (io.popen mancante).")
+  if not run_cmd then
+    print("SilenceCut DIAGNOSTICA: " .. diagnostics())
+    return print("SilenceCut: questa versione di Resolve non permette agli script di avviare programmi esterni. Copia la riga DIAGNOSTICA e mandala.")
   end
+  print("SilenceCut: metodo = " .. RUN_METHOD)
   local res = resolve or (Resolve and Resolve()) or (app and app:GetResolve())
   if not res then return alert("Impossibile collegarsi a DaVinci Resolve.") end
   local project = res:GetProjectManager():GetCurrentProject()
