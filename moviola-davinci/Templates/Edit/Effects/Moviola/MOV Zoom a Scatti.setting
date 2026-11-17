@@ -1,0 +1,332 @@
+{
+	Tools = ordered() {
+		MOV_ZoomAScatti = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Steps",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Every",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Zoom",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Flash",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Tone",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Vign",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Grain",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Punto",
+					Source = "Pivot",
+					Name = "Punto (trascinalo nel viewer)",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Z1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local f=(time-comp.RenderStart)-8\nlocal n=Steps\nlocal z=1\nlocal last=-1\nfor i=0,n-1 do local t0=i*Every if f>=t0 then local a,b=Zoom^(i/n),Zoom^((i+1)/n) local k=min((f-t0)/4,1) k=k>=1 and 1 or 1-2^(-10*k) z=a+(b-a)*k last=t0 end end\nz=z*(1+0.02*max(f,0)/100)\nreturn z",
+						},
+						Center = Input {
+							Expression = ":local f=(time-comp.RenderStart)-8\nlocal n=Steps\nlocal z=1\nlocal last=-1\nfor i=0,n-1 do local t0=i*Every if f>=t0 then local a,b=Zoom^(i/n),Zoom^((i+1)/n) local k=min((f-t0)/4,1) k=k>=1 and 1 or 1-2^(-10*k) z=a+(b-a)*k last=t0 end end\nz=z*(1+0.02*max(f,0)/100)\nlocal px,py=Punto.Pivot.X,Punto.Pivot.Y\nlocal cx,cy=0.5-(px-0.5)*z,0.5-(py-0.5)*z\nlocal lim=(z-1)/2 cx=min(max(cx,0.5-lim),0.5+lim) cy=min(max(cy,0.5-lim),0.5+lim)\nlocal d=f-last local a=(last>=0) and 0.012*max(1-d/8,0)^2 or 0\nreturn Point(cx+a*sin(time*2.5), cy+a*cos(time*3.1))",
+						},
+						Edges = Input { Value = 3, },
+						Steps = Input { Value = 3, },
+						Every = Input { Value = 18, },
+						Zoom = Input { Value = 2.6, },
+						Flash = Input { Value = 1, },
+						Tone = Input { Value = 1, },
+						Vign = Input { Value = 0.45, },
+						Grain = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Steps = {
+							LINKS_Name = "Scatti",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 3,
+							INP_MinScale = 1,
+							INP_MaxScale = 5,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Every = {
+							LINKS_Name = "Fotogrammi tra gli scatti",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 18,
+							INP_MinScale = 4,
+							INP_MaxScale = 75,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Zoom = {
+							LINKS_Name = "Zoom finale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 2.6,
+							INP_MinScale = 1.2,
+							INP_MaxScale = 5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Flash = {
+							LINKS_Name = "Lampo su ogni scatto",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Tone = {
+							{ CCS_AddString = "Originale" },
+							{ CCS_AddString = "Bianco e nero" },
+							{ CCS_AddString = "Seppia" },
+							{ CCS_AddString = "Duotono verde" },
+							LINKS_Name = "Tono",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Vign = {
+							LINKS_Name = "Vignetta",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.45,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Grain = {
+							LINKS_Name = "Grana pellicola",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.35,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				Punto = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Pivot = Input { Value = { 0.42, 0.42 }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Mosso = DirectionalBlur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ctrl",
+							Source = "Output",
+						},
+						Type = Input { Value = 3, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Length = Input {
+							Expression = ":local f=(time-comp.RenderStart)-8\nlocal last=-1 for i=0,Ctrl.Steps-1 do if f>=i*Ctrl.Every then last=i*Ctrl.Every end end\nif last<0 then return 0 end return 0.15*max(1-(f-last)/4,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Tono = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Mosso",
+							Source = "Output",
+						},
+						Saturation = Input {
+							Expression = "Ctrl.Tone>0 and 0 or 1",
+						},
+						Contrast = Input {
+							Expression = "Ctrl.Tone>0 and 0.12 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				TonoTinta = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Tono",
+							Source = "Output",
+						},
+						GainRed = Input {
+							Expression = "Ctrl.Tone==2 and 1.08 or (Ctrl.Tone==3 and 0.78 or 1)",
+						},
+						GainGreen = Input {
+							Expression = "Ctrl.Tone==2 and 0.98 or (Ctrl.Tone==3 and 1.0 or 1)",
+						},
+						GainBlue = Input {
+							Expression = "Ctrl.Tone==2 and 0.82 or (Ctrl.Tone==3 and 0.86 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				VignMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.19792, },
+						Height = Input { Value = 1.38889, },
+						SoftEdge = Input { Value = 0.25, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Vign = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "VignMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				GranaFx = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 6, },
+						XScale = Input { Value = 120, },
+						Contrast = Input { Value = 1.4, },
+						Brightness = Input { Value = 0, },
+						SeetheRate = Input { Value = 0.9, },
+						Color1Alpha = Input { Value = 1, },
+						Color2Alpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Look1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "TonoTinta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Vign",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Vign*0.6",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Look2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Look1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "GranaFx",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Grain*0.3",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Bianco = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 1, },
+						TopLeftBlue = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				Z1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Look2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bianco",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local f=(time-comp.RenderStart)-8\nlocal last=-1 for i=0,Ctrl.Steps-1 do if f>=i*Ctrl.Every then last=i*Ctrl.Every end end\nif last<0 then return 0 end return Ctrl.Flash*0.45*max(1-(f-last)/3,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_ZoomAScatti"
+}

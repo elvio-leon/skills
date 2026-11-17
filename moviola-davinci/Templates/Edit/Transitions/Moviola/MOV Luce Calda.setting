@@ -1,0 +1,422 @@
+{
+	Tools = ordered() {
+		MOV_LuceCalda = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Tint",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "S6",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = "min(max((Ctrl.Mix-0.5+0.06)/0.12,0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Bolla0Mask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(((-600+1.9539602270216403*2700*Ctrl.Mix+-0.0508393220441192*1000))/1920, 1-(696.6779690409527)/1080)",
+						},
+						Width = Input { Value = 0.8415, },
+						Height = Input { Value = 1.1968, },
+						SoftEdge = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Bolla0 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bolla0Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "Ctrl.Tint==0 and 1 or (Ctrl.Tint==1 and 1 or 0.47)",
+						},
+						TopLeftGreen = Input {
+							Expression = "Ctrl.Tint==0 and 0.67 or (Ctrl.Tint==1 and 0.27 or 0.75)",
+						},
+						TopLeftBlue = Input {
+							Expression = "Ctrl.Tint==0 and 0.24 or (Ctrl.Tint==1 and 0.2 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Bolla1Mask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(((-600+1.5724981235024842*2700*Ctrl.Mix+-0.0040405701040276965*1000))/1920, 1-(813.6665978391902)/1080)",
+						},
+						Width = Input { Value = 0.48235, },
+						Height = Input { Value = 0.686, },
+						SoftEdge = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Bolla1 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bolla1Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "Ctrl.Tint==0 and 1 or (Ctrl.Tint==1 and 0.75 or 0.31)",
+						},
+						TopLeftGreen = Input {
+							Expression = "Ctrl.Tint==0 and 0.35 or (Ctrl.Tint==1 and 0.12 or 0.47)",
+						},
+						TopLeftBlue = Input {
+							Expression = "Ctrl.Tint==0 and 0.12 or (Ctrl.Tint==1 and 0.16 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Bolla2Mask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(((-600+1.2905647717225155*2700*Ctrl.Mix+0.07734268679932549*1000))/1920, 1-(636.5355104327269)/1080)",
+						},
+						Width = Input { Value = 0.89105, },
+						Height = Input { Value = 1.26727, },
+						SoftEdge = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Bolla2 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bolla2Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "Ctrl.Tint==0 and 1 or (Ctrl.Tint==1 and 1 or 0.86)",
+						},
+						TopLeftGreen = Input {
+							Expression = "Ctrl.Tint==0 and 0.9 or (Ctrl.Tint==1 and 0.7 or 0.94)",
+						},
+						TopLeftBlue = Input {
+							Expression = "Ctrl.Tint==0 and 0.67 or (Ctrl.Tint==1 and 0.55 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Bolla3Mask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(((-600+1.6591529503424807*2700*Ctrl.Mix+-0.11237238088713447*1000))/1920, 1-(375.77919553765)/1080)",
+						},
+						Width = Input { Value = 0.72364, },
+						Height = Input { Value = 1.02917, },
+						SoftEdge = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Bolla3 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bolla3Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "Ctrl.Tint==0 and 1 or (Ctrl.Tint==1 and 1 or 0.47)",
+						},
+						TopLeftGreen = Input {
+							Expression = "Ctrl.Tint==0 and 0.67 or (Ctrl.Tint==1 and 0.27 or 0.75)",
+						},
+						TopLeftBlue = Input {
+							Expression = "Ctrl.Tint==0 and 0.24 or (Ctrl.Tint==1 and 0.2 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Bolla4Mask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point(((-600+1.9330762974468416*2700*Ctrl.Mix+-0.2947543241644391*1000))/1920, 1-(356.4409107005736)/1080)",
+						},
+						Width = Input { Value = 0.59976, },
+						Height = Input { Value = 0.85299, },
+						SoftEdge = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Bolla4 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bolla4Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "Ctrl.Tint==0 and 1 or (Ctrl.Tint==1 and 0.75 or 0.31)",
+						},
+						TopLeftGreen = Input {
+							Expression = "Ctrl.Tint==0 and 0.35 or (Ctrl.Tint==1 and 0.12 or 0.47)",
+						},
+						TopLeftBlue = Input {
+							Expression = "Ctrl.Tint==0 and 0.12 or (Ctrl.Tint==1 and 0.16 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				Picco = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.96, },
+						TopLeftBlue = Input { Value = 0.88, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				S1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bolla0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.6*Ctrl.Amount*(1-abs(2*Ctrl.Mix-1))",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				S2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bolla1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.6*Ctrl.Amount*(1-abs(2*Ctrl.Mix-1))",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				S3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bolla2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.6*Ctrl.Amount*(1-abs(2*Ctrl.Mix-1))",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				S4 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S3",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bolla3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.6*Ctrl.Amount*(1-abs(2*Ctrl.Mix-1))",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+				},
+				S5 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S4",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bolla4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.6*Ctrl.Amount*(1-abs(2*Ctrl.Mix-1))",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1760, 0 } },
+				},
+				S6 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S5",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Picco",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Amount*0.85*max(1-abs(Ctrl.Mix-0.5)/0.09,0)",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1870, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Amount = Input { Value = 0.9, },
+						Tint = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1980, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.9,
+							INP_MinScale = 0.2,
+							INP_MaxScale = 1.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Tint = {
+							{ CCS_AddString = "Ambra" },
+							{ CCS_AddString = "Rosso" },
+							{ CCS_AddString = "Freddo" },
+							LINKS_Name = "Tinta",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 2,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_LuceCalda"
+}

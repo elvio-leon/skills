@@ -1,0 +1,318 @@
+{
+	Tools = ordered() {
+		MOV_KenBurns = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Z0",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Z1",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Rot",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Breath",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Smooth",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Tone",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Vign",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Grain",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "PuntoA",
+					Source = "Pivot",
+					Name = "Punto di partenza",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "PuntoB",
+					Source = "Pivot",
+					Name = "Punto di arrivo",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Look2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local p=min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)\nif Smooth==0 then p=p<0.5 and 4*p^3 or 1-((-2*p+2)^3)/2 elseif Smooth==2 then p=p<0.5 and 16*p^5 or 1-((-2*p+2)^5)/2 end\nreturn Z0+(Z1-Z0)*p",
+						},
+						Center = Input {
+							Expression = ":local p=min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)\nif Smooth==0 then p=p<0.5 and 4*p^3 or 1-((-2*p+2)^3)/2 elseif Smooth==2 then p=p<0.5 and 16*p^5 or 1-((-2*p+2)^5)/2 end\nlocal z=Z0+(Z1-Z0)*p\nlocal ax,ay=PuntoA.Pivot.X,PuntoA.Pivot.Y\nlocal bx,by=PuntoB.Pivot.X,PuntoB.Pivot.Y\nlocal px,py=ax+(bx-ax)*p,ay+(by-ay)*p\nlocal cx,cy=0.5-(px-0.5)*z,0.5-(py-0.5)*z\nlocal lim=(z-1)/2\ncx=min(max(cx,0.5-lim),0.5+lim) cy=min(max(cy,0.5-lim),0.5+lim)\nif Breath>0.5 then cx=cx+0.003*sin(time*0.05) cy=cy+0.003*cos(time*0.043) end\nreturn Point(cx,cy)",
+						},
+						Angle = Input {
+							Expression = ":local p=min(max((time-comp.RenderStart)/max(comp.RenderEnd-comp.RenderStart,1),0),1)\nif Smooth==0 then p=p<0.5 and 4*p^3 or 1-((-2*p+2)^3)/2 elseif Smooth==2 then p=p<0.5 and 16*p^5 or 1-((-2*p+2)^5)/2 end\nreturn Rot*p",
+						},
+						Edges = Input { Value = 3, },
+						Z0 = Input { Value = 1.05, },
+						Z1 = Input { Value = 1.45, },
+						Rot = Input { Value = 1, },
+						Breath = Input { Value = 1, },
+						Smooth = Input { Value = 0, },
+						Tone = Input { Value = 0, },
+						Vign = Input { Value = 0.45, },
+						Grain = Input { Value = 0.35, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Z0 = {
+							LINKS_Name = "Zoom iniziale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1.05,
+							INP_MinScale = 1,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Z1 = {
+							LINKS_Name = "Zoom finale",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1.45,
+							INP_MinScale = 1,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Rot = {
+							LINKS_Name = "Rotazione (gradi)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = -6,
+							INP_MaxScale = 6,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Breath = {
+							LINKS_Name = "Respiro di camera a mano",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Smooth = {
+							{ CCS_AddString = "Morbida" },
+							{ CCS_AddString = "Lineare" },
+							{ CCS_AddString = "Decisa" },
+							LINKS_Name = "Curva",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 2,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Tone = {
+							{ CCS_AddString = "Originale" },
+							{ CCS_AddString = "Bianco e nero" },
+							{ CCS_AddString = "Seppia" },
+							{ CCS_AddString = "Duotono verde" },
+							LINKS_Name = "Tono",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Vign = {
+							LINKS_Name = "Vignetta",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.45,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Grain = {
+							LINKS_Name = "Grana pellicola",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.35,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				PuntoA = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Pivot = Input { Value = { 0.35, 0.55 }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				PuntoB = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Pivot = Input { Value = { 0.62, 0.45 }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Tono = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ctrl",
+							Source = "Output",
+						},
+						Saturation = Input {
+							Expression = "Ctrl.Tone>0 and 0 or 1",
+						},
+						Contrast = Input {
+							Expression = "Ctrl.Tone>0 and 0.12 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				TonoTinta = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Tono",
+							Source = "Output",
+						},
+						GainRed = Input {
+							Expression = "Ctrl.Tone==2 and 1.08 or (Ctrl.Tone==3 and 0.78 or 1)",
+						},
+						GainGreen = Input {
+							Expression = "Ctrl.Tone==2 and 0.98 or (Ctrl.Tone==3 and 1.0 or 1)",
+						},
+						GainBlue = Input {
+							Expression = "Ctrl.Tone==2 and 0.82 or (Ctrl.Tone==3 and 0.86 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				VignMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.19792, },
+						Height = Input { Value = 1.38889, },
+						SoftEdge = Input { Value = 0.25, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Vign = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "VignMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				GranaFx = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 6, },
+						XScale = Input { Value = 120, },
+						Contrast = Input { Value = 1.4, },
+						Brightness = Input { Value = 0, },
+						SeetheRate = Input { Value = 0.9, },
+						Color1Alpha = Input { Value = 1, },
+						Color2Alpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Look1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "TonoTinta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Vign",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Vign*0.6",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Look2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Look1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "GranaFx",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Grain*0.3",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_KenBurns"
+}

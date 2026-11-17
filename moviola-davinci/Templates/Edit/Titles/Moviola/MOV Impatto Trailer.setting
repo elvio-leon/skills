@@ -1,0 +1,717 @@
+{
+	Tools = ordered() {
+		MOV_ImpattoTrailer = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Battute",
+					Source = "StyledText",
+					Name = "Battute (una per riga, max 4)",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Speed",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Bg",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Beat",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Start",
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "TSize",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "LastRed",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Grain",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				FondoVerde = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.094, },
+						TopLeftGreen = Input { Value = 0.227, },
+						TopLeftBlue = Input { Value = 0.184, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				FondoVignMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.19792, },
+						Height = Input { Value = 1.38889, },
+						SoftEdge = Input { Value = 0.25, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				FondoVign = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0.55, },
+						EffectMask = Input {
+							SourceOp = "FondoVignMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				FondoNero = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.043, },
+						TopLeftGreen = Input { Value = 0.051, },
+						TopLeftBlue = Input { Value = 0.047, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				FondoCarta = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				FondoFibra = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 4, },
+						XScale = Input { Value = 6, },
+						Contrast = Input { Value = 0.8, },
+						Brightness = Input { Value = 0.1, },
+						Color1Red = Input { Value = 0.8, },
+						Color1Green = Input { Value = 0.74, },
+						Color1Blue = Input { Value = 0.64, },
+						Color2Red = Input { Value = 1, },
+						Color2Green = Input { Value = 1, },
+						Color2Blue = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Battute = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "UNA SQUADRA.\nUNA CITTÀ.\nUNA LEGGENDA.", },
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.00521, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input { Value = { 0.5, 1.37037 }, },
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Battuta0 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn Text(L[1] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=min(max(((f-0*b)/5),0),1)\nlocal last=(i==n-1)\nlocal creep=1+0.05*min(max((f-0*b)/b,0),3)\nreturn Ctrl.TSize/1920*(1+0.45*(1-(k>=1 and 1 or 1-2^(-10*k))))*creep",
+						},
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 0, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 0==n-1 then return 0.71 end return 0.961",
+						},
+						Green1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 0==n-1 then return 0.196 end return 0.937",
+						},
+						Blue1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 0==n-1 then return 0.235 end return 0.902",
+						},
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.02, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Battuta1 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn Text(L[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=min(max(((f-1*b)/5),0),1)\nlocal last=(i==n-1)\nlocal creep=1+0.05*min(max((f-1*b)/b,0),3)\nreturn Ctrl.TSize/1920*(1+0.45*(1-(k>=1 and 1 or 1-2^(-10*k))))*creep",
+						},
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 0, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 1==n-1 then return 0.71 end return 0.961",
+						},
+						Green1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 1==n-1 then return 0.196 end return 0.937",
+						},
+						Blue1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 1==n-1 then return 0.235 end return 0.902",
+						},
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.02, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Battuta2 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn Text(L[3] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=min(max(((f-2*b)/5),0),1)\nlocal last=(i==n-1)\nlocal creep=1+0.05*min(max((f-2*b)/b,0),3)\nreturn Ctrl.TSize/1920*(1+0.45*(1-(k>=1 and 1 or 1-2^(-10*k))))*creep",
+						},
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 0, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 2==n-1 then return 0.71 end return 0.961",
+						},
+						Green1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 2==n-1 then return 0.196 end return 0.937",
+						},
+						Blue1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 2==n-1 then return 0.235 end return 0.902",
+						},
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.02, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				Battuta3 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn Text(L[4] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=min(max(((f-3*b)/5),0),1)\nlocal last=(i==n-1)\nlocal creep=1+0.05*min(max((f-3*b)/b,0),3)\nreturn Ctrl.TSize/1920*(1+0.45*(1-(k>=1 and 1 or 1-2^(-10*k))))*creep",
+						},
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 0, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 3==n-1 then return 0.71 end return 0.961",
+						},
+						Green1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 3==n-1 then return 0.196 end return 0.937",
+						},
+						Blue1 = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif Ctrl.LastRed>0.5 and 3==n-1 then return 0.235 end return 0.902",
+						},
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.02, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				Colpi0 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Battuta0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn (f>=0 and i==0) and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				Colpi1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Colpi0",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Battuta1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn i==1 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				Colpi2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Colpi1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Battuta2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn i==2 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				Colpi3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Colpi2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Battuta3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nreturn i==3 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+				},
+				Scia = DirectionalBlur {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Colpi3",
+							Source = "Output",
+						},
+						Type = Input { Value = 3, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Length = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=(f-i*b)/5 if f<0 then return 0 end return 0.18*max(1-k,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1760, 0 } },
+				},
+				Lampo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.98, },
+						TopLeftBlue = Input { Value = 0.94, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1870, 0 } },
+				},
+				Grana = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 6, },
+						XScale = Input { Value = 110, },
+						Contrast = Input { Value = 1.6, },
+						Brightness = Input { Value = 0, },
+						SeetheRate = Input { Value = 0.9, },
+						Color1Alpha = Input { Value = 1, },
+						Color2Alpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1980, 0 } },
+				},
+				Liv1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoVerde",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==1 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2090, 0 } },
+				},
+				Liv2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoNero",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==2 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2200, 0 } },
+				},
+				Liv3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoCarta",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==3 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2310, 0 } },
+				},
+				Liv4 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv3",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoFibra",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==3 and 0.5 or 0",
+						},
+						ApplyMode = Input { Value = FuID { "Multiply" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2420, 0 } },
+				},
+				Liv5 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv4",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoVign",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg>0 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2530, 0 } },
+				},
+				Liv6 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv5",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Scia",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif f<0 then return 0 end local k=(f-i*b) return (i==0 and 1 or 1)*(k>=0 and 1 or 0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2640, 0 } },
+				},
+				Liv7 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv6",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Lampo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nif f<0 then return 0 end local k=(f-i*b)/3 return 0.35*max(1-k,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2750, 0 } },
+				},
+				Liv8 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv7",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Grana",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Grain)*(Ctrl.Bg>0 and 0.35 or 0)",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2860, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Liv8",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":local src=(Battute.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal n=#L\nlocal b=Ctrl.Beat*Ctrl.Speed\nlocal f=(time-comp.RenderStart)-Ctrl.Start*Ctrl.Speed\nlocal i=floor(f/b)\nif i>n-1 then i=n-1 end\nlocal k=(f-i*b) if f<0 then return Point(0.5,0.5) end local a=0.012*max(1-k/9,0)^2\nreturn Point(0.5+a*sin(time*2.7), 0.5+a*cos(time*3.3))",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Speed = Input { Value = 1, },
+						OutDur = Input { Value = 15, },
+						Bg = Input { Value = 2, },
+						Beat = Input { Value = 24, },
+						Start = Input { Value = 14, },
+						TSize = Input { Value = 300, },
+						LastRed = Input { Value = 1, },
+						Grain = Input { Value = 0.4, },
+						Blend = Input {
+							Expression = "min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2970, 0 } },
+					UserControls = ordered() {
+						Speed = {
+							LINKS_Name = "Velocità animazioni (1 = normale, 2 = più lenta)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.3,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0.05,
+							INP_MaxAllowed = 20,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (fotogrammi)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 15,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 600,
+						},
+						Bg = {
+							{ CCS_AddString = "Trasparente" },
+							{ CCS_AddString = "Verde campo" },
+							{ CCS_AddString = "Nero" },
+							{ CCS_AddString = "Carta" },
+							LINKS_Name = "Sfondo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 2,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Beat = {
+							LINKS_Name = "Fotogrammi per battuta",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 24,
+							INP_MinScale = 6,
+							INP_MaxScale = 75,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Start = {
+							LINKS_Name = "Prima battuta al fotogramma",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 14,
+							INP_MinScale = 0,
+							INP_MaxScale = 200,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						TSize = {
+							LINKS_Name = "Dimensione testo (px)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 300,
+							INP_MinScale = 100,
+							INP_MaxScale = 500,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						LastRed = {
+							LINKS_Name = "Ultima battuta in colore accento",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Grain = {
+							LINKS_Name = "Grana pellicola",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.4,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_ImpattoTrailer"
+}

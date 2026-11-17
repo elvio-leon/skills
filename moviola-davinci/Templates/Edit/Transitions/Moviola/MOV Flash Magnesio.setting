@@ -1,0 +1,216 @@
+{
+	Tools = ordered() {
+		MOV_FlashMagnesio = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Peak",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Smoke",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "S3",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = "min(max((Ctrl.Mix-0.08+0.01)/0.02,0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Bianco = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 1, },
+						TopLeftBlue = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				CaldoMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.55208, 0.58333 }, },
+						Width = Input { Value = 1.25, },
+						Height = Input { Value = 1.66667, },
+						SoftEdge = Input { Value = 0.3, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Caldo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.86, },
+						TopLeftBlue = Input { Value = 0.63, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "CaldoMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Fumo = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 3, },
+						XScale = Input { Value = 2.5, },
+						Contrast = Input { Value = 1.1, },
+						SeetheRate = Input { Value = 0.6, },
+						Center = Input {
+							Expression = "Point(0.5, 0.5+Ctrl.Mix*0.25)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				S1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bianco",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Peak*((Ctrl.Mix<0.08 and (Ctrl.Mix/0.08)^2 or (1-(Ctrl.Mix-0.08)/0.92)^3))^1.6",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				S2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Caldo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Peak*0.5*(Ctrl.Mix<0.08 and (Ctrl.Mix/0.08)^2 or (1-(Ctrl.Mix-0.08)/0.92)^3)",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				S3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Fumo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Smoke*0.25*min(Ctrl.Mix*8,1)*(1-Ctrl.Mix)",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Peak = Input { Value = 1, },
+						Smoke = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+					UserControls = ordered() {
+						Peak = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Smoke = {
+							LINKS_Name = "Fumo del magnesio",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_FlashMagnesio"
+}

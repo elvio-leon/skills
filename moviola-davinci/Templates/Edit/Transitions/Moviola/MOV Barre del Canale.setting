@@ -1,0 +1,363 @@
+{
+	Tools = ordered() {
+		MOV_BarreDelCanale = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Pal",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Scritta",
+					Source = "StyledText",
+					Name = "Scritta sul taglio (vuota = nessuna)",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "S5",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = "min(max((Ctrl.Mix-0.5+0.01)/0.02,0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Barra0Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((((-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))+2)^3)/2))+(-390-40+(2740)*((min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))+2)^3)/2)))/2)/1920, 1-(540)/1080)",
+						},
+						Width = Input {
+							Expression = "(max((-390-40+(2740)*((min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.0)/(0.5-0.07500000000000001-0.0),0),1))+2)^3)/2))-(-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.0)/(0.5-0.06-0.0),0),1))+2)^3)/2)),0))/1920",
+						},
+						Height = Input { Value = 1.2963, },
+						SoftEdge = Input { Value = 0, },
+						Angle = Input { Value = -20, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Barra0 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Barra0Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "(Ctrl.Pal==0 and 0.961) or (Ctrl.Pal==1 and 0.961) or (Ctrl.Pal==2 and 1) or (Ctrl.Pal==3 and 1) or 0",
+						},
+						TopLeftGreen = Input {
+							Expression = "(Ctrl.Pal==0 and 0.937) or (Ctrl.Pal==1 and 0.937) or (Ctrl.Pal==2 and 1) or (Ctrl.Pal==3 and 1) or 0",
+						},
+						TopLeftBlue = Input {
+							Expression = "(Ctrl.Pal==0 and 0.902) or (Ctrl.Pal==1 and 0.902) or (Ctrl.Pal==2 and 1) or (Ctrl.Pal==3 and 1) or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Barra1Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((((-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))+2)^3)/2))+(-390-40+(2740)*((min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))+2)^3)/2)))/2)/1920, 1-(540)/1080)",
+						},
+						Width = Input {
+							Expression = "(max((-390-40+(2740)*((min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.05)/(0.5-0.05-0.05),0),1))+2)^3)/2))-(-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.04)/(0.5-0.04-0.04),0),1))+2)^3)/2)),0))/1920",
+						},
+						Height = Input { Value = 1.2963, },
+						SoftEdge = Input { Value = 0, },
+						Angle = Input { Value = -20, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Barra1 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Barra1Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "(Ctrl.Pal==0 and 0.71) or (Ctrl.Pal==1 and 0.71) or (Ctrl.Pal==2 and 0.23) or (Ctrl.Pal==3 and 0.54) or 0",
+						},
+						TopLeftGreen = Input {
+							Expression = "(Ctrl.Pal==0 and 0.196) or (Ctrl.Pal==1 and 0.23) or (Ctrl.Pal==2 and 0.48) or (Ctrl.Pal==3 and 0.54) or 0",
+						},
+						TopLeftBlue = Input {
+							Expression = "(Ctrl.Pal==0 and 0.235) or (Ctrl.Pal==1 and 0.23) or (Ctrl.Pal==2 and 0.84) or (Ctrl.Pal==3 and 0.54) or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Barra2Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((((-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))+2)^3)/2))+(-390-40+(2740)*((min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))+2)^3)/2)))/2)/1920, 1-(540)/1080)",
+						},
+						Width = Input {
+							Expression = "(max((-390-40+(2740)*((min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.1)/(0.5-0.025-0.1),0),1))+2)^3)/2))-(-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.08)/(0.5-0.02-0.08),0),1))+2)^3)/2)),0))/1920",
+						},
+						Height = Input { Value = 1.2963, },
+						SoftEdge = Input { Value = 0, },
+						Angle = Input { Value = -20, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Barra2 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Barra2Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "(Ctrl.Pal==0 and 0.133) or (Ctrl.Pal==1 and 0.36) or (Ctrl.Pal==2 and 0.12) or (Ctrl.Pal==3 and 0.16) or 0",
+						},
+						TopLeftGreen = Input {
+							Expression = "(Ctrl.Pal==0 and 0.196) or (Ctrl.Pal==1 and 0.08) or (Ctrl.Pal==2 and 0.25) or (Ctrl.Pal==3 and 0.16) or 0",
+						},
+						TopLeftBlue = Input {
+							Expression = "(Ctrl.Pal==0 and 0.29) or (Ctrl.Pal==1 and 0.13) or (Ctrl.Pal==2 and 0.55) or (Ctrl.Pal==3 and 0.16) or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Barra3Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((((-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))+2)^3)/2))+(-390-40+(2740)*((min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))+2)^3)/2)))/2)/1920, 1-(540)/1080)",
+						},
+						Width = Input {
+							Expression = "(max((-390-40+(2740)*((min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.15000000000000002)/(0.5-0.0-0.15000000000000002),0),1))+2)^3)/2))-(-390-40+(2700)*((min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))<0.5 and 4*(min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))^3 or 1-((-2*(min(max((Ctrl.Mix-0.5-0.12)/(0.5-0.0-0.12),0),1))+2)^3)/2)),0))/1920",
+						},
+						Height = Input { Value = 1.2963, },
+						SoftEdge = Input { Value = 0, },
+						Angle = Input { Value = -20, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Barra3 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Barra3Mask",
+							Source = "Mask",
+						},
+						TopLeftRed = Input {
+							Expression = "(Ctrl.Pal==0 and 0.094) or (Ctrl.Pal==1 and 0.23) or (Ctrl.Pal==2 and 0.05) or (Ctrl.Pal==3 and 0.04) or 0",
+						},
+						TopLeftGreen = Input {
+							Expression = "(Ctrl.Pal==0 and 0.227) or (Ctrl.Pal==1 and 0.05) or (Ctrl.Pal==2 and 0.12) or (Ctrl.Pal==3 and 0.04) or 0",
+						},
+						TopLeftBlue = Input {
+							Expression = "(Ctrl.Pal==0 and 0.184) or (Ctrl.Pal==1 and 0.09) or (Ctrl.Pal==2 and 0.27) or (Ctrl.Pal==3 and 0.04) or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Scritta = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "CAPITOLO II", },
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input {
+							Expression = "170/1920*(1+(Ctrl.Mix-0.5)*0.4)",
+						},
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 0, },
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				S1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Barra0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				S2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Barra1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				S3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Barra2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				S4 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S3",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Barra3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				S5 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S4",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Scritta",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "max(1-abs(Ctrl.Mix-0.5)/0.17,0)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Pal = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+					UserControls = ordered() {
+						Pal = {
+							{ CCS_AddString = "Canale" },
+							{ CCS_AddString = "Granata" },
+							{ CCS_AddString = "Azzurro" },
+							{ CCS_AddString = "Bianco e nero" },
+							LINKS_Name = "Colori",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 0,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_BarreDelCanale"
+}

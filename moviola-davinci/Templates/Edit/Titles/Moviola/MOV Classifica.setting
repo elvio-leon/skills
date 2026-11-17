@@ -1,0 +1,2639 @@
+{
+	Tools = ordered() {
+		MOV_Classifica = MacroOperator {
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "Titolo",
+					Source = "StyledText",
+					Name = "Titolo",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Nota",
+					Source = "StyledText",
+					Name = "Nota",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Righe",
+					Source = "StyledText",
+					Name = "Righe (Squadra|punti, max 8)",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Filo",
+					Source = "TopLeftRed",
+					Name = "Colore accento",
+					ControlGroup = 1,
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Filo",
+					Source = "TopLeftGreen",
+					ControlGroup = 1,
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Filo",
+					Source = "TopLeftBlue",
+					ControlGroup = 1,
+				},
+				Input7 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Speed",
+				},
+				Input8 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "OutDur",
+				},
+				Input9 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Bg",
+				},
+				Input10 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Hi",
+				},
+				Input11 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Grain",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "Ctrl",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Canvas = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				FondoVerde = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.094, },
+						TopLeftGreen = Input { Value = 0.227, },
+						TopLeftBlue = Input { Value = 0.184, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				FondoVignMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.19792, },
+						Height = Input { Value = 1.38889, },
+						SoftEdge = Input { Value = 0.25, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				FondoVign = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 0.55, },
+						EffectMask = Input {
+							SourceOp = "FondoVignMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				FondoNero = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.043, },
+						TopLeftGreen = Input { Value = 0.051, },
+						TopLeftBlue = Input { Value = 0.047, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				FondoCarta = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				FondoFibra = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 4, },
+						XScale = Input { Value = 6, },
+						Contrast = Input { Value = 0.8, },
+						Brightness = Input { Value = 0.1, },
+						Color1Red = Input { Value = 0.8, },
+						Color1Green = Input { Value = 0.74, },
+						Color1Blue = Input { Value = 0.64, },
+						Color2Red = Input { Value = 1, },
+						Color2Green = Input { Value = 1, },
+						Color2Blue = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Righe = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "Torino|65\nMilan|49\nJuventus|49\nTriestina|49\nAtalanta|48\nModena|48", },
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.00521, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input { Value = { 0, 1.37037 }, },
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Titolo = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "SERIE A 1947/48", },
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.04792, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((420)/1920, 1-(210+(1-(1-(1-min(max(((time-comp.RenderStart)-(0)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*90)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "TitMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				TitMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.80556 }, },
+						Width = Input { Value = 1, },
+						Height = Input { Value = 0.1037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Nota = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input { Value = "Classifica finale · 2 punti a vittoria", },
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.01354, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input { Value = { 0.78125, 0.78889 }, },
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 0.7, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				FiloMask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((420+1080*(1-(1-min(max(((time-comp.RenderStart)-(6)*Ctrl.Speed)/max((20)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(262)/1080)",
+						},
+						Width = Input {
+							Expression = "(1080*(1-(1-min(max(((time-comp.RenderStart)-(6)*Ctrl.Speed)/max((20)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.0037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				Filo = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "FiloMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				Evid0Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(373.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				Evid0 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid0Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				Riga0Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.61667 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+				},
+				Linea0 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga0Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1760, 0 } },
+				},
+				Pos0 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[1] or '') if (L[1] or '')=='' then return Text('') end return Text(string.format('%02d',1))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(373.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==1))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==1))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==1))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==1))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1870, 0 } },
+				},
+				Squadra0 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[1] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(373.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1980, 0 } },
+				},
+				Punti0 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[1] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(373.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2090, 0 } },
+				},
+				Esiste0 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[1] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2200, 0 } },
+				},
+				Evid1Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(459.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2310, 0 } },
+				},
+				Evid1 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid1Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2420, 0 } },
+				},
+				Riga1Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.53704 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2530, 0 } },
+				},
+				Linea1 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga1Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2640, 0 } },
+				},
+				Pos1 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[2] or '') if (L[2] or '')=='' then return Text('') end return Text(string.format('%02d',2))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(459.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==2))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==2))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==2))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==2))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2750, 0 } },
+				},
+				Squadra1 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[2] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(459.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2860, 0 } },
+				},
+				Punti1 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[2] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(459.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2970, 0 } },
+				},
+				Esiste1 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[2] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 3080, 0 } },
+				},
+				Evid2Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(545.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3190, 0 } },
+				},
+				Evid2 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid2Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 3300, 0 } },
+				},
+				Riga2Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.45741 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3410, 0 } },
+				},
+				Linea2 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga2Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 3520, 0 } },
+				},
+				Pos2 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[3] or '') if (L[3] or '')=='' then return Text('') end return Text(string.format('%02d',3))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(545.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==3))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==3))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==3))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==3))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3630, 0 } },
+				},
+				Squadra2 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[3] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(545.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3740, 0 } },
+				},
+				Punti2 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[3] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(545.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 3850, 0 } },
+				},
+				Esiste2 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[3] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 3960, 0 } },
+				},
+				Evid3Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(631.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4070, 0 } },
+				},
+				Evid3 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid3Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 4180, 0 } },
+				},
+				Riga3Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.37778 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4290, 0 } },
+				},
+				Linea3 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga3Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 4400, 0 } },
+				},
+				Pos3 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[4] or '') if (L[4] or '')=='' then return Text('') end return Text(string.format('%02d',4))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(631.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==4))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==4))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==4))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==4))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4510, 0 } },
+				},
+				Squadra3 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[4] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(631.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4620, 0 } },
+				},
+				Punti3 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[4] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(631.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4730, 0 } },
+				},
+				Esiste3 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[4] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 4840, 0 } },
+				},
+				Evid4Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(717.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 4950, 0 } },
+				},
+				Evid4 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid4Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 5060, 0 } },
+				},
+				Riga4Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.29815 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 5170, 0 } },
+				},
+				Linea4 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga4Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 5280, 0 } },
+				},
+				Pos4 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[5] or '') if (L[5] or '')=='' then return Text('') end return Text(string.format('%02d',5))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(717.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==5))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==5))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==5))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==5))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 5390, 0 } },
+				},
+				Squadra4 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[5] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(717.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 5500, 0 } },
+				},
+				Punti4 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[5] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(717.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 5610, 0 } },
+				},
+				Esiste4 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[5] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 5720, 0 } },
+				},
+				Evid5Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(803.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 5830, 0 } },
+				},
+				Evid5 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid5Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 5940, 0 } },
+				},
+				Riga5Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.21852 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6050, 0 } },
+				},
+				Linea5 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga5Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 6160, 0 } },
+				},
+				Pos5 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[6] or '') if (L[6] or '')=='' then return Text('') end return Text(string.format('%02d',6))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(803.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==6))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==6))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==6))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==6))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6270, 0 } },
+				},
+				Squadra5 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[6] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(803.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6380, 0 } },
+				},
+				Punti5 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[6] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(803.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6490, 0 } },
+				},
+				Esiste5 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[6] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 6600, 0 } },
+				},
+				Evid6Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(889.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6710, 0 } },
+				},
+				Evid6 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid6Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 6820, 0 } },
+				},
+				Riga6Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.13889 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 6930, 0 } },
+				},
+				Linea6 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga6Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 7040, 0 } },
+				},
+				Pos6 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[7] or '') if (L[7] or '')=='' then return Text('') end return Text(string.format('%02d',7))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(889.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==7))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==7))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==7))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==7))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 7150, 0 } },
+				},
+				Squadra6 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[7] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(889.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 7260, 0 } },
+				},
+				Punti6 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[7] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(889.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 7370, 0 } },
+				},
+				Esiste6 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[7] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 7480, 0 } },
+				},
+				Evid7Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = "Point((400+(1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)/2)/1920, 1-(975.0)/1080)",
+						},
+						Width = Input {
+							Expression = "((1120)*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))/1920",
+						},
+						Height = Input { Value = 0.07037, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 7590, 0 } },
+				},
+				Evid7 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.71, },
+						TopLeftGreen = Input { Value = 0.196, },
+						TopLeftBlue = Input { Value = 0.235, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Evid7Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 7700, 0 } },
+				},
+				Riga7Mask = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.05926 }, },
+						Width = Input { Value = 0.5625, },
+						Height = Input { Value = 0.00093, },
+						SoftEdge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 7810, 0 } },
+				},
+				Linea7 = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.961, },
+						TopLeftGreen = Input { Value = 0.937, },
+						TopLeftBlue = Input { Value = 0.902, },
+						TopLeftAlpha = Input { Value = 0.14, },
+						EffectMask = Input {
+							SourceOp = "Riga7Mask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 7920, 0 } },
+				},
+				Pos7 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[8] or '') if (L[8] or '')=='' then return Text('') end return Text(string.format('%02d',8))",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((430+(1-(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(975.0)/1080)",
+						},
+						Red1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==8))) and 0.961 or 0.961",
+						},
+						Green1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==8))) and 0.937 or 0.937",
+						},
+						Blue1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==8))) and 0.902 or 0.902",
+						},
+						Alpha1 = Input {
+							Expression = "(((1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)>0.5 and (Ctrl.Hi==8))) and 1 or 0.6",
+						},
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 8030, 0 } },
+				},
+				Squadra7 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[8] or '') return Text(string.upper(a[1] or ''))",
+						},
+						Font = Input { Value = "Inter", },
+						Style = Input { Value = "Bold", },
+						Size = Input { Value = 0.01667, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = -1, },
+						Center = Input {
+							Expression = "Point((540+(1-(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(975.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 8140, 0 } },
+				},
+				Punti7 = TextPlus {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						StyledText = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nlocal function split(s) local a={} for p0 in string.gmatch(s..'|','([^|]*)|') do local p=string.gsub(p0,'^%s+','') p=string.gsub(p,'%s+$','') table.insert(a,p) end return a end\nlocal function num(s) s=string.gsub(s or '','%.','') s=string.gsub(s,',','.') s=string.gsub(s,'[^%d%.%-]','') return tonumber(s) or 0 end\nlocal function fmt(v,d) local s=string.format('%.'..(d or 0)..'f',v) local i,f=string.match(s,'^(%-?%d+)%.?(%d*)$') i=i or s local r=string.reverse(i) r=string.gsub(r,'(%d%d%d)','%1.') r=string.reverse(r) r=string.gsub(r,'^%.','') r=string.gsub(r,'^%-%.','-') if f and f~='' then r=r..','..f end return r end\nlocal function dec(s) local f=string.match(s or '',',(%d+)') return f and #f or 0 end\nlocal a=split(L[8] or '') return Text(a[2] or '')",
+						},
+						Font = Input { Value = "Anton", },
+						Style = Input { Value = "Regular", },
+						Size = Input { Value = 0.02396, },
+						VerticalJustificationNew = Input { Value = 3, },
+						HorizontalJustificationNew = Input { Value = 3, },
+						HorizontalLeftCenterRight = Input { Value = 1, },
+						Center = Input {
+							Expression = "Point((1490+(1-(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3))*260)/1920, 1-(975.0)/1080)",
+						},
+						Red1 = Input { Value = 0.961, },
+						Green1 = Input { Value = 0.937, },
+						Blue1 = Input { Value = 0.902, },
+						Alpha1 = Input { Value = 1, },
+						ElementShape1 = Input { Value = 0, },
+						CharacterSpacing = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 8250, 0 } },
+				},
+				Esiste7 = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Size = Input {
+							Expression = ":local src=(Righe.StyledText.Value or '')\nlocal L={} for l0 in string.gmatch(src..'\\n','([^\\n]*)\\n') do local l=string.gsub(l0,'^%s+','') l=string.gsub(l,'%s+$','') if l~='' then table.insert(L,l) end end\nreturn ((L[8] or '')~='') and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 8360, 0 } },
+				},
+				Grana = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 6, },
+						XScale = Input { Value = 110, },
+						Contrast = Input { Value = 1.6, },
+						Brightness = Input { Value = 0, },
+						SeetheRate = Input { Value = 0.9, },
+						Color1Alpha = Input { Value = 1, },
+						Color2Alpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 8470, 0 } },
+				},
+				Liv1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoVerde",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==1 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 8580, 0 } },
+				},
+				Liv2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoNero",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==2 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 8690, 0 } },
+				},
+				Liv3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoCarta",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==3 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 8800, 0 } },
+				},
+				Liv4 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv3",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoFibra",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg==3 and 0.5 or 0",
+						},
+						ApplyMode = Input { Value = FuID { "Multiply" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 8910, 0 } },
+				},
+				Liv5 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv4",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "FondoVign",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Bg>0 and 1 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9020, 0 } },
+				},
+				Liv6 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv5",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Titolo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 9130, 0 } },
+				},
+				Liv7 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv6",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Nota",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(10)*Ctrl.Speed)/max((14)*Ctrl.Speed,1),0),1))^3)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9240, 0 } },
+				},
+				Liv8 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv7",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Filo",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 9350, 0 } },
+				},
+				Liv9 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv8",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==1) and Esiste0.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9460, 0 } },
+				},
+				Liv10 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv9",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste0.Size*((Ctrl.Hi==1) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9570, 0 } },
+				},
+				Liv11 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv10",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==1)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9680, 0 } },
+				},
+				Liv12 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv11",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==1)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9790, 0 } },
+				},
+				Liv13 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv12",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti0",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(16)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==1)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 9900, 0 } },
+				},
+				Liv14 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv13",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==2) and Esiste1.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10010, 0 } },
+				},
+				Liv15 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv14",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste1.Size*((Ctrl.Hi==2) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10120, 0 } },
+				},
+				Liv16 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv15",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==2)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10230, 0 } },
+				},
+				Liv17 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv16",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==2)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10340, 0 } },
+				},
+				Liv18 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv17",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti1",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(19)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==2)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10450, 0 } },
+				},
+				Liv19 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv18",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==3) and Esiste2.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10560, 0 } },
+				},
+				Liv20 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv19",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste2.Size*((Ctrl.Hi==3) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10670, 0 } },
+				},
+				Liv21 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv20",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==3)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10780, 0 } },
+				},
+				Liv22 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv21",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==3)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 10890, 0 } },
+				},
+				Liv23 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv22",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(22)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==3)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11000, 0 } },
+				},
+				Liv24 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv23",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==4) and Esiste3.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11110, 0 } },
+				},
+				Liv25 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv24",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste3.Size*((Ctrl.Hi==4) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11220, 0 } },
+				},
+				Liv26 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv25",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==4)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11330, 0 } },
+				},
+				Liv27 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv26",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==4)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11440, 0 } },
+				},
+				Liv28 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv27",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti3",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(25)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==4)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11550, 0 } },
+				},
+				Liv29 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv28",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==5) and Esiste4.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11660, 0 } },
+				},
+				Liv30 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv29",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste4.Size*((Ctrl.Hi==5) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11770, 0 } },
+				},
+				Liv31 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv30",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==5)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11880, 0 } },
+				},
+				Liv32 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv31",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==5)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 11990, 0 } },
+				},
+				Liv33 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv32",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti4",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(28)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==5)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12100, 0 } },
+				},
+				Liv34 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv33",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid5",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==6) and Esiste5.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12210, 0 } },
+				},
+				Liv35 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv34",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea5",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste5.Size*((Ctrl.Hi==6) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12320, 0 } },
+				},
+				Liv36 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv35",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos5",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==6)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12430, 0 } },
+				},
+				Liv37 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv36",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra5",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==6)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12540, 0 } },
+				},
+				Liv38 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv37",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti5",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(31)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==6)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12650, 0 } },
+				},
+				Liv39 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv38",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid6",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==7) and Esiste6.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12760, 0 } },
+				},
+				Liv40 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv39",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea6",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste6.Size*((Ctrl.Hi==7) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12870, 0 } },
+				},
+				Liv41 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv40",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos6",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==7)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 12980, 0 } },
+				},
+				Liv42 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv41",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra6",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==7)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13090, 0 } },
+				},
+				Liv43 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv42",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti6",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(34)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==7)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13200, 0 } },
+				},
+				Liv44 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv43",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Evid7",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Hi==8) and Esiste7.Size or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13310, 0 } },
+				},
+				Liv45 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv44",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Linea7",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*Esiste7.Size*((Ctrl.Hi==8) and 0 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13420, 0 } },
+				},
+				Liv46 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv45",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Pos7",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==8)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13530, 0 } },
+				},
+				Liv47 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv46",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Squadra7",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==8)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13640, 0 } },
+				},
+				Liv48 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv47",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Punti7",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(1-(1-min(max(((time-comp.RenderStart)-(37)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)*((Ctrl.Hi>0 and not (Ctrl.Hi==8)) and (1-0.45*(1-(1-min(max(((time-comp.RenderStart)-(50)*Ctrl.Speed)/max((18)*Ctrl.Speed,1),0),1))^3)) or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13750, 0 } },
+				},
+				Liv49 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Liv48",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Grana",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "(Ctrl.Grain)*(Ctrl.Bg>0 and 0.35 or 0)",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 13860, 0 } },
+				},
+				Ctrl = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Canvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Liv49",
+							Source = "Output",
+						},
+						Center = Input { Value = { 0.5, 0.5 }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Speed = Input { Value = 1, },
+						OutDur = Input { Value = 15, },
+						Bg = Input { Value = 1, },
+						Hi = Input { Value = 1, },
+						Grain = Input { Value = 0.25, },
+						Blend = Input {
+							Expression = "min(max((comp.RenderEnd-time)/max(Ctrl.OutDur,1),0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 13970, 0 } },
+					UserControls = ordered() {
+						Speed = {
+							LINKS_Name = "Velocità animazioni (1 = normale, 2 = più lenta)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.3,
+							INP_MaxScale = 3,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 0.05,
+							INP_MaxAllowed = 20,
+						},
+						OutDur = {
+							LINKS_Name = "Durata uscita (fotogrammi)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 15,
+							INP_MinScale = 1,
+							INP_MaxScale = 60,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+							INP_MinAllowed = 1,
+							INP_MaxAllowed = 600,
+						},
+						Bg = {
+							{ CCS_AddString = "Trasparente" },
+							{ CCS_AddString = "Verde campo" },
+							{ CCS_AddString = "Nero" },
+							{ CCS_AddString = "Carta" },
+							LINKS_Name = "Sfondo",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+						Hi = {
+							LINKS_Name = "Riga in evidenza (0 = nessuna)",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 8,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Grain = {
+							LINKS_Name = "Grana pellicola",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.25,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_Classifica"
+}

@@ -1,0 +1,243 @@
+{
+	Tools = ordered() {
+		MOV_DisturboVHS = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Background",
+					Name = "Clip in uscita",
+				},
+				MainInput2 = InstanceInput {
+					SourceOp = "Taglio",
+					Source = "Foreground",
+					Name = "Clip in entrata",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Amount",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "S3",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Taglio = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							Expression = "min(max((Ctrl.Mix-0.5+0.03)/0.06,0),1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+				},
+				Sposta = Transform {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Taglio",
+							Source = "Output",
+						},
+						Center = Input {
+							Expression = ":randomseed(floor(time)*13) return Point(0.5+(random()-0.5)*0.06*(max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*Ctrl.Amount, 0.5)",
+						},
+						Edges = Input { Value = 3, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				Neve = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 1, },
+						XScale = Input { Value = 260, },
+						Contrast = Input { Value = 2.5, },
+						SeetheRate = Input { Value = 8, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Righe = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						LockXY = Input { Value = 0, },
+						XScale = Input { Value = 0.4, },
+						YScale = Input { Value = 60, },
+						Contrast = Input { Value = 3, },
+						SeetheRate = Input { Value = 6, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Bande = BitmapMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Image = Input {
+							SourceOp = "Righe",
+							Source = "Output",
+						},
+						Channel = Input { Value = FuID { "Luminance" }, },
+						Low = Input {
+							Expression = "0.75-(max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*0.4",
+						},
+						High = Input {
+							Expression = "0.8-(max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*0.4",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Ciano = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.16, },
+						TopLeftGreen = Input { Value = 0.86, },
+						TopLeftBlue = Input { Value = 1, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bande",
+							Source = "Mask",
+						},
+						Center = Input { Value = { 0.506, 0.5 }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Magenta = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.16, },
+						TopLeftBlue = Input { Value = 0.24, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Bande",
+							Source = "Mask",
+						},
+						Center = Input { Value = { 0.494, 0.5 }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				S1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Sposta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Neve",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Amount*((max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)>0.8 and 1 or (max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*0.5)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				S2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Ciano",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.35*(max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*Ctrl.Amount",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				S3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "S2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Magenta",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "0.35*(max(1-abs(Ctrl.Mix-0.5)*2,0)^1.4)*Ctrl.Amount",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Ctrl = Dissolve {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Mix = Input {
+							SourceOp = "CtrlCurve",
+							Source = "Value",
+						},
+						Amount = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+					UserControls = ordered() {
+						Amount = {
+							LINKS_Name = "Intensità",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0.2,
+							INP_MaxScale = 1.5,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				CtrlCurve = LUTLookup {
+					Inputs = {
+						Source = Input { Value = FuID { "Duration" }, },
+						Lookup = Input {
+							SourceOp = "CtrlCurveLookup",
+							Source = "Value",
+						},
+					},
+				},
+				CtrlCurveLookup = LUTBezier {
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					},
+					SplineColor = { Red = 255, Green = 255, Blue = 255 },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_DisturboVHS"
+}

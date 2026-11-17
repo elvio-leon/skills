@@ -1,0 +1,564 @@
+{
+	Tools = ordered() {
+		MOV_PellicolaEpoca = MacroOperator {
+			Inputs = ordered() {
+				MainInput1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Input",
+					Name = "Input",
+				},
+				Input1 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Grain",
+				},
+				Input2 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Dust",
+				},
+				Input3 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Flicker",
+				},
+				Input4 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Vign",
+				},
+				Input5 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Burn",
+				},
+				Input6 = InstanceInput {
+					SourceOp = "Ctrl",
+					Source = "Tone",
+				},
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "P3",
+					Source = "Output",
+				},
+			},
+			ViewInfo = GroupInfo { Pos = { 0, 0 } },
+			Tools = ordered() {
+				Ctrl = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Gain = Input {
+							Expression = ":randomseed(floor(time/2)*7) return 1+(random()-0.5)*0.12*Flicker",
+						},
+						Grain = Input { Value = 0.55, },
+						Dust = Input { Value = 1, },
+						Flicker = Input { Value = 0.35, },
+						Vign = Input { Value = 0.55, },
+						Burn = Input { Value = 1, },
+						Tone = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 0 } },
+					UserControls = ordered() {
+						Grain = {
+							LINKS_Name = "Grana",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.55,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Dust = {
+							LINKS_Name = "Polvere e graffi",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 1,
+							INP_MinScale = 0,
+							INP_MaxScale = 2,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Flicker = {
+							LINKS_Name = "Sfarfallio",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.35,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Vign = {
+							LINKS_Name = "Vignetta",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "SliderControl",
+							INP_Default = 0.55,
+							INP_MinScale = 0,
+							INP_MaxScale = 1,
+							INP_Integer = false,
+							ICS_ControlPage = "Controls",
+						},
+						Burn = {
+							LINKS_Name = "Bordi bruciati",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "CheckboxControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							ICS_ControlPage = "Controls",
+						},
+						Tone = {
+							{ CCS_AddString = "Originale" },
+							{ CCS_AddString = "Bianco e nero" },
+							{ CCS_AddString = "Seppia" },
+							{ CCS_AddString = "Duotono verde" },
+							LINKS_Name = "Tono",
+							LINKID_DataType = "Number",
+							INPID_InputControl = "ComboControl",
+							INP_Default = 1,
+							INP_Integer = true,
+							INP_MinAllowed = 0,
+							INP_MaxAllowed = 3,
+							CC_LabelPosition = "Horizontal",
+							ICS_ControlPage = "Controls",
+						},
+					},
+				},
+				Tono = BrightnessContrast {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Ctrl",
+							Source = "Output",
+						},
+						Saturation = Input {
+							Expression = "Ctrl.Tone>0 and 0 or 1",
+						},
+						Contrast = Input {
+							Expression = "Ctrl.Tone>0 and 0.12 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+				},
+				TonoTinta = ColorGain {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Tono",
+							Source = "Output",
+						},
+						GainRed = Input {
+							Expression = "Ctrl.Tone==2 and 1.08 or (Ctrl.Tone==3 and 0.78 or 1)",
+						},
+						GainGreen = Input {
+							Expression = "Ctrl.Tone==2 and 0.98 or (Ctrl.Tone==3 and 1.0 or 1)",
+						},
+						GainBlue = Input {
+							Expression = "Ctrl.Tone==2 and 0.82 or (Ctrl.Tone==3 and 0.86 or 1)",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 0 } },
+				},
+				Granello0 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+0*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+0*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+0*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+				},
+				Granello1 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+1*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+1*7) random() random() random() return (2)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+1*7) random() random() random() return (2)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello0",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 0 } },
+				},
+				Granello2 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+2*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+2*7) random() random() random() return (3)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+2*7) random() random() random() return (3)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello1",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+				},
+				Granello3 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+3*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+3*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+3*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello2",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 0 } },
+				},
+				Granello4 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+4*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+4*7) random() random() random() return (2)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+4*7) random() random() random() return (2)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello3",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 770, 0 } },
+				},
+				Granello5 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+5*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+5*7) random() random() random() return (3)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+5*7) random() random() random() return (3)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello4",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 880, 0 } },
+				},
+				Granello6 = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/2)*31+6*7) local on=random()<0.35+0.3*Ctrl.Dust return Point(random(), random())",
+						},
+						Width = Input {
+							Expression = ":randomseed(floor(time/2)*31+6*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1920",
+						},
+						Height = Input {
+							Expression = ":randomseed(floor(time/2)*31+6*7) random() random() random() return (1)*(2+6*random())*Ctrl.Dust/1080*0.8",
+						},
+						SoftEdge = Input { Value = 0.0008, },
+						EffectMask = Input {
+							SourceOp = "Granello5",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 990, 0 } },
+				},
+				Sporco = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.05, },
+						TopLeftGreen = Input { Value = 0.04, },
+						TopLeftBlue = Input { Value = 0.03, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Granello6",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1100, 0 } },
+				},
+				Graffio0 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/6)*17+0*5) return Point(random()+0.003*sin(time*0.9), 0.5)",
+						},
+						Width = Input { Value = 0.0008, },
+						Height = Input {
+							Expression = ":randomseed(floor(time/6)*17+0*5) random() return (random()<0.5+0.25*Ctrl.Dust) and 1.2 or 0",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1210, 0 } },
+				},
+				Graffio1 = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input {
+							Expression = ":randomseed(floor(time/6)*17+1*5) return Point(random()+0.003*sin(time*0.9), 0.5)",
+						},
+						Width = Input { Value = 0.0008, },
+						Height = Input {
+							Expression = ":randomseed(floor(time/6)*17+1*5) random() return (random()<0.5+0.25*Ctrl.Dust) and 1.2 or 0",
+						},
+						EffectMask = Input {
+							SourceOp = "Graffio0",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1320, 0 } },
+				},
+				Righe = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 1, },
+						TopLeftGreen = Input { Value = 0.97, },
+						TopLeftBlue = Input { Value = 0.92, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "Graffio1",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1430, 0 } },
+				},
+				BruciaSx = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0, 0.5 }, },
+						Width = Input { Value = 0.29167, },
+						Height = Input { Value = 1.2037, },
+						SoftEdge = Input { Value = 0.12, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1540, 0 } },
+				},
+				BruciaDx = RectangleMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 1, 0.5 }, },
+						Width = Input { Value = 0.29167, },
+						Height = Input { Value = 1.2037, },
+						SoftEdge = Input { Value = 0.12, },
+						EffectMask = Input {
+							SourceOp = "BruciaSx",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1650, 0 } },
+				},
+				Bruciato = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0.42, },
+						TopLeftGreen = Input { Value = 0.18, },
+						TopLeftBlue = Input { Value = 0.05, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "BruciaDx",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1760, 0 } },
+				},
+				VignMask = EllipseMask {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Center = Input { Value = { 0.5, 0.5 }, },
+						Width = Input { Value = 1.19792, },
+						Height = Input { Value = 1.38889, },
+						SoftEdge = Input { Value = 0.25, },
+						Invert = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 1870, 0 } },
+				},
+				Vign = Background {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						TopLeftRed = Input { Value = 0, },
+						TopLeftGreen = Input { Value = 0, },
+						TopLeftBlue = Input { Value = 0, },
+						TopLeftAlpha = Input { Value = 1, },
+						EffectMask = Input {
+							SourceOp = "VignMask",
+							Source = "Mask",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 1980, 0 } },
+				},
+				GranaFx = FastNoise {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						Detail = Input { Value = 6, },
+						XScale = Input { Value = 120, },
+						Contrast = Input { Value = 1.4, },
+						Brightness = Input { Value = 0, },
+						SeetheRate = Input { Value = 0.9, },
+						Color1Alpha = Input { Value = 1, },
+						Color2Alpha = Input { Value = 1, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2090, 0 } },
+				},
+				Look1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "TonoTinta",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Vign",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Vign*0.6",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2200, 0 } },
+				},
+				Look2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Look1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "GranaFx",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Overlay" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Grain*0.3",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2310, 0 } },
+				},
+				P1 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Look2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Sporco",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "min(Ctrl.Dust,1)*0.75",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2420, 0 } },
+				},
+				P2 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "P1",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Righe",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Dust*0.35",
+						},
+					},
+					ViewInfo = OperatorInfo { Pos = { 2530, 0 } },
+				},
+				P3 = Merge {
+					CtrlWZoom = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "P2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "Bruciato",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, },
+						Blend = Input {
+							Expression = "Ctrl.Burn*0.45*(0.8+0.2*sin(time*0.7))",
+						},
+						ApplyMode = Input { Value = FuID { "Multiply" }, },
+					},
+					ViewInfo = OperatorInfo { Pos = { 2640, 0 } },
+				},
+			},
+		},
+	},
+	ActiveTool = "MOV_PellicolaEpoca"
+}
