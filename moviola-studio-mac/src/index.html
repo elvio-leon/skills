@@ -1,0 +1,293 @@
+<title>Moviola Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Shadows+Into+Light+Two&family=Special+Elite&family=UnifrakturMaguntia&family=VT323&display=swap">
+<style>
+/* Studio di montaggio: tre colonne come un programma di editing — libreria, monitor, ispettore. Tavolo verde campo, carta, rosso. */
+:root {
+  --ground: #0c1f19; --panel: #10271f; --panel-2: #143127; --line: rgba(245,239,230,.13); --line-2: rgba(245,239,230,.24);
+  --paper: #F5EFE6; --paper-dim: rgba(245,239,230,.72); --paper-mute: rgba(245,239,230,.6);
+  --red: #B5323C; --red-hi: #c8434d; --ink: #22324a; --phos: #7CFF9B;
+  --f-display: 'Anton', Impact, 'Arial Narrow', sans-serif; --f-body: 'Inter', 'Helvetica Neue', Arial, sans-serif; --f-hand: 'Shadows Into Light Two', cursive; --f-mono: 'VT323', 'Courier New', monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--ground); color: var(--paper); font: 400 14px/1.45 var(--f-body); -webkit-font-smoothing: antialiased; }
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+.shell { height: 100%; display: flex; flex-direction: column; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 16px; }
+.top { display: flex; align-items: center; gap: 18px; padding-block: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+.brand h1 { margin: 0; font: 400 30px/1 var(--f-display); letter-spacing: .06em; }
+.brand h1 b { color: var(--red); font-weight: 400; }
+.brand p { margin: 0; color: var(--paper-mute); font-size: 13px; }
+.top .count { margin-left: auto; font: 400 20px/1 var(--f-mono); color: var(--phos); letter-spacing: .06em; }
+.app { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr) 360px; gap: 16px; }
+.col { min-height: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: rgba(245,239,230,.25) transparent; }
+.lib { padding: 14px 12px 20px; }
+.insp { padding: 16px 16px 24px; display: flex; flex-direction: column; gap: 22px; }
+.center { overflow: auto; display: flex; flex-direction: column; gap: 14px; min-width: 0; background: transparent; border: 0; }
+.label { font: 600 11px/1 var(--f-body); letter-spacing: .16em; text-transform: uppercase; color: var(--paper-mute); }
+h2.sec { margin: 0 0 12px; font: 400 22px/1 var(--f-display); letter-spacing: .05em; display: flex; align-items: center; gap: 10px; }
+h2.sec::before { content: ""; width: 10px; height: 10px; background: var(--red); }
+
+/* materiale */
+.media { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; padding: 10px; border: 1px dashed var(--line-2); margin-bottom: 16px; }
+.media.has { border-style: solid; border-color: var(--paper-dim); }
+.media canvas { width: 96px; height: 54px; display: block; background: #000; }
+.media .mtext { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.media #medianame { font-size: 12px; color: var(--paper-dim); overflow-wrap: anywhere; }
+.media .mrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.upl { position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; padding: 6px 10px; background: var(--paper); color: var(--ink); }
+.upl:hover { background: #fff; }
+.upl:focus-within { outline: 2px solid var(--paper); outline-offset: 2px; }
+.upl input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.linkish { background: none; border: 0; padding: 4px 0; color: var(--paper-dim); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 12px; text-align: left; }
+.linkish:hover { color: var(--paper); }
+
+/* libreria */
+.cat { margin-bottom: 18px; }
+.cat h3 { margin: 0; display: flex; align-items: baseline; justify-content: space-between; font: 400 18px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; padding: 0 4px; }
+.cat h3 small { font: 400 17px/1 var(--f-mono); color: var(--paper-mute); }
+.catnote { margin: 4px 4px 8px; font-size: 12px; color: var(--paper-mute); }
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.item { width: 100%; display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; padding: 6px; background: transparent; border: 1px solid transparent; cursor: pointer; text-align: left; }
+.item:hover { background: var(--panel-2); }
+.item.on { background: var(--panel-2); border-color: var(--paper-dim); }
+.thumb { position: relative; display: block; width: 96px; aspect-ratio: 16 / 9; background: #08140f; overflow: hidden; }
+.thumb canvas { width: 100%; height: 100%; display: block; }
+.item.on .thumb { outline: 2px solid var(--red); outline-offset: 0; }
+.meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.meta b { font-weight: 600; font-size: 13px; line-height: 1.2; }
+.meta small { font-size: 11px; color: var(--paper-mute); }
+
+/* monitor */
+.monitor { position: relative; padding: 22px; background: #08140f; border: 1px solid var(--line); }
+.monitor .x { position: absolute; width: 22px; height: 22px; pointer-events: none; }
+.monitor .x::before, .monitor .x::after { content: ""; position: absolute; background: rgba(245,239,230,.55); }
+.monitor .x::before { left: 10px; top: 0; width: 2px; height: 100%; }
+.monitor .x::after { top: 10px; left: 0; height: 2px; width: 100%; }
+.x.tl { left: 0; top: 0; } .x.tr { right: 0; top: 0; } .x.bl { left: 0; bottom: 0; } .x.br { right: 0; bottom: 0; }
+.stagewrap { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; background: #000; overflow: hidden; }
+.stagewrap.checker { background: repeating-conic-gradient(#2a2f2d 0 25%, #1d2220 0 50%) 0 0 / 24px 24px; }
+#stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.markers { position: absolute; inset: 0; pointer-events: none; }
+.pm { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border: 2px solid rgba(245,239,230,.75); border-radius: 50%; }
+.pm::before, .pm::after { content: ""; position: absolute; background: rgba(245,239,230,.75); }
+.pm::before { left: 15px; top: -8px; width: 2px; height: 46px; } .pm::after { top: 15px; left: -8px; height: 2px; width: 46px; }
+.pm.on { border-color: var(--phos); } .pm.on::before, .pm.on::after { background: var(--phos); }
+.pm i { position: absolute; left: 22px; top: -20px; font: 400 18px/1 var(--f-mono); font-style: normal; color: var(--phos); }
+.safeov { position: absolute; inset: 0; pointer-events: none; }
+.safeov::before, .safeov::after { content: ""; position: absolute; border: 1px dashed rgba(124,255,155,.7); }
+.safeov::before { inset: 5%; } .safeov::after { inset: 10%; }
+.pointhint { position: absolute; left: 10px; bottom: 10px; font: 400 18px/1 var(--f-mono); color: var(--phos); background: rgba(0,0,0,.6); padding: 4px 8px; pointer-events: none; }
+.stagewrap.has-point { cursor: crosshair; }
+.stagewrap.pointmode .pointhint { color: var(--paper); }
+
+.transport { display: grid; grid-template-columns: auto auto auto auto 1fr auto auto auto auto; align-items: center; gap: 8px; margin-top: 14px; }
+.icon { width: 40px; height: 40px; display: inline-grid; place-items: center; background: transparent; border: 1px solid var(--line-2); cursor: pointer; color: var(--paper); }
+.icon:hover { background: var(--panel-2); }
+.icon[aria-pressed="false"] { color: var(--paper-mute); }
+.icon[aria-pressed="true"] { border-color: var(--paper-dim); }
+.icon.sm { width: 28px; height: 28px; border: 0; }
+.icon.sm svg { width: 16px; height: 16px; }
+#play { width: 52px; height: 44px; background: var(--red); border-color: var(--red); }
+#play:hover { background: var(--red-hi); }
+.tc { font: 400 24px/1 var(--f-mono); letter-spacing: .04em; color: var(--phos); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tc span { color: var(--paper-mute); }
+.scrub { position: relative; min-width: 0; }
+.scrub input { width: 100%; }
+#cutmark { position: absolute; top: -12px; width: 12px; height: 12px; margin-left: -6px; background: var(--red); transform: rotate(45deg); pointer-events: none; }
+.bgsel { width: auto; }
+
+input[type=range] { -webkit-appearance: none; appearance: none; height: 26px; background: transparent; cursor: pointer; --p: 50%; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(90deg, var(--paper) var(--p), rgba(245,239,230,.2) var(--p)); }
+input[type=range]::-moz-range-track { height: 4px; background: rgba(245,239,230,.2); }
+input[type=range]::-moz-range-progress { height: 4px; background: var(--paper); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 20px; margin-top: -8px; background: var(--paper); border: 2px solid var(--ground); }
+input[type=range]::-moz-range-thumb { width: 12px; height: 18px; background: var(--paper); border: 2px solid var(--ground); border-radius: 0; }
+#scrub::-webkit-slider-runnable-track { height: 6px; }
+#scrub::-webkit-slider-thumb { margin-top: -7px; background: var(--phos); }
+.field input[type=range]::-webkit-slider-runnable-track { background: rgba(245,239,230,.2); }
+
+/* informazioni */
+.info { background: var(--panel); border: 1px solid var(--line); padding: 18px 20px 20px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px 28px; }
+.info-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.info h2 { margin: 0; font: 400 34px/1 var(--f-display); letter-spacing: .02em; text-wrap: balance; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font: 600 11px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; padding: 6px 8px; border: 1px solid var(--line-2); color: var(--paper-dim); }
+.chip.red { background: var(--red); border-color: var(--red); color: var(--paper); }
+.desc { margin: 0; color: var(--paper-dim); max-width: 62ch; }
+.tip { position: relative; background: var(--paper); color: var(--ink); padding: 14px 16px 16px; transform: rotate(-.6deg); box-shadow: 0 10px 22px rgba(0,0,0,.35); }
+.tip h4 { margin: 0 0 4px; font: 600 11px/1.2 var(--f-body); letter-spacing: .16em; text-transform: uppercase; color: var(--red); }
+.tip p { margin: 0; font: 400 21px/1.15 var(--f-hand); }
+
+/* ispettore */
+form#params { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > label, .field .row > label { font-size: 12px; font-weight: 600; color: var(--paper-dim); }
+.field .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.field .row.gap { justify-content: stretch; } .field .row.gap .inp { flex: 1; min-width: 0; }
+.field output { font: 400 18px/1 var(--f-mono); color: var(--phos); }
+.inp { width: 100%; background: #0a1a14; border: 1px solid var(--line-2); padding: 9px 10px; color: var(--paper); border-radius: 0; }
+.inp:hover { border-color: rgba(245,239,230,.4); }
+.inp:focus-visible { outline: 2px solid var(--paper); outline-offset: 0; border-color: var(--paper); }
+textarea.inp { resize: vertical; line-height: 1.45; font-size: 13px; }
+select.inp { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--paper) 50%), linear-gradient(135deg, var(--paper) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+select.inp option { background: #10271f; }
+.field.check { flex-direction: row; align-items: center; gap: 10px; }
+.field.check input { width: 18px; height: 18px; accent-color: var(--red); margin: 0; }
+.field.pt { padding: 8px 10px; border: 1px solid var(--line-2); }
+.field.pt output { margin-left: auto; font-size: 16px; }
+input[type=color] { width: 36px; height: 26px; padding: 0; border: 1px solid var(--line-2); background: none; cursor: pointer; }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.sw { width: 26px; height: 26px; background: var(--c); border: 1px solid rgba(245,239,230,.35); cursor: pointer; padding: 0; }
+.sw[aria-pressed="true"] { outline: 2px solid var(--paper); outline-offset: 2px; }
+.vlist { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+.vlist li { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px 10px; background: var(--red); color: var(--paper); border: 0; cursor: pointer; font: 400 19px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; }
+.btn:hover { background: var(--red-hi); }
+.btn.sm { font-size: 15px; padding: 9px 14px 8px; }
+.btn.ghost { background: transparent; border: 1px solid var(--line-2); font: 600 12px/1 var(--f-body); letter-spacing: .04em; text-transform: none; padding: 10px 12px; }
+.btn.ghost:hover { background: var(--panel-2); }
+.btn.paper { background: var(--paper); color: var(--ink); }
+.btn.paper:hover { background: #fff; }
+.btn.busy { background: transparent; border: 1px solid var(--red); color: var(--paper); }
+.export { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+.export .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hint { margin: 0; font-size: 12px; color: var(--paper-mute); }
+.bar { height: 6px; background: rgba(245,239,230,.15); --p: 0%; }
+.bar::before { content: ""; display: block; height: 100%; width: var(--p); background: var(--phos); }
+.exportmsg { font: 400 18px/1.15 var(--f-mono); color: var(--phos); min-height: 1em; overflow-wrap: anywhere; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--paper); color: var(--ink); padding: 12px 18px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.5); z-index: 20; max-width: calc(100% - 32px); }
+body.dragging::after { content: "Rilascia il file: diventa il tuo materiale"; position: fixed; inset: 12px; border: 3px dashed var(--phos); background: rgba(6,20,12,.82); display: grid; place-items: center; font: 400 44px/1.1 var(--f-mono); color: var(--phos); z-index: 30; text-align: center; padding: 20px; }
+.guide { font-size: 12px; color: var(--paper-mute); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 6px; }
+.guide b { color: var(--paper-dim); font-weight: 600; }
+kbd { font: 400 15px/1 var(--f-mono); border: 1px solid var(--line-2); padding: 1px 5px; color: var(--paper); }
+
+@media (max-width: 1240px) {
+  .app { grid-template-columns: 270px minmax(0, 1fr); grid-template-rows: auto auto; height: auto; }
+  .shell { height: auto; min-height: 100%; }
+  .col { max-height: none; }
+  .lib { grid-row: 1 / span 2; max-height: calc(100vh - 90px); position: sticky; top: 0; }
+  .insp { grid-column: 2; }
+  .center { overflow: visible; }
+}
+@media (max-width: 820px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .lib { grid-row: auto; position: static; max-height: 380px; }
+  .insp { grid-column: 1; }
+  .info { grid-template-columns: minmax(0, 1fr); }
+  .transport { grid-template-columns: auto auto auto 1fr; }
+  .transport .scrub { grid-column: 1 / -1; order: 9; }
+  .monitor { padding: 12px; }
+  .brand p { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .tip { transform: none; } }
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div class="brand"><h1>MOVIOLA <b>STUDIO</b></h1><p>Titoli, dati, tattica, transizioni e camera per documentari di calcio</p></div>
+    <span class="count" id="count">35 preset</span>
+  </header>
+  <main class="app">
+    <aside class="col lib" aria-label="Libreria dei preset">
+      <div class="media" id="mediabox">
+        <canvas id="mediathumb" width="192" height="108" aria-hidden="true"></canvas>
+        <div class="mtext">
+          <span class="label">Il tuo materiale</span>
+          <span id="medianame">Nessun file</span>
+          <div class="mrow">
+            <label class="upl" id="upl"><span id="uplicon" aria-hidden="true"></span><span>Carica foto o video</span><input type="file" id="mediafile" accept="image/*,video/*"></label>
+            <button type="button" class="linkish" id="mediaclear" hidden>Rimuovi</button>
+          </div>
+        </div>
+      </div>
+      <div id="library"></div>
+    </aside>
+
+    <section class="col center" aria-label="Anteprima">
+      <div class="monitor">
+        <i class="x tl"></i><i class="x tr"></i><i class="x bl"></i><i class="x br"></i>
+        <div class="stagewrap checker" id="stagewrap">
+          <canvas id="stage" width="1280" height="720" aria-label="Anteprima del preset"></canvas>
+          <div class="safeov" id="safeov" hidden></div>
+          <div class="markers" id="markers"></div>
+          <div class="pointhint" id="pointhint" hidden>PASSA SOPRA: INQUADRATURA INTERA · CLICCA PER IL PUNTO</div>
+        </div>
+        <div class="transport">
+          <button type="button" class="icon" id="play" aria-label="Riproduci"></button>
+          <button type="button" class="icon" id="prev" aria-label="Fotogramma precedente"></button>
+          <button type="button" class="icon" id="next" aria-label="Fotogramma successivo"></button>
+          <span class="tc"><span id="tc">00:00:00</span> <span>/ <span id="tcd">00:00:00</span></span></span>
+          <div class="scrub"><span id="cutmark" hidden title="Punto di taglio"></span><input type="range" id="scrub" min="0" max="5" step="0.001" value="0" aria-label="Posizione nel tempo"></div>
+          <button type="button" class="icon" id="loop" aria-label="Ripeti" aria-pressed="true"></button>
+          <button type="button" class="icon" id="snd" aria-label="Effetti sonori in anteprima" aria-pressed="true"></button>
+          <button type="button" class="icon" id="safe" aria-label="Margini di sicurezza" aria-pressed="false"></button>
+          <label class="sr" for="bgsel" hidden>Sfondo anteprima</label>
+          <select id="bgsel" class="inp bgsel" aria-label="Sfondo dell'anteprima">
+            <option>Scacchiera</option><option>Il tuo materiale</option><option>Verde campo</option><option>Nero</option><option>Grigio 50%</option>
+          </select>
+        </div>
+      </div>
+      <div class="info" id="info"></div>
+    </section>
+
+    <aside class="col insp" aria-label="Impostazioni ed esportazione">
+      <div>
+        <h2 class="sec">Impostazioni</h2>
+        <form id="params" onsubmit="return false"></form>
+      </div>
+      <div class="export">
+        <h2 class="sec">Esporta</h2>
+        <div class="field"><label for="fmt">Formato</label>
+          <select id="fmt" class="inp">
+            <option value="mp4">MP4 · H.264 con audio</option>
+            <option value="matte">MP4 + maschera alfa (.zip)</option>
+            <option value="webm">WebM con trasparenza</option>
+            <option value="png">Sequenza PNG trasparente (.zip)</option>
+            <option value="frame">Fotogramma attuale (PNG)</option>
+          </select>
+        </div>
+        <p class="hint" id="fmthint"></p>
+        <div class="grid2">
+          <div class="field"><label for="res">Risoluzione</label><select id="res" class="inp"><option>1080p</option><option>1440p</option><option>4K</option></select></div>
+          <div class="field"><label for="fps">Fotogrammi al secondo</label><select id="fps" class="inp"><option>24</option><option>25</option><option>30</option><option>50</option><option>60</option></select></div>
+        </div>
+        <div class="field" id="outbgfield"><label for="outbg">Sfondo per gli elementi trasparenti</label><select id="outbg" class="inp"><option>Nero</option><option>Verde chroma</option><option>Grigio 50%</option><option>Verde campo</option><option>Il tuo materiale</option></select></div>
+        <div class="field check" id="audiofield"><input type="checkbox" id="withaudio"><label for="withaudio">Includi gli effetti sonori nel video</label></div>
+        <div class="bar" id="bar" hidden></div>
+        <div class="exportmsg" id="exportmsg" role="status" aria-live="polite"></div>
+        <div class="actions">
+          <button type="button" class="btn" id="exportbtn">Esporta</button>
+          <button type="button" class="btn paper" id="savebtn" hidden>Salva il file</button>
+        </div>
+        <button type="button" class="btn ghost" id="sfxbtn"></button>
+        <div class="guide">
+          <span><b>Scorciatoie:</b> <kbd>Spazio</kbd> riproduci, <kbd>←</kbd> <kbd>→</kbd> un fotogramma.</span>
+          <span><b>Esportazione video:</b> serve Chrome o Edge aggiornati. Il file resta sul tuo computer.</span>
+          <span><b>Tutto è modificabile:</b> testi, colori, durate. Le modifiche restano salvate in questo browser.</span>
+        </div>
+      </div>
+      <div>
+        <h2 class="sec">Le tue versioni</h2>
+        <div id="variants"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="fflate.js"></script>
+<script src="mp4-muxer.js"></script>
+<script src="webm-muxer.js"></script>
+<script src="geo.js"></script>
+<script src="core.js"></script>
+<script src="presets-a.js"></script>
+<script src="presets-b.js"></script>
+<script src="app.js"></script>

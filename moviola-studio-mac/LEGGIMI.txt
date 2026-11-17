@@ -1,0 +1,31 @@
+MOVIOLA STUDIO per Mac
+Schede giocatore, dati e tattica per documentari di calcio.
+
+INSTALLAZIONE
+Trascina "Moviola Studio" nella cartella Applicazioni.
+
+PRIMA APERTURA
+L'app non è firmata da Apple, quindi la prima volta macOS la blocca:
+- tasto destro su Moviola Studio > Apri > Apri;
+- su macOS 15 o successivi: prova ad aprirla, poi vai in Impostazioni di Sistema >
+  Privacy e sicurezza e premi "Apri comunque".
+Dalla seconda volta si apre con un doppio clic.
+
+L'app si apre in una finestra propria di Google Chrome (o Edge / Brave).
+Se non hai nessuno di questi browser si apre nel browser predefinito:
+l'anteprima funziona ovunque, ma l'esportazione video richiede Chrome o Edge.
+
+VERSIONE BROWSER
+Nella cartella "Versione browser" c'è la stessa app: doppio clic su
+"Apri Moviola Studio.html". Non serve installare niente e non c'è il blocco di macOS.
+Puoi copiare la cartella dove vuoi (anche su una chiavetta).
+
+COSA C'È
+- Scheda giocatore (carica il ritratto in "Il tuo materiale")
+- Dati: Numero gigante, Tabellino, Testa a testa, Classifica, Linea del tempo, Grafico
+- Tattica: Lavagna tattica, Mappa e percorso
+
+Tutto funziona senza internet: font e librerie sono inclusi.
+Esporti in MP4, MP4 + maschera alfa, sequenza PNG trasparente o singolo fotogramma.
+I file si salvano nella cartella Download.
+Le tue versioni salvate restano nell'app, sul tuo Mac.
