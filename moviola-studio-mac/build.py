@@ -67,10 +67,20 @@ def main():
     (STAGE / "Versione browser" / "index.html").rename(STAGE / "Versione browser" / "Apri Moviola Studio.html")
     shutil.copy(R / "LEGGIMI.txt", STAGE / "LEGGIMI.txt")
     os.symlink("/Applications", STAGE / "Applicazioni")
-    dmg = OUT / "Moviola Studio.dmg"
-    subprocess.run(["genisoimage", "-quiet", "-V", "Moviola Studio", "-R", "-J", "-joliet-long", "-D", "-iso-level", "3",
-                    "-o", str(dmg), str(STAGE)], check=True)
-    print(dmg, dmg.stat().st_size // 1024, "KB")
+    os.remove(STAGE / "Applicazioni")
+    # .zip con permessi Unix (l'eseguibile dell'app resta eseguibile quando macOS lo estrae)
+    import zipfile
+    out = OUT / "Moviola Studio Mac.zip"
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(STAGE.rglob("*")):
+            rel = Path("Moviola Studio") / f.relative_to(STAGE)
+            if f.is_dir():
+                info = zipfile.ZipInfo(str(rel) + "/"); info.external_attr = (0o40755 << 16) | 0x10; z.writestr(info, "")
+            else:
+                info = zipfile.ZipInfo(str(rel)); info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = ((0o100755 if os.access(f, os.X_OK) else 0o100644) << 16)
+                z.writestr(info, f.read_bytes())
+    print(out, out.stat().st_size // 1024, "KB")
 
 if __name__ == "__main__":
     main()

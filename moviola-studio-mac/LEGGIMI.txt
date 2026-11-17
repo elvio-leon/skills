@@ -2,7 +2,8 @@ MOVIOLA STUDIO per Mac
 Schede giocatore, dati e tattica per documentari di calcio.
 
 INSTALLAZIONE
-Trascina "Moviola Studio" nella cartella Applicazioni.
+Fai doppio clic sullo .zip: si crea la cartella "Moviola Studio".
+Trascina "Moviola Studio.app" nella cartella Applicazioni (o lasciala dove vuoi).
 
 PRIMA APERTURA
 L'app non è firmata da Apple, quindi la prima volta macOS la blocca:
