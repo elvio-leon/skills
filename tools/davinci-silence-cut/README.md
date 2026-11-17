@@ -28,6 +28,17 @@ La versione Lua non richiede Python: Lua è integrato in Resolve. `SilenceCut.py
    | **Aggressivo** | ritmo serrato stile YouTube/Reels/TikTok |
 6. Viene creata una nuova timeline `… - SilenceCut`. Il taglio è applicato a **tutte le tracce nello stesso punto** (video, audio del telefono, microfono), quindi resta tutto a sync, e i pezzi di ogni frase sono collegati tra loro. La timeline originale non viene toccata.
 
+### Se Resolve blocca gli script (analisi da Terminale)
+
+Alcune versioni di Resolve non permettono agli script di avviare programmi esterni come ffmpeg. In quel caso:
+
+1. Lancia SilenceCut dalla **Console** (Workspace → Console), incollando:
+   `dofile(os.getenv("HOME") .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/SilenceCut.lua")`
+2. Lo script scrive in Console una riga che inizia con `bash`: copiala, incollala nel **Terminale** e premi Invio. Analizza l'audio del microfono con ffmpeg.
+3. Quando il Terminale scrive "Fatto", rilancia la stessa riga in Console (freccia ↑ e Invio): viene creata la timeline tagliata.
+
+Senza finestre di scelta, usa il preset Normale e la traccia del microfono. Per un altro preset, metti `SC_PRESET="Aggressivo";` (o `"Delicato"`) prima di `dofile(...)`.
+
 Senza nessuna timeline aperta, lo script lavora sulle clip selezionate nel Media Pool, prese per intero.
 
 I dettagli dell'analisi compaiono in **Workspace → Console** (scheda Lua).

@@ -1,6 +1,8 @@
 --[[
 SilenceCut (versione Lua) — taglio automatico dei silenzi per DaVinci Resolve.
 Non richiede Python: Lua è integrato in Resolve. Serve solo ffmpeg (brew install ffmpeg).
+Se Resolve non permette agli script di avviare ffmpeg, l'audio si analizza da Terminale
+con analizza.sh: lo script stampa in Console il comando esatto da incollare.
 
 Installazione: copia questo file in
   ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/
@@ -126,6 +128,7 @@ end
 
 -- Finestra di scelta da lista (macOS). Restituisce la voce scelta, nil se annullato.
 local function choose_from_list(prompt, options, default)
+  if not run_cmd then return default end   -- niente finestre: usa il predefinito
   local items = {}
   for i, o in ipairs(options) do items[i] = '"' .. clean(o) .. '"' end
   local script = 'choose from list {' .. table.concat(items, ", ") .. '} with title "SilenceCut" with prompt "' ..
@@ -138,7 +141,9 @@ local function choose_from_list(prompt, options, default)
 end
 
 local function choose_preset()
-  if not ASK_PRESET then return DEFAULT_PRESET end
+  local forced = SC_PRESET
+  if forced and PRESETS[forced] then return forced end
+  if not ASK_PRESET or not run_cmd then return DEFAULT_PRESET end
   return choose_from_list("Quanto tagliare i silenzi?", PRESET_ORDER, DEFAULT_PRESET)
 end
 
@@ -184,6 +189,66 @@ local function detect_silences(ffmpeg, path, p, from_sec, len_sec)
     error("ffmpeg non riesce a leggere l'audio di " .. path .. "\n" .. tail, 0)
   end
   return silences, duration
+end
+
+-- ---------------------------------------------------------------------------
+-- Analisi fatta da Terminale (quando Resolve non permette di avviare ffmpeg)
+-- ---------------------------------------------------------------------------
+local HOME = (os and os.getenv and os.getenv("HOME")) or ""
+local SC_DIR = HOME .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/SilenceCut"
+local DATA_PATH = SC_DIR .. "/analisi.lua"
+local ANALYZER = SC_DIR .. "/analizza.sh"
+
+local ANALYSIS = nil
+local function analysis_data()
+  if ANALYSIS == nil then
+    local ok, d = pcall(dofile, DATA_PATH)
+    ANALYSIS = (ok and type(d) == "table") and d or {}
+  end
+  return ANALYSIS
+end
+
+-- Silenzi già calcolati per un file, ritagliati sull'intervallo usato in timeline
+local function silences_from_analysis(path, p, from_sec, len_sec)
+  local entry = analysis_data()[path]
+  if not entry then return nil end
+  local list, best = nil, math.huge
+  for k, v in pairs(entry) do
+    if type(k) == "number" and math.abs(k - p.noise_db) < best then best = math.abs(k - p.noise_db); list = v end
+  end
+  list = list or {}
+  from_sec = from_sec or 0
+  len_sec = len_sec or entry.duration or 0
+  local to, out = from_sec + len_sec, {}
+  for _, sl in ipairs(list) do
+    if sl[2] - sl[1] >= p.min_silence then
+      local a, b = math.max(sl[1], from_sec), math.min(sl[2], to)
+      if b > a then out[#out + 1] = { a - from_sec, b - from_sec } end
+    end
+  end
+  return out, len_sec
+end
+
+-- Silenzi di un file: con ffmpeg se possibile, altrimenti dall'analisi da Terminale
+local FFMPEG = nil
+local function get_silences(path, p, from_sec, len_sec)
+  if run_cmd and FFMPEG then
+    return detect_silences(FFMPEG, path, p, from_sec, len_sec)
+  end
+  local sil, dur = silences_from_analysis(path, p, from_sec, len_sec)
+  if not sil then error("NON_ANALIZZATO", 0) end
+  return sil, dur
+end
+
+local function print_analyzer_command(paths)
+  local quoted = {}
+  for i, pth in ipairs(paths) do quoted[i] = shq(pth) end
+  print("")
+  print("SilenceCut: >>> Prima va analizzato l'audio. Copia la riga qui sotto, incollala nel Terminale e premi Invio:")
+  print("")
+  print("bash " .. shq(ANALYZER) .. " " .. table.concat(quoted, " "))
+  print("")
+  print("SilenceCut: >>> Quando il Terminale scrive 'Fatto', rilancia SilenceCut.")
 end
 
 -- Dai silenzi ai pezzi parlati, con margini e unioni
@@ -295,7 +360,7 @@ local function merge_ranges(r)
   return out
 end
 
-local function run_timeline(res, project, mp, tl, ffmpeg)
+local function run_timeline(res, project, mp, tl)
   local tl_fps = tonumber(tostring(project:GetSetting("timelineFrameRate") or ""):match("[%d%.]+")) or 25
   local all, by_id = collect_timeline_items(tl)
   local items = selected_items(tl, by_id)
@@ -343,13 +408,26 @@ local function run_timeline(res, project, mp, tl, ffmpeg)
   local p = PRESETS[preset_name]
   print("SilenceCut — preset " .. preset_name)
 
+  -- Senza ffmpeg: controlla che i file della traccia scelta siano già stati analizzati
+  if not (run_cmd and FFMPEG) then
+    local missing, seen = {}, {}
+    for _, r in ipairs(items) do
+      if r.kind == "audio" and r.track == det_track and not seen[r.path] then
+        seen[r.path] = true
+        if not analysis_data()[r.path] then missing[#missing + 1] = r.path end
+      end
+    end
+    if #missing > 0 then print_analyzer_command(missing); return true end
+    print("SilenceCut: uso l'analisi fatta da Terminale")
+  end
+
   -- Tratti da togliere (in fotogrammi di timeline) = silenzi sulla traccia scelta
   local cuts, errors = {}, {}
   for _, r in ipairs(items) do
     if r.kind == "audio" and r.track == det_track then
       print("SilenceCut: analizzo " .. r.name .. " ...")
       local len_sec = r.dur / tl_fps
-      local okc, silences, duration = pcall(detect_silences, ffmpeg, r.path, p, r.left / tl_fps, len_sec)
+      local okc, silences, duration = pcall(get_silences, r.path, p, r.left / tl_fps, len_sec)
       if not okc then
         errors[#errors + 1] = tostring(silences)
       else
@@ -446,7 +524,7 @@ end
 -- Modalità MEDIA POOL: clip intere selezionate (nessuna timeline aperta)
 -- ---------------------------------------------------------------------------
 
-local function run_media_pool(res, project, mp, ffmpeg)
+local function run_media_pool(res, project, mp)
   local clips = {}
   local ok, sel = pcall(function() return mp:GetSelectedClips() end)
   if ok then clips = to_list(sel) end
@@ -462,6 +540,15 @@ local function run_media_pool(res, project, mp, ffmpeg)
     return alert("Apri la timeline da tagliare, oppure seleziona delle clip nel Media Pool, e rilancia lo script.")
   end
 
+  if not (run_cmd and FFMPEG) then
+    local missing = {}
+    for _, c in ipairs(clips) do
+      local pth = c:GetClipProperty("File Path")
+      if not analysis_data()[pth] then missing[#missing + 1] = pth end
+    end
+    if #missing > 0 then return print_analyzer_command(missing) end
+  end
+
   local preset_name = choose_preset()
   if not preset_name then return end
   local p = PRESETS[preset_name]
@@ -470,7 +557,7 @@ local function run_media_pool(res, project, mp, ffmpeg)
   for _, clip in ipairs(clips) do
     local path = clip:GetClipProperty("File Path")
     print("SilenceCut: analizzo " .. clip:GetName() .. " ...")
-    local okc, silences, duration = pcall(detect_silences, ffmpeg, path, p)
+    local okc, silences, duration = pcall(get_silences, path, p)
     if not okc then
       errors[#errors + 1] = tostring(silences)
     else
@@ -506,27 +593,27 @@ end
 
 local function main()
   print("SilenceCut: avvio")
-  if not run_cmd then
-    print("SilenceCut DIAGNOSTICA: " .. diagnostics())
-    return print("SilenceCut: questa versione di Resolve non permette agli script di avviare programmi esterni. Copia la riga DIAGNOSTICA e mandala.")
-  end
-  print("SilenceCut: metodo = " .. RUN_METHOD)
   local res = resolve or (Resolve and Resolve()) or (app and app:GetResolve())
   if not res then return alert("Impossibile collegarsi a DaVinci Resolve.") end
   local project = res:GetProjectManager():GetCurrentProject()
   if not project then return alert("Apri prima un progetto in DaVinci Resolve.") end
   local mp = project:GetMediaPool()
 
-  local ffmpeg = find_ffmpeg()
-  if not ffmpeg then return alert("ffmpeg non trovato. Installalo dal Terminale con:  brew install ffmpeg") end
-  print("SilenceCut: ffmpeg = " .. ffmpeg)
+  if run_cmd then
+    FFMPEG = find_ffmpeg()
+    if not FFMPEG then return alert("ffmpeg non trovato. Installalo dal Terminale con:  brew install ffmpeg") end
+    print("SilenceCut: ffmpeg = " .. FFMPEG .. " (" .. RUN_METHOD .. ")")
+  else
+    print("SilenceCut: Resolve non permette di avviare ffmpeg, uso l'analisi da Terminale")
+  end
 
   local tl = project:GetCurrentTimeline()
-  if tl and run_timeline(res, project, mp, tl, ffmpeg) ~= false then return end
-  run_media_pool(res, project, mp, ffmpeg)
+  if tl and run_timeline(res, project, mp, tl) ~= false then return end
+  run_media_pool(res, project, mp)
 end
 
 local ok, err = pcall(main)
+SC_PRESET = nil
 if not ok then
   print("SilenceCut ERRORE: " .. tostring(err))
   pcall(alert, "Errore: " .. tostring(err))

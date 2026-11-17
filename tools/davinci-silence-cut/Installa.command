@@ -7,6 +7,9 @@ DEST="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion
 echo "== Installazione SilenceCut per DaVinci Resolve =="
 mkdir -p "$DEST"
 cp "$DIR/SilenceCut.lua" "$DEST/SilenceCut.lua"
+SC="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/SilenceCut"
+mkdir -p "$SC"
+cp "$DIR/analizza.sh" "$SC/analizza.sh"
 echo "OK  Script copiato in: $DEST"
 
 FF=""
