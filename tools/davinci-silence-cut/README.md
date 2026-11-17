@@ -7,14 +7,17 @@ Flusso di lavoro: importi il girato, lanci SilenceCut, ottieni una timeline già
 ## Installazione (una volta sola)
 
 1. **ffmpeg**: apri il Terminale ed esegui `brew install ffmpeg` (se non hai Homebrew: https://brew.sh).
-2. **Python 3**: se non è già installato, scaricalo da https://www.python.org/downloads/macos/ (Resolve usa quello).
-3. Fai doppio clic su **`Installa.command`**. Se macOS lo blocca: tasto destro → Apri.
-4. Riavvia DaVinci Resolve.
+2. Copia **`SilenceCut.lua`** in
+   `~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/`
+   (nel Finder: Cmd + Shift + G e incolla il percorso), oppure fai doppio clic su `Installa.command`.
+3. Riavvia DaVinci Resolve.
+
+La versione Lua non richiede Python: Lua è integrato in Resolve. `SilenceCut.py` fa le stesse cose, ma Resolve lo mostra solo se trova una versione di Python che supporta.
 
 ## Uso dentro Resolve
 
 1. Nel **Media Pool** seleziona una o più clip (se non selezioni niente, usa tutte quelle della cartella aperta).
-2. Menu **Workspace → Scripts → Edit → SilenceCut**.
+2. Menu **Workspace → Scripts → SilenceCut**.
 3. Scegli il preset:
    | Preset | Quando usarlo |
    |---|---|
@@ -27,17 +30,17 @@ I dettagli dell'analisi compaiono in **Workspace → Console**.
 
 ## Regolazioni
 
-In cima a `SilenceCut.py` trovi i preset. I valori principali:
+In cima a `SilenceCut.lua` (o `SilenceCut.py`) trovi i preset. I valori principali:
 
 - `noise_db`: sotto questo volume è "silenzio". Se taglia parole sussurrate, abbassalo (es. -40); se lascia pause con rumore di fondo, alzalo (es. -30).
 - `min_silence`: pausa minima (in secondi) da tagliare.
 - `pad_before` / `pad_after`: margine lasciato prima e dopo ogni frase, così non tronca l'attacco o la coda delle parole.
 
-Dopo una modifica, ricopia lo script con `Installa.command`.
+Dopo una modifica, ricopia lo script nella cartella `Utility` e riavvia Resolve.
 
 ## Alternativa da Terminale (FCPXML)
 
-Se lo script non compare nel menu Scripts, puoi generare la timeline da Terminale e importarla:
+Senza aprire Resolve puoi anche generare la timeline da Terminale e importarla:
 
 ```bash
 python3 SilenceCut.py clip1.mov clip2.mov -p Normale -o tagliato.fcpxml
