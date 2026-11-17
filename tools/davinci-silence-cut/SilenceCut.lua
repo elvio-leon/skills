@@ -63,7 +63,7 @@ end
 
 local function alert(msg)
   print(msg)
-  exec("osascript -e " .. shq('display dialog ' .. applescript_str(msg) ..
+  exec("osascript -e 'tell me to activate' -e " .. shq('display dialog ' .. applescript_str(msg) ..
     ' with title "SilenceCut" buttons {"OK"} default button "OK"'))
 end
 
@@ -73,7 +73,9 @@ local function choose_preset()
   for i, n in ipairs(PRESET_ORDER) do items[i] = '"' .. n .. '"' end
   local script = 'choose from list {' .. table.concat(items, ", ") ..
     '} with title "SilenceCut" with prompt "Quanto tagliare i silenzi?" default items {"' .. DEFAULT_PRESET .. '"}'
-  local out = exec("osascript -e " .. shq(script)):gsub("%s+$", "")
+  print("SilenceCut: scegli il preset nella finestra (se non la vedi, usa Cmd+Tab)")
+  local out = exec("osascript -e 'tell me to activate' -e " .. shq(script)):gsub("%s+$", "")
+  print("SilenceCut: risposta finestra = " .. out)
   if out == "false" then return nil end   -- annullato
   if PRESETS[out] then return out end
   return DEFAULT_PRESET                   -- osascript non disponibile o risposta strana
@@ -167,6 +169,10 @@ local function round(x) return math.floor(x + 0.5) end
 -- ---------------------------------------------------------------------------
 
 local function main()
+  print("SilenceCut: avvio")
+  if not io or not io.popen then
+    return alert("Questa versione di Resolve non permette agli script Lua di avviare ffmpeg (io.popen mancante).")
+  end
   local res = resolve or (Resolve and Resolve()) or (app and app:GetResolve())
   if not res then return alert("Impossibile collegarsi a DaVinci Resolve.") end
   local project = res:GetProjectManager():GetCurrentProject()
@@ -183,10 +189,12 @@ local function main()
     if fp and fp ~= "" then valid[#valid + 1] = c end
   end
   clips = valid
+  print("SilenceCut: clip trovate = " .. #clips)
   if #clips == 0 then return alert("Seleziona una o più clip nel Media Pool e rilancia lo script.") end
 
   local ffmpeg = find_ffmpeg()
   if not ffmpeg then return alert("ffmpeg non trovato. Installalo dal Terminale con:  brew install ffmpeg") end
+  print("SilenceCut: ffmpeg = " .. ffmpeg)
 
   local preset_name = choose_preset()
   if not preset_name then return end
@@ -197,6 +205,7 @@ local function main()
   local total_before, total_after = 0, 0
   for idx, clip in ipairs(clips) do
     local path = clip:GetClipProperty("File Path")
+    print("SilenceCut: analizzo " .. path .. " ...")
     local okc, silences, duration = pcall(detect_silences, ffmpeg, path, p)
     if not okc then
       errors[#errors + 1] = tostring(silences)
@@ -228,6 +237,7 @@ local function main()
   if not timeline then return alert("Impossibile creare la timeline.") end
   project:SetCurrentTimeline(timeline)
   local items = to_list(mp:AppendToTimeline(infos))
+  print("SilenceCut: pezzi aggiunti in timeline = " .. #items)
 
   if #clips > 1 then
     for i, item in ipairs(items) do
@@ -243,4 +253,7 @@ local function main()
 end
 
 local ok, err = pcall(main)
-if not ok then alert("Errore: " .. tostring(err)) end
+if not ok then
+  print("SilenceCut ERRORE: " .. tostring(err))
+  pcall(alert, "Errore: " .. tostring(err))
+end
