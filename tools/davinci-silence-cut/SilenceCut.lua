@@ -208,9 +208,29 @@ local function analysis_data()
   return ANALYSIS
 end
 
+-- Nome del file di analisi di un media: stessa regola di analizza.sh
+local function cache_file(path)
+  local n = tostring(path):gsub("[^A-Za-z0-9%._%-]+", "_")
+  if #n > 200 then n = n:sub(-200) end
+  return SC_DIR .. "/cache/" .. n .. ".lua"
+end
+
+local ENTRIES = {}
+local function entry_for(path)
+  if ENTRIES[path] == nil then
+    local ok, d = pcall(dofile, cache_file(path))
+    if ok and type(d) == "table" then
+      ENTRIES[path] = d
+    else
+      ENTRIES[path] = analysis_data()[path] or false   -- vecchio formato (analisi.lua)
+    end
+  end
+  return ENTRIES[path] or nil
+end
+
 -- Silenzi già calcolati per un file, ritagliati sull'intervallo usato in timeline
 local function silences_from_analysis(path, p, from_sec, len_sec)
-  local entry = analysis_data()[path]
+  local entry = entry_for(path)
   if not entry then return nil end
   local list, best = nil, math.huge
   for k, v in pairs(entry) do
@@ -240,15 +260,35 @@ local function get_silences(path, p, from_sec, len_sec)
   return sil, dur
 end
 
-local function print_analyzer_command(paths)
-  local quoted = {}
-  for i, pth in ipairs(paths) do quoted[i] = shq(pth) end
+local MARKER_TAG = "SilenceCut"
+
+local function print_analyzer_command(paths, tl)
+  local quoted, names = {}, {}
+  for i, pth in ipairs(paths) do
+    quoted[i] = shq(pth)
+    names[i] = pth:match("([^/]+)$") or pth
+  end
   print("")
-  print("SilenceCut: >>> Prima va analizzato l'audio. Copia la riga qui sotto, incollala nel Terminale e premi Invio:")
+  print("SilenceCut: >>> Questi file non sono ancora stati analizzati:")
+  for _, n in ipairs(names) do print("     " .. n) end
+  print("SilenceCut: >>> Trascina la loro cartella sull'app 'SilenceCut Analizza' (nel Dock),")
+  print("SilenceCut: >>> oppure incolla nel Terminale questa riga:")
   print("")
   print("bash " .. shq(ANALYZER) .. " " .. table.concat(quoted, " "))
   print("")
-  print("SilenceCut: >>> Quando il Terminale scrive 'Fatto', rilancia SilenceCut.")
+  print("SilenceCut: >>> Poi rilancia SilenceCut.")
+  -- Promemoria visibile in timeline (lo script non può aprire finestre)
+  if tl then
+    pcall(function() tl:DeleteMarkerByCustomData(MARKER_TAG) end)
+    local note = "Analizza prima l'audio: trascina la cartella del girato sull'app SilenceCut Analizza, poi rilancia SilenceCut. File: " ..
+      table.concat(names, ", ")
+    for f = 0, 50 do
+      local ok, added = pcall(function()
+        return tl:AddMarker(f, "Red", "SilenceCut: manca l'analisi", note, 1, MARKER_TAG)
+      end)
+      if ok and added then break end
+    end
+  end
 end
 
 -- Dai silenzi ai pezzi parlati, con margini e unioni
@@ -433,10 +473,10 @@ local function run_timeline(res, project, mp, tl)
     for _, r in ipairs(items) do
       if r.kind == "audio" and r.track == det_track and not seen[r.path] then
         seen[r.path] = true
-        if not analysis_data()[r.path] then missing[#missing + 1] = r.path end
+        if not entry_for(r.path) then missing[#missing + 1] = r.path end
       end
     end
-    if #missing > 0 then print_analyzer_command(missing); return true end
+    if #missing > 0 then print_analyzer_command(missing, tl); return true end
     print("SilenceCut: uso l'analisi fatta da Terminale")
   end
 
@@ -514,6 +554,7 @@ local function run_timeline(res, project, mp, tl)
     end
     pos = pos + (kr[2] - kr[1])
   end
+  pcall(function() tl:DeleteMarkerByCustomData(MARKER_TAG) end)
   local appended = to_list(mp:AppendToTimeline(infos))
   print("SilenceCut: elementi aggiunti = " .. #appended .. " su " .. #infos)
 
@@ -563,7 +604,7 @@ local function run_media_pool(res, project, mp)
     local missing = {}
     for _, c in ipairs(clips) do
       local pth = c:GetClipProperty("File Path")
-      if not analysis_data()[pth] then missing[#missing + 1] = pth end
+      if not entry_for(pth) then missing[#missing + 1] = pth end
     end
     if #missing > 0 then return print_analyzer_command(missing) end
   end

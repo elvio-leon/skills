@@ -6,42 +6,21 @@ Flusso di lavoro: importi il girato, lanci SilenceCut, ottieni una timeline già
 
 ## Installazione (una volta sola)
 
-1. **ffmpeg**: apri il Terminale ed esegui `brew install ffmpeg` (se non hai Homebrew: https://brew.sh).
-2. Copia **`SilenceCut.lua`** in
-   `~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/`
-   (nel Finder: Cmd + Shift + G e incolla il percorso), oppure fai doppio clic su `Installa.command`.
-3. Riavvia DaVinci Resolve.
+1. Se non l'hai già: `brew install ffmpeg` nel Terminale.
+2. Scarica `Installa-SilenceCut.command` ed eseguilo nel Terminale:
+   `bash ~/Downloads/Installa-SilenceCut.command`
+3. Si apre una finestra con l'app **SilenceCut Analizza**: trascinala nel Dock.
+4. Riavvia DaVinci Resolve.
 
-La versione Lua non richiede Python: Lua è integrato in Resolve. `SilenceCut.py` fa le stesse cose, ma Resolve lo mostra solo se trova una versione di Python che supporta.
+## Uso di tutti i giorni
 
-## Uso dentro Resolve
+1. **Una volta per ogni girato**: trascina la cartella del girato (o i file del microfono) sull'app **SilenceCut Analizza** nel Dock. Analizza l'audio di tutti i file; quelli già analizzati vengono saltati.
+2. **In Resolve**: apri la timeline (V1/A1 telefono, A2 microfono, già sincronizzati) e scegli **Workspace → Scripts → SilenceCut** (oppure *SilenceCut Aggressivo* / *SilenceCut Delicato*).
+3. Si crea una nuova timeline `… - SilenceCut`, tagliata su tutte le tracce nello stesso punto. Il parlato viene cercato sulla traccia del microfono (il file solo audio). La timeline originale non viene toccata.
 
-1. Apri la **timeline** che hai montato. Va bene anche con video del telefono su V1/A1 e microfono esterno su A2, già sincronizzati.
-2. *(Facoltativo, Resolve 21.0.4 o successivo)* Seleziona in timeline le clip da tagliare. Se non selezioni niente, o la tua versione non lo supporta, lavora su tutta la timeline.
-3. Menu **Workspace → Scripts → SilenceCut**.
-4. Scegli **su quale traccia audio cercare il parlato**: di solito il microfono, che viene già proposto.
-5. Scegli il preset:
-   | Preset | Quando usarlo |
-   |---|---|
-   | **Delicato** | parlato lento e ragionato, vuoi tenere i respiri |
-   | **Normale** | la maggior parte dei casi (talking head, tutorial) |
-   | **Aggressivo** | ritmo serrato stile YouTube/Reels/TikTok |
-6. Viene creata una nuova timeline `… - SilenceCut`. Il taglio è applicato a **tutte le tracce nello stesso punto** (video, audio del telefono, microfono), quindi resta tutto a sync, e i pezzi di ogni frase sono collegati tra loro. La timeline originale non viene toccata.
+Se dimentichi il passo 1, lo script mette un **marker rosso** all'inizio della timeline con il promemoria (e scrive i dettagli in Workspace → Console). Il marker sparisce quando il taglio riesce.
 
-### Se Resolve blocca gli script (analisi da Terminale)
-
-Alcune versioni di Resolve non permettono agli script di avviare programmi esterni come ffmpeg. In quel caso:
-
-1. Lancia SilenceCut dalla **Console** (Workspace → Console), incollando:
-   `dofile(os.getenv("HOME") .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/SilenceCut.lua")`
-2. Lo script scrive in Console una riga che inizia con `bash`: copiala, incollala nel **Terminale** e premi Invio. Analizza l'audio del microfono con ffmpeg.
-3. Quando il Terminale scrive "Fatto", rilancia la stessa riga in Console (freccia ↑ e Invio): viene creata la timeline tagliata.
-
-Senza finestre di scelta, usa il preset Normale e la traccia del microfono. Per un altro preset, metti `SC_PRESET="Aggressivo";` (o `"Delicato"`) prima di `dofile(...)`.
-
-Senza nessuna timeline aperta, lo script lavora sulle clip selezionate nel Media Pool, prese per intero.
-
-I dettagli dell'analisi compaiono in **Workspace → Console** (scheda Lua).
+Perché serve l'app esterna: questa versione di Resolve non permette agli script di avviare programmi come ffmpeg, quindi l'analisi dell'audio si fa fuori da Resolve.
 
 ## Regolazioni
 
@@ -51,7 +30,7 @@ In cima a `SilenceCut.lua` (o `SilenceCut.py`) trovi i preset. I valori principa
 - `min_silence`: pausa minima (in secondi) da tagliare.
 - `pad_before` / `pad_after`: margine lasciato prima e dopo ogni frase, così non tronca l'attacco o la coda delle parole.
 
-Dopo una modifica, ricopia lo script nella cartella `Utility` e riavvia Resolve.
+Dopo una modifica a `SilenceCut.lua` o `analizza.sh`, rigenera l'installer con `python3 crea-installer.py`.
 
 ## Alternativa da Terminale (FCPXML)
 

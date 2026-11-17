@@ -1,13 +1,20 @@
 #!/bin/bash
-# SilenceCut — analisi dei silenzi da Terminale.
-# Serve quando DaVinci Resolve non permette agli script di avviare ffmpeg.
-# Uso: bash analizza.sh file1.wav [file2.mov ...]
+# SilenceCut — analisi dei silenzi da Terminale (o dall'app "SilenceCut Analizza").
+# Serve perché DaVinci Resolve non permette agli script di avviare ffmpeg.
+#
+# Uso: bash analizza.sh [-f] file-o-cartella [altri ...]
+#   Le cartelle vengono esplorate (anche le sottocartelle) cercando file audio/video.
+#   I file già analizzati vengono saltati; -f li rianalizza.
 # Il risultato viene letto dallo script SilenceCut dentro Resolve.
 
-OUT_DIR="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/SilenceCut"
-OUT="$OUT_DIR/analisi.lua"
+SC_DIR="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/SilenceCut"
+CACHE="$SC_DIR/cache"
 THRESHOLDS="-30 -35 -40"   # soglie in dB usate dai preset
 MIN_SILENCE=0.3            # pausa più corta registrata (s)
+EXTENSIONS="mp4 mov m4v mxf mts m2ts avi mkv wav aif aiff mp3 m4a aac flac caf"
+
+FORCE=0
+if [ "$1" = "-f" ]; then FORCE=1; shift; fi
 
 FF=""
 for p in "$(command -v ffmpeg 2>/dev/null)" /opt/homebrew/bin/ffmpeg /usr/local/bin/ffmpeg; do
@@ -18,25 +25,46 @@ if [ -z "$FF" ]; then
   exit 1
 fi
 if [ $# -eq 0 ]; then
-  echo "Uso: bash analizza.sh file1 [file2 ...]"
+  echo "Uso: bash analizza.sh file-o-cartella [...]"
   exit 1
 fi
+mkdir -p "$CACHE"
 
-mkdir -p "$OUT_DIR"
-TMP="$(mktemp)"
-echo "return {" > "$TMP"
-ok=0
-for f in "$@"; do
-  if [ ! -f "$f" ]; then
-    echo "!! File non trovato: $f"
-    continue
+# Nome del file di analisi: stessa regola usata dallo script in Resolve
+cache_name() {
+  local s
+  s=$(printf '%s' "$1" | LC_ALL=C sed 's/[^A-Za-z0-9._-][^A-Za-z0-9._-]*/_/g')
+  if [ ${#s} -gt 200 ]; then s=${s: -200}; fi
+  printf '%s/%s.lua' "$CACHE" "$s"
+}
+
+is_media() {
+  local ext
+  ext=$(printf '%s' "${1##*.}" | tr '[:upper:]' '[:lower:]')
+  case " $EXTENSIONS " in *" $ext "*) return 0 ;; esac
+  return 1
+}
+
+analyze() {
+  local f="$1" out tmp db log
+  out=$(cache_name "$f")
+  if [ $FORCE -eq 0 ] && [ -f "$out" ] && [ "$out" -nt "$f" ]; then
+    SKIPPED=$((SKIPPED + 1))
+    return
   fi
   echo "Analizzo: $(basename "$f")"
-  printf '  [ [==[%s]==] ] = {\n' "$f" >> "$TMP"
+  tmp="$out.tmp"
+  printf 'return {\n  path = [==[%s]==],\n' "$f" > "$tmp"
   for db in $THRESHOLDS; do
-    "$FF" -hide_banner -nostats -i "$f" -map 0:a:0 \
-      -af "silencedetect=noise=${db}dB:d=${MIN_SILENCE}" -f null - 2>&1 |
-    awk -v db="$db" '
+    log=$("$FF" -nostdin -hide_banner -nostats -i "$f" -map 0:a:0 \
+      -af "silencedetect=noise=${db}dB:d=${MIN_SILENCE}" -f null - 2>&1)
+    if printf '%s' "$log" | grep -q "matches no streams"; then
+      echo "   (nessun audio, salto)"
+      rm -f "$tmp"
+      NOAUDIO=$((NOAUDIO + 1))
+      return
+    fi
+    printf '%s\n' "$log" | awk -v db="$db" '
       /Duration:/ && dur == "" {
         split($2, t, ":"); gsub(",", "", t[3]); dur = t[1] * 3600 + t[2] * 60 + t[3]
       }
@@ -47,20 +75,29 @@ for f in "$@"; do
       }
       END {
         if (open && dur != "") list = list sprintf("{%s,%s},", s, dur)
-        printf "    [%s] = { %s },\n", db, list
-        if (db == -35 && dur != "") printf "    duration = %s,\n", dur
-      }' >> "$TMP"
+        printf "  [%s] = { %s },\n", db, list
+        if (db == -35 && dur != "") printf "  duration = %s,\n", dur
+      }' >> "$tmp"
   done
-  echo "  }," >> "$TMP"
-  ok=$((ok + 1))
+  echo "}" >> "$tmp"
+  mv "$tmp" "$out"
+  DONE=$((DONE + 1))
+}
+
+DONE=0; SKIPPED=0; NOAUDIO=0
+for arg in "$@"; do
+  [ "$arg" != "/" ] && arg="${arg%/}"
+  if [ -d "$arg" ]; then
+    while IFS= read -r f; do
+      f=$(printf '%s' "$f" | sed 's#//*#/#g')
+      is_media "$f" && analyze "$f"
+    done < <(find "$arg" -type f ! -name '._*' 2>/dev/null | sort)
+  elif [ -f "$arg" ]; then
+    analyze "$arg"
+  else
+    echo "!! Non trovato: $arg"
+  fi
 done
-echo "}" >> "$TMP"
-mv "$TMP" "$OUT"
 
 echo
-if [ $ok -gt 0 ]; then
-  echo "Fatto: $ok file analizzati."
-  echo "Ora torna in DaVinci Resolve e rilancia SilenceCut."
-else
-  echo "Nessun file analizzato."
-fi
+echo "Fatto: $DONE file analizzati, $SKIPPED già pronti, $NOAUDIO senza audio."
