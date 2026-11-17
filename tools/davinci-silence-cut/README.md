@@ -16,17 +16,21 @@ La versione Lua non richiede Python: Lua è integrato in Resolve. `SilenceCut.py
 
 ## Uso dentro Resolve
 
-1. Nel **Media Pool** seleziona una o più clip (se non selezioni niente, usa tutte quelle della cartella aperta).
-2. Menu **Workspace → Scripts → SilenceCut**.
-3. Scegli il preset:
+1. Apri la **timeline** che hai montato. Va bene anche con video del telefono su V1/A1 e microfono esterno su A2, già sincronizzati.
+2. *(Facoltativo, Resolve 21.0.4 o successivo)* Seleziona in timeline le clip da tagliare. Se non selezioni niente, o la tua versione non lo supporta, lavora su tutta la timeline.
+3. Menu **Workspace → Scripts → SilenceCut**.
+4. Scegli **su quale traccia audio cercare il parlato**: di solito il microfono, che viene già proposto.
+5. Scegli il preset:
    | Preset | Quando usarlo |
    |---|---|
    | **Delicato** | parlato lento e ragionato, vuoi tenere i respiri |
    | **Normale** | la maggior parte dei casi (talking head, tutorial) |
    | **Aggressivo** | ritmo serrato stile YouTube/Reels/TikTok |
-4. Si apre la pagina Edit con la timeline `SilenceCut - …` pronta. Se hai selezionato più clip, sono una dopo l'altra, colorate in modo diverso per file di origine.
+6. Viene creata una nuova timeline `… - SilenceCut`. Il taglio è applicato a **tutte le tracce nello stesso punto** (video, audio del telefono, microfono), quindi resta tutto a sync, e i pezzi di ogni frase sono collegati tra loro. La timeline originale non viene toccata.
 
-I dettagli dell'analisi compaiono in **Workspace → Console**.
+Senza nessuna timeline aperta, lo script lavora sulle clip selezionate nel Media Pool, prese per intero.
+
+I dettagli dell'analisi compaiono in **Workspace → Console** (scheda Lua).
 
 ## Regolazioni
 
@@ -50,5 +54,8 @@ In Resolve: **File → Import → Timeline…** e scegli `tagliato.fcpxml`. Opzi
 
 ## Limiti
 
-- Analizza la **prima traccia audio** del file (`AUDIO_STREAM` in cima allo script). Se registri l'audio con un recorder esterno, sincronizza e usa un file che contenga quell'audio, oppure imposta la traccia giusta.
+- Se hai sincronizzato il microfono **dentro la clip** nel Media Pool (Auto Sync Audio), lo script legge solo l'audio originale del file video. Meglio tenere il microfono su una traccia separata in timeline.
+- Titoli, generatori ed effetti non vengono copiati nella nuova timeline: aggiungili dopo il taglio.
+- Clip con velocità modificata (retime) non sono gestite.
+- La versione Python (`SilenceCut.py`) lavora solo sulle clip del Media Pool; la versione Lua è quella completa.
 - Rileva il silenzio dal volume, non dal significato: le take ripetute o sbagliate le scegli tu, ed è proprio quello che resta da fare.
