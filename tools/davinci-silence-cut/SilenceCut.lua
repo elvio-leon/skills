@@ -280,10 +280,29 @@ local function speech_segments(silences, duration, p)
   return result
 end
 
+-- Trasforma una risposta di Resolve in un elenco di oggetti.
+-- Resolve a volte mette nella tabella anche numeri (contatori) o usa gli oggetti
+-- come chiavi: tengo solo gli oggetti veri, nell'ordine dei numeri se c'è.
+local function is_obj(x)
+  local t = type(x)
+  return t == "userdata" or t == "table"
+end
+
 local function to_list(t)
-  local l = {}
-  if type(t) ~= "table" then return l end
-  for _, v in pairs(t) do l[#l + 1] = v end
+  local l, seen = {}, {}
+  if not is_obj(t) then return l end
+  local function add(o) if not seen[o] then seen[o] = true; l[#l + 1] = o end end
+  local keys = {}
+  for k in pairs(t) do keys[#keys + 1] = k end
+  table.sort(keys, function(a, b)
+    local na, nb = type(a) == "number", type(b) == "number"
+    if na and nb then return a < b end
+    return na and not nb
+  end)
+  for _, k in ipairs(keys) do
+    local v = t[k]
+    if is_obj(v) then add(v) elseif is_obj(k) then add(k) end
+  end
   return l
 end
 
