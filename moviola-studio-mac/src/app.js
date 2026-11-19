@@ -12,7 +12,7 @@ const CAT_NOTE = { Titoli: 'Aperture, capitoli, citazioni', Informazioni: 'Nomi,
 const S = {
   id: store.get('preset', 'apertura'), vals: {}, t: 0, playing: false, loop: true, audio: store.get('audio', true),
   bg: store.get('bg', 'Scacchiera'), safe: false, media: null, activePoint: 'punto',
-  fps: store.get('fps', 25), res: store.get('res', '1080p'), fmt: store.get('fmt', 'mp4'), outBg: store.get('outBg', 'Nero'), withAudio: store.get('withAudio', true)
+  fps: store.get('fps', 25), res: store.get('res', '1080p'), fmt: store.get('fmt2', 'png'), outBg: store.get('outBg', 'Nero'), withAudio: store.get('withAudio', true)
 };
 const byId = id => PRE.find(p => p.id === id) || PRE[0];
 /* passaggio al look HD: azzera una volta sola grana, vignetta e polvere salvate in precedenza */
@@ -391,13 +391,13 @@ $('#sfxbtn').addEventListener('click', async () => {
   saveFile(`${slug(p.name)}-effetti-sonori.zip`, new Blob(parts, { type: 'application/zip' }));
 });
 function exportUI() {
-  const sel = (id, key, cb) => { const s = $(id); s.value = S[key]; s.addEventListener('change', e => { S[key] = e.target.value; store.set(key, S[key]); clearReady(); if (cb) cb(); }); };
-  sel('#fmt', 'fmt', fmtHint); sel('#res', 'res'); sel('#fps', 'fps', () => { dirty = true; }); sel('#outbg', 'outBg');
+  const sel = (id, key, cb) => { const sk = key === 'fmt2' ? 'fmt' : key; const s = $(id); s.value = S[sk]; s.addEventListener('change', e => { S[sk] = e.target.value; store.set(key, S[sk]); clearReady(); if (cb) cb(); }); };
+  sel('#fmt', 'fmt2', fmtHint); sel('#res', 'res'); sel('#fps', 'fps', () => { dirty = true; }); sel('#outbg', 'outBg');
   const wa = $('#withaudio'); wa.checked = S.withAudio; wa.addEventListener('change', e => { S.withAudio = e.target.checked; store.set('withAudio', S.withAudio); });
   fmtHint();
 }
 function fmtHint() {
-  const h = { mp4: 'Un unico file pronto per il montaggio, con l\'audio. Gli elementi senza sfondo vengono messi sullo sfondo scelto qui sotto.', matte: 'Due video nello stesso .zip: colore e maschera in bianco e nero. In Premiere usa l\'effetto "Track Matte Key", in DaVinci "Usa come maschera". Funziona in ogni programma.', webm: 'Un file con la trasparenza vera (VP9 alfa). Leggero e comodo, ma non tutti i programmi lo leggono: provalo nel tuo prima di usarlo in serie.', png: 'Una sequenza di immagini PNG con trasparenza, in un .zip. Il formato più compatibile: importa la cartella come "sequenza di immagini".', frame: 'Il fotogramma che vedi ora, in PNG trasparente, alla risoluzione scelta.' }[S.fmt];
+  const h = { mp4: 'Un unico file pronto per il montaggio, con l\'audio. Gli elementi senza sfondo vengono messi sullo sfondo scelto qui sotto.', matte: 'Due video nello stesso .zip: colore e maschera in bianco e nero. In Premiere usa l\'effetto "Track Matte Key", in DaVinci "Usa come maschera". Funziona in ogni programma.', webm: 'Un file con la trasparenza vera (VP9 alfa). Leggero e comodo, ma non tutti i programmi lo leggono: provalo nel tuo prima di usarlo in serie.', png: 'Per mettere la grafica sopra il tuo video. Estrai lo .zip, trascina la cartella nel Media Pool di DaVinci e metti la clip su V2. Se vedi nero: Clip Attributes → Alpha Mode → Straight.', frame: 'Il fotogramma che vedi ora, in PNG trasparente, alla risoluzione scelta.' }[S.fmt];
   $('#fmthint').textContent = h; $('#outbgfield').hidden = S.fmt !== 'mp4'; $('#audiofield').hidden = S.fmt === 'png' || S.fmt === 'frame';
 }
 
