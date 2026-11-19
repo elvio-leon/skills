@@ -249,7 +249,7 @@ def run_in_resolve(resolve):
         total_before += duration or 0
         for s, e in segs:
             start_f = int(round(s * fps))
-            end_f = int(round(e * fps)) - 1  # endFrame è incluso
+            end_f = int(round(e * fps))  # endFrame escluso
             if end_f > start_f:
                 infos.append({"mediaPoolItem": clip, "startFrame": start_f, "endFrame": end_f})
                 sources.append(idx)

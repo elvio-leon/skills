@@ -556,7 +556,7 @@ local function run_timeline(res, project, mp, tl)
         infos[#infos + 1] = {
           mediaPoolItem = r.mpi,
           startFrame = r.left + (a - r.start),
-          endFrame = r.left + (b - r.start) - 1,          -- incluso
+          endFrame = r.left + (b - r.start),              -- escluso (Resolve non conta l'ultimo)
           mediaType = (r.kind == "video") and 1 or 2,
           trackIndex = r.track,
           recordFrame = pos + (a - kr[1]),
@@ -637,7 +637,7 @@ local function run_media_pool(res, project, mp)
       local frames = tonumber(clip:GetClipProperty("Frames") or "")
       if frames and frames > 0 then duration = frames / fps end
       for _, sg in ipairs(speech_segments(silences, duration, p)) do
-        local sf, ef = round(sg[1] * fps), round(sg[2] * fps) - 1
+        local sf, ef = round(sg[1] * fps), round(sg[2] * fps)   -- ef escluso
         if ef > sf then
           infos[#infos + 1] = { mediaPoolItem = clip, startFrame = sf, endFrame = ef }
           after = after + (sg[2] - sg[1])
