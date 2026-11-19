@@ -564,7 +564,7 @@ local function run_timeline(res, project, mp, tl)
   local new_start = new_tl:GetStartFrame() or 0
 
   -- Ogni pezzo di ogni traccia, rimontato in sequenza
-  local infos, group = {}, {}
+  local infos = {}
   local pos = new_start
   for k, kr in ipairs(keep) do
     for _, r in ipairs(items) do
@@ -578,7 +578,6 @@ local function run_timeline(res, project, mp, tl)
           trackIndex = r.track,
           recordFrame = pos + (a - kr[1]),
         }
-        group[#infos] = k
       end
     end
     pos = pos + (kr[2] - kr[1])
@@ -587,14 +586,29 @@ local function run_timeline(res, project, mp, tl)
   local appended = to_list(mp:AppendToTimeline(infos))
   print("SilenceCut: elementi aggiunti = " .. #appended .. " su " .. #infos)
 
-  -- Ricollega video e audio di ogni pezzo, così si spostano insieme
+  -- Ricollega video e audio di ogni pezzo, così si spostano insieme.
+  -- Raggruppo per posizione in timeline (Resolve non restituisce i pezzi in ordine).
+  local ranges = {}
+  local p0 = new_start
+  for k, kr in ipairs(keep) do
+    ranges[k] = { p0, p0 + (kr[2] - kr[1]) }
+    p0 = ranges[k][2]
+  end
   local chunks = {}
-  for i, it in ipairs(appended) do
-    local g = group[i]
-    if g then chunks[g] = chunks[g] or {}; table.insert(chunks[g], it) end
+  for _, it in ipairs(appended) do
+    local okp, st = pcall(function() return it:GetStart() end)
+    if okp and type(st) == "number" then
+      for k, rg in ipairs(ranges) do
+        if st >= rg[1] and st < rg[2] then
+          chunks[k] = chunks[k] or {}
+          table.insert(chunks[k], it)
+          break
+        end
+      end
+    end
   end
   for _, list in pairs(chunks) do
-    if #list > 1 then pcall(function() new_tl:SetClipsLinked(list, true) end) end
+    if #list > 1 and #list <= 6 then pcall(function() new_tl:SetClipsLinked(list, true) end) end
   end
   pcall(function() res:OpenPage("edit") end)
 
