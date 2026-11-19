@@ -30,6 +30,12 @@ local PRESETS = {
 }
 local DEFAULT_PRESET = "Normale"
 local AUDIO_STREAM = 0        -- traccia audio da analizzare (0 = la prima)
+-- Dove cercare il parlato in timeline:
+--   "telefono"  = audio registrato insieme al video (di solito più pulito nelle pause)
+--   "microfono" = file solo audio del microfono esterno
+--   oppure il numero della traccia, es. 2 per A2
+-- Si può cambiare al volo scrivendo in Console  SC_DETECT="microfono";  prima di dofile(...)
+local DETECT_ON = "telefono"
 local ASK_PRESET = true       -- mostra la finestrina di scelta del preset
 local CLIP_COLORS = { "Orange", "Teal", "Yellow", "Violet", "Green", "Pink", "Blue", "Apricot" }
 local FFMPEG_CANDIDATES = { "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg" }
@@ -448,13 +454,24 @@ local function run_timeline(res, project, mp, tl)
     local label = "A" .. t .. " - " .. r.name .. ((name ~= "" and name ~= ("Audio " .. t)) and (" (" .. name .. ")") or "")
     labels[#labels + 1] = label
     r.label = label
-    -- predefinita: la prima traccia con un file solo audio (il microfono)
-    if not default_label and clip_is_audio_only(r.mpi) then default_label = label end
   end
-  default_label = default_label or labels[#labels]
-  local det_track = idxs[#idxs]
+  -- traccia predefinita secondo DETECT_ON (o SC_DETECT dalla Console)
+  local want = SC_DETECT or DETECT_ON
+  local want_n = tonumber(want)
+  for i, t in ipairs(idxs) do
+    local only_audio = clip_is_audio_only(audio_tracks[t].mpi)
+    if not default_label and (
+        (want_n and t == want_n) or
+        (want == "microfono" and only_audio) or
+        (want == "telefono" and not only_audio)) then
+      default_label = labels[i]
+    end
+  end
+  default_label = default_label or labels[1]
+  local det_track = idxs[1]
+  for i, l in ipairs(labels) do if l == default_label then det_track = idxs[i] end end
   if #labels > 1 then
-    local choice = choose_from_list("Su quale traccia audio cerco il parlato? (di solito il microfono)", labels, default_label)
+    local choice = choose_from_list("Su quale traccia audio cerco il parlato?", labels, default_label)
     if not choice then return true end
     for i, l in ipairs(labels) do if l == choice then det_track = idxs[i] end end
   else
@@ -674,6 +691,7 @@ end
 
 local ok, err = pcall(main)
 SC_PRESET = nil
+SC_DETECT = nil
 if not ok then
   print("SilenceCut ERRORE: " .. tostring(err))
   pcall(alert, "Errore: " .. tostring(err))

@@ -16,7 +16,7 @@ Flusso di lavoro: importi il girato, lanci SilenceCut, ottieni una timeline già
 
 1. **Una volta per ogni girato**: trascina la cartella del girato (o i file del microfono) sull'app **SilenceCut Analizza** nel Dock. Analizza l'audio di tutti i file; quelli già analizzati vengono saltati.
 2. **In Resolve**: apri la timeline (V1/A1 telefono, A2 microfono, già sincronizzati) e scegli **Workspace → Scripts → SilenceCut** (oppure *SilenceCut Aggressivo* / *SilenceCut Delicato*).
-3. Si crea una nuova timeline `… - SilenceCut`, tagliata su tutte le tracce nello stesso punto. Il parlato viene cercato sulla traccia del microfono (il file solo audio). La timeline originale non viene toccata.
+3. Si crea una nuova timeline `… - SilenceCut`, tagliata su tutte le tracce nello stesso punto. Il parlato viene cercato sull'audio del telefono (quello registrato col video), che di solito ha pause più pulite del microfono. Per usare il microfono: in Console scrivi `SC_DETECT="microfono";` prima di `dofile(...)`, oppure cambia `DETECT_ON` in cima a `SilenceCut.lua`. La timeline originale non viene toccata.
 
 Se dimentichi il passo 1, lo script mette un **marker rosso** all'inizio della timeline con il promemoria (e scrive i dettagli in Workspace → Console). Il marker sparisce quando il taglio riesce.
 
