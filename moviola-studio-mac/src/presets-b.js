@@ -34,8 +34,8 @@ function boardBg(ctx, style) {
   if (style === 'Carta') { ground(ctx, 'Carta'); return; }
   if (style === 'Progetto') { ground(ctx, 'Inchiostro'); return; }
   const key = 'board'; let c = M.cache.get(key);
-  if (!c) { c = M.mk(960, 540); const g = c.getContext('2d'); const im = g.createImageData(960, 540); for (let y = 0; y < 540; y++) for (let x = 0; x < 960; x++) { const i = (y * 960 + x) * 4; const n = M.fbm(x / 90, y / 60, 4), s = M.fbm(x / 14 + 9, y / 140, 2); const v = 30 + n * 22 + (s > .62 ? (s - .62) * 60 : 0); im.data[i] = v * .78; im.data[i + 1] = v * 1.02; im.data[i + 2] = v * .88; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); M.cache.set(key, c); }
-  ctx.drawImage(c, 0, 0, W, H); M.vignette(ctx, .5);
+  if (!c) { c = M.mk(960, 540); const g = c.getContext('2d'); const im = g.createImageData(960, 540); for (let y = 0; y < 540; y++) for (let x = 0; x < 960; x++) { const i = (y * 960 + x) * 4; const n = M.fbm(x / 160, y / 120, 3); const v = 30 + n * 10; im.data[i] = v * .78; im.data[i + 1] = v * 1.02; im.data[i + 2] = v * .88; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); M.cache.set(key, c); }
+  ctx.drawImage(c, 0, 0, W, H); M.vignette(ctx, .2);
 }
 P.push({
   id: 'lavagna', cat: 'Tattica', name: 'Lavagna tattica', dur: 11, thumbT: 6.5,
@@ -48,7 +48,7 @@ P.push({
     { k: 'mosse', label: 'Movimenti in sequenza', type: 'textarea', def: '6>10\n10>66,30\n6>10\n10>9\n9>90,48' },
     { k: 'stile', label: 'Stile', type: 'select', opts: ['Lavagna', 'Progetto', 'Carta'], def: 'Lavagna' },
     { k: 'colore', label: 'Colore giocatori', type: 'color', def: PAL.rosso },
-    grainP(.3)
+    grainP()
   ],
   sched(p) { const ms = M.lines(p.mosse); return ms.map((m, i) => ({ m, t0: 4.0 + i * 1.15 })); },
   sfx(p) { const c = [{ s: 'chalk', t: .1, d: 1.6, g: .4 }]; for (let i = 0; i < 11; i++) c.push({ s: 'pop', t: 1.7 + i * .12, g: .35 }); this.sched(p).forEach(s => c.push({ s: /,/.test(s.m) ? 'chalk' : 'whoosh', t: s.t0, d: .7, g: .4 })); return c; },
@@ -72,7 +72,7 @@ P.push({
       ctx.strokeStyle = rgba(PAL.carta, .7 * lp); for (const [x, y] of [[0, 0], [105, 0], [0, 68], [105, 68]]) M.cross(ctx, mx(x), my(y), 14, 1.5);
       alpha(ctx, lp, () => { T(ctx, '105 m', mx(52.5), py0 + phh + 44, { size: 20, fam: F.mono, color: rgba(PAL.carta, .7), align: 'center' }); ctx.save(); ctx.translate(px0 - 30, my(34)); ctx.rotate(-Math.PI / 2); T(ctx, '68 m', 0, 0, { size: 20, fam: F.mono, color: rgba(PAL.carta, .7), align: 'center' }); ctx.restore(); });
     }
-    if (st === 'Lavagna') M.grain(ctx, t, .5, true, 1);
+    if (st === 'Lavagna' && p.grana > 0) M.grain(ctx, t, .5, true, 1);
     /* giocatori */
     const form = FORMS[p.modulo] || FORMS['Sistema WM 3-2-2-3'];
     const names = M.rows(p.nomi); const pos = form.map((q, i) => ({ x: q[0] * 105, y: q[1] * 68, n: names[i] ? names[i][1] || String(i + 1) : String(i + 1), name: names[i] ? names[i][0] : '' }));
@@ -129,7 +129,7 @@ P.push({
     { k: 'titolo', label: 'Titolo', type: 'text', def: 'L\'ULTIMO VOLO · 4 MAGGIO 1949' },
     { k: 'stile', label: 'Stile', type: 'select', opts: ['Carta d\'epoca', 'Verde campo', 'Notte'], def: 'Carta d\'epoca' },
     { k: 'italia', label: 'Italia in evidenza', type: 'bool', def: true },
-    accentP(), grainP(.3)
+    accentP(), grainP()
   ],
   sfx(p, D) { const n = M.lines(p.percorso).length; const c = [{ s: 'whoosh', t: .2, d: 1.2, g: .4 }]; for (let i = 0; i < n; i++) c.push({ s: 'pop', t: 1.6 + i * ((D - 3.2) / Math.max(1, n - 1)) * (i ? 1 : 0), g: .5 }); for (let i = 1; i < n; i++) c.push({ s: 'whoosh', t: 1.8 + (i - 1) * ((D - 3.2) / Math.max(1, n - 1)), d: (D - 3.2) / Math.max(1, n - 1), g: .25 }); return c; },
   draw(ctx, t, D, p) {
@@ -186,7 +186,7 @@ P.push({
     });
     /* titolo */
     alpha(ctx, ph(t, .4, .8), () => { ctx.fillStyle = st === 'Carta d\'epoca' ? rgba(PAL.carta, .85) : 'rgba(8,20,16,.75)'; M.font(ctx, 30, F.body, 600); const tw = M.textW(ctx, p.titolo, 30 * .22) + 70; ctx.fillRect(80, H - 150, tw * ph(t, .4, .7, E.film), 70); ctx.fillStyle = p.accento; ctx.fillRect(80, H - 150, 8, 70); mask(ctx, 80, H - 150, tw * ph(t, .4, .7, E.film), 70, () => T(ctx, p.titolo, 116, H - 104, { size: 30, weight: 600, tr: .22, color: ink })); });
-    M.vignette(ctx, st === 'Carta d\'epoca' ? .3 : .5, st === 'Carta d\'epoca' ? '70,45,20' : '0,0,0');
+    M.vignette(ctx, st === 'Carta d\'epoca' ? .12 : .2, st === 'Carta d\'epoca' ? '70,45,20' : '0,0,0');
     M.grain(ctx, t, p.grana * .4, false);
   }
 });
@@ -203,7 +203,7 @@ P.push({
   id: 't-pellicola', cat: 'Transizioni', name: 'Bruciatura pellicola', dur: 1.6, cut: .5, thumbT: .62, kind: 'transition',
   desc: 'La pellicola si incendia: macchie incandescenti che crescono dal bordo, nucleo bianco che copre lo stacco, alone arancio che si spegne.',
   tip: 'Metti il taglio tra le due clip esattamente sul punto rosso della barra: lì lo schermo è coperto. Per salti di decennio o cambi di capitolo.',
-  params: [{ k: 'origine', label: 'Parte da', type: 'select', opts: ['Destra', 'Sinistra', 'Centro', 'Basso'], def: 'Destra' }, { k: 'calore', label: 'Colore', type: 'select', opts: ['Classico', 'Rosso profondo', 'Bianco'], def: 'Classico' }, grainP(.3)],
+  params: [{ k: 'origine', label: 'Parte da', type: 'select', opts: ['Destra', 'Sinistra', 'Centro', 'Basso'], def: 'Destra' }, { k: 'calore', label: 'Colore', type: 'select', opts: ['Classico', 'Rosso profondo', 'Bianco'], def: 'Classico' }, grainP()],
   sfx: (p, D) => [{ s: 'whoosh', t: 0, d: D * .55, g: .5 }, { s: 'flash', t: D * .48, g: .5 }, { s: 'static', t: D * .3, d: .5, g: .25 }],
   draw(ctx, t, D, p) {
     const w = 240, h = 135, f1 = field(11, w, h, 26, 4), f2 = field(12, w, h, 9, 2); const c = lowres(w, h), g = c.getContext('2d'); const im = g.createImageData(w, h), d = im.data;
@@ -233,7 +233,7 @@ P.push({
   id: 't-carta', cat: 'Transizioni', name: 'Strappo di carta', dur: 1.5, cut: .45, thumbT: .75, kind: 'transition',
   desc: 'Un foglio d\'archivio entra a coprire l\'immagine e si strappa a metà: le due parti volano via con fibre bianche sul bordo dello strappo.',
   tip: 'Sul taglio il foglio è intero: è il momento per stampare sopra una data o un titolo con un altro preset.',
-  params: [{ k: 'colore', label: 'Carta', type: 'select', opts: ['Avorio', 'Giornale', 'Kraft'], def: 'Avorio' }, { k: 'testo', label: 'Scritta sul foglio (facoltativa)', type: 'text', def: '' }, grainP(.25)],
+  params: [{ k: 'colore', label: 'Carta', type: 'select', opts: ['Avorio', 'Giornale', 'Kraft'], def: 'Avorio' }, { k: 'testo', label: 'Scritta sul foglio (facoltativa)', type: 'text', def: '' }, grainP()],
   sfx: (p, D) => [{ s: 'whoosh', t: 0, d: .6, g: .5 }, { s: 'rip', t: D * .6, d: .55, g: .9 }],
   draw(ctx, t, D, p) {
     const cut = D * this.cut; const tint = { 'Avorio': null, 'Giornale': 'rgba(230,220,200,1)', 'Kraft': 'rgba(196,160,112,1)' }[p.colore];
@@ -265,7 +265,7 @@ P.push({
   id: 't-inchiostro', cat: 'Transizioni', name: 'Macchia d\'inchiostro', dur: 1.8, cut: .5, thumbT: .7, kind: 'transition',
   desc: 'Gocce d\'inchiostro che si allargano e si fondono fino a coprire lo schermo, poi si ritirano con un disegno diverso. Bordi organici, schizzi.',
   tip: 'In verde campo diventa la transizione del tuo canale. In rosso funziona per i momenti drammatici (espulsioni, tragedie).',
-  params: [{ k: 'colore', label: 'Inchiostro', type: 'color', def: PAL.verdeScuro }, grainP(.25)],
+  params: [{ k: 'colore', label: 'Inchiostro', type: 'color', def: PAL.verdeScuro }, grainP()],
   sfx: (p, D) => [{ s: 'whoosh', t: 0, d: D * .5, g: .4 }, { s: 'sub', t: D * .45, g: .4 }, { s: 'whoosh', t: D * .5, d: D * .45, g: .3 }],
   draw(ctx, t, D, p) {
     const w = 320, h = 180, nf = field(21, w, h, 16, 3), nf2 = field(22, w, h, 12, 3); const c = lowres(w, h), g = c.getContext('2d'); const im = g.createImageData(w, h), d = im.data;
@@ -494,7 +494,7 @@ P.push({
     { k: 'fonte', label: 'Fonte', type: 'text', def: 'Fonte: Archivio Storico Luce' },
     { k: 'anno', label: 'Anno in sovraimpressione', type: 'text', def: '1949' },
     { k: 'bande', label: 'Bande cinema 2,39:1', type: 'bool', def: false },
-    accentP(), grainP(.3)
+    accentP(), grainP()
   ],
   sfx: () => [],
   draw(ctx, t, D, p) {
@@ -515,10 +515,10 @@ P.push({
 });
 
 /* =============================================================== CAMERA (sul tuo materiale) */
-const toneP = (def = 'Bianco e nero') => ({ k: 'tono', label: 'Tono', type: 'select', opts: M.TONES, def });
+const toneP = (def = 'Originale') => ({ k: 'tono', label: 'Tono', type: 'select', opts: M.TONES, def });
 function src(env, p) { return M.toned(env.media || M.samplePhoto(), p.tono || 'Originale', env.mediaKey || 'sample'); }
-function look(ctx, t, p) { M.vignette(ctx, (p.vignetta ?? .4) * .8); if (p.polvere) M.filmDirt(ctx, t, .6); M.grain(ctx, t, (p.grana ?? .3) * .45, false); }
-const camExtras = [{ k: 'vignetta', label: 'Vignetta', type: 'range', min: 0, max: 1, step: .05, def: .45 }, { k: 'polvere', label: 'Polvere di pellicola', type: 'bool', def: false }, grainP(.35)];
+function look(ctx, t, p) { M.vignette(ctx, (p.vignetta ?? .4) * .8); if (p.polvere) M.filmDirt(ctx, t, .6); M.grain(ctx, t, (p.grana ?? 0) * .45, false); }
+const camExtras = [{ k: 'vignetta', label: 'Vignetta', type: 'range', min: 0, max: 1, step: .05, def: 0 }, { k: 'polvere', label: 'Polvere di pellicola', type: 'bool', def: false }, grainP()];
 
 P.push({
   id: 'z-dettaglio', cat: 'Camera', name: 'Zoom sul dettaglio', dur: 7, thumbT: 4.5, media: true,
@@ -662,7 +662,7 @@ P.push({
     { k: 'stile', label: 'Supporto', type: 'select', opts: ['Cartolina d\'archivio', 'Stampa con bordo bianco', 'Istantanea'], def: 'Cartolina d\'archivio' },
     { k: 'inclina', label: 'Inclinazione (gradi)', type: 'range', min: -6, max: 6, step: .5, def: -1.5 },
     { k: 'usura', label: 'Usura', type: 'range', min: 0, max: 10, step: 1, def: 5 },
-    toneP('Originale'), { k: 'sfondo', label: 'Sfondo', type: 'select', opts: ['Verde campo', 'Trasparente'], def: 'Verde campo' }, grainP(.3)
+    toneP('Originale'), { k: 'sfondo', label: 'Sfondo', type: 'select', opts: ['Verde campo', 'Trasparente'], def: 'Verde campo' }, grainP()
   ],
   sfx: () => [{ s: 'whoosh', t: 0, d: .7, g: .45 }, { s: 'hit', t: .62, g: .5 }, { s: 'chalk', t: 1.4, d: .9, g: .4 }, { s: 'chalk', t: 2.3, d: 1.0, g: .35 }],
   draw(ctx, t, D, p, env) {

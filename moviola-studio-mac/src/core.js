@@ -400,12 +400,12 @@ function samplePhoto() {
   }
   g.fillStyle = '#f4f2ea'; g.beginPath(); g.arc(w * .52, h * .73, 13, 0, 7); g.fill(); g.strokeStyle = '#333'; g.lineWidth = 2; g.stroke();
   /* invecchiamento: sfocatura, monocromia, grana, vignetta */
-  const o = mk(w, h), og = o.getContext('2d'); og.filter = 'blur(2.4px) grayscale(1) contrast(.94) brightness(1.02)'; og.drawImage(c, 0, 0);
+  const o = mk(w, h), og = o.getContext('2d'); og.filter = 'blur(1px) grayscale(1) contrast(1.02)'; og.drawImage(c, 0, 0);
   og.filter = 'none';
   const im = og.getImageData(0, 0, w, h), d = im.data;
-  for (let i = 0; i < d.length; i += 4) { const n = (r() + r() - 1) * 26; d[i] += n; d[i + 1] += n; d[i + 2] += n - 2; }
+  for (let i = 0; i < d.length; i += 4) { const n = (r() + r() - 1) * 5; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
   og.putImageData(im, 0, 0);
-  const vg = og.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, h * .95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); og.fillStyle = vg; og.fillRect(0, 0, w, h);
+  const vg = og.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, h * .95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.2)'); og.fillStyle = vg; og.fillRect(0, 0, w, h);
   cache.set('sample', o); return o;
 }
 /* ritratto di esempio per la scheda giocatore */
@@ -419,8 +419,7 @@ function samplePortrait() {
   g.fillStyle = '#a3978a'; g.beginPath(); g.ellipse(w * .5, h * .4, w * .17, h * .17, 0, 0, 7); g.fill();
   g.fillStyle = '#1e1b18'; g.beginPath(); g.ellipse(w * .5, h * .29, w * .18, h * .09, 0, Math.PI, 0); g.fill(); g.fillRect(w * .32, h * .27, w * .36, h * .04);
   g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(w * .44, h * .4, 14, 7, 0, 0, 7); g.ellipse(w * .56, h * .4, 14, 7, 0, 0, 7); g.fill();
-  const o = mk(w, h), og = o.getContext('2d'); og.filter = 'blur(2px) grayscale(1)'; og.drawImage(c, 0, 0); og.filter = 'none';
-  const im = og.getImageData(0, 0, w, h), d = im.data; for (let i = 0; i < d.length; i += 4) { const n = (r() + r() - 1) * 22; d[i] += n; d[i + 1] += n; d[i + 2] += n; } og.putImageData(im, 0, 0);
+  const o = mk(w, h), og = o.getContext('2d'); og.filter = 'blur(1px) grayscale(1)'; og.drawImage(c, 0, 0); og.filter = 'none';
   cache.set('portrait', o); return o;
 }
 

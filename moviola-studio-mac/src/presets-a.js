@@ -9,10 +9,10 @@ function rgba(hex, a) { const h = hex.replace('#', ''); const n = parseInt(h.len
 function ground(ctx, kind, t = 0) {
   if (kind === 'Verde campo') {
     const g = ctx.createRadialGradient(W / 2, H * .45, 40, W / 2, H * .5, W * .62); g.addColorStop(0, '#1d4537'); g.addColorStop(.55, PAL.verde); g.addColorStop(1, PAL.verdeScuro);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .45);
-  } else if (kind === 'Nero') { ctx.fillStyle = PAL.nero; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .4); }
-  else if (kind === 'Carta') { ctx.beginPath(); ctx.rect(0, 0, W, H); M.paperFill(ctx, null, 2); M.vignette(ctx, .28, '60,40,20'); }
-  else if (kind === 'Inchiostro') { ctx.fillStyle = PAL.inchiostro; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .45); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .18);
+  } else if (kind === 'Nero') { ctx.fillStyle = PAL.nero; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .15); }
+  else if (kind === 'Carta') { ctx.beginPath(); ctx.rect(0, 0, W, H); M.paperFill(ctx, null, 2); M.vignette(ctx, .1, '60,40,20'); }
+  else if (kind === 'Inchiostro') { ctx.fillStyle = PAL.inchiostro; ctx.fillRect(0, 0, W, H); M.vignette(ctx, .18); }
 }
 const isDark = k => k !== 'Carta';
 function T(ctx, s, x, y, o = {}) {
@@ -53,7 +53,8 @@ function fmtIt(v, dec = 0) { const neg = v < 0; const f = Math.abs(v).toFixed(de
 function decOf(s) { const m = String(s).match(/,(\d+)/); return m ? m[1].length : 0; }
 const BG = ['Trasparente', 'Verde campo', 'Nero', 'Carta', 'Inchiostro'];
 const accentP = (def = PAL.rosso) => ({ k: 'accento', label: 'Colore accento', type: 'color', def });
-const grainP = (def = .25) => ({ k: 'grana', label: 'Grana pellicola', type: 'range', min: 0, max: 1, step: .05, def });
+/* look HD pulito: la grana è un'opzione, sempre a 0 di partenza */
+const grainP = () => ({ k: 'grana', label: 'Grana pellicola (look d\'epoca)', type: 'range', min: 0, max: 1, step: .05, def: 0 });
 const bgP = (def = 'Trasparente') => ({ k: 'sfondo', label: 'Sfondo', type: 'select', opts: BG, def });
 function finish(ctx, t, p, atopIfTransparent = true) {
   const transparent = (p.sfondo || 'Trasparente') === 'Trasparente';
@@ -72,7 +73,7 @@ P.push({
     { k: 'titolo', label: 'Titolo (una riga per a capo)', type: 'textarea', def: 'IL GRANDE\nTORINO' },
     { k: 'sotto', label: 'Sottotitolo', type: 'text', def: '1943 — 1949' },
     { k: 'allinea', label: 'Allineamento', type: 'select', opts: ['Centro', 'Sinistra'], def: 'Centro' },
-    bgP('Verde campo'), accentP(), { k: 'cornice', label: 'Cornice di registro', type: 'bool', def: true }, grainP(.35)
+    bgP('Verde campo'), accentP(), { k: 'cornice', label: 'Cornice di registro', type: 'bool', def: true }, grainP()
   ],
   sfx: (p, D) => [{ s: 'whoosh', t: .35, d: .5, g: .7 }, { s: 'impact', t: .78, g: 1 }, { s: 'sub', t: .78, g: .6 }, { s: 'whoosh', t: D - .75, d: .6, g: .5 }],
   draw(ctx, t, D, p, env) {
@@ -127,7 +128,7 @@ P.push({
     { k: 'titolo', label: 'Titolo', type: 'text', def: 'La nebbia su Superga' },
     { k: 'data', label: 'Data o periodo', type: 'text', def: '4 maggio 1949' },
     { k: 'riempi', label: 'Riempimento del numero', type: 'bool', def: true },
-    bgP('Verde campo'), accentP(), grainP(.35)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx: () => [{ s: 'whoosh', t: .2, d: .7, g: .5 }, { s: 'hit', t: 1.2, g: .8 }, { s: 'whoosh', t: 1.55, d: .5, g: .35 }],
   draw(ctx, t, D, p, env) {
@@ -185,7 +186,7 @@ P.push({
     { k: 'autore', label: 'Autore', type: 'text', def: 'Arrigo Sacchi' },
     { k: 'chiave', label: 'Parola chiave', type: 'text', def: 'importante' },
     { k: 'stile', label: 'Carattere', type: 'select', opts: ['Corsivo editoriale', 'Scritto a mano', 'Macchina da scrivere'], def: 'Corsivo editoriale' },
-    bgP('Verde campo'), accentP(), grainP(.3)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx: (p, D) => [{ s: 'whoosh', t: .1, d: .9, g: .35 }, { s: 'chalk', t: D * .58, d: .45, g: .5 }],
   draw(ctx, t, D, p, env) {
@@ -244,7 +245,7 @@ P.push({
     { k: 'chiave', label: 'Parole da evidenziare', type: 'text', def: 'Torino' },
     { k: 'foto', label: 'Foto in pagina (usa il tuo materiale)', type: 'bool', def: true },
     { k: 'camera', label: 'Movimento', type: 'select', opts: ['Spinta sul titolo', 'Scorrimento verticale', 'Fermo'], def: 'Spinta sul titolo' },
-    accentP(), grainP(.3)
+    accentP(), grainP()
   ],
   sfx: (p, D) => [{ s: 'rip', t: .05, d: .5, g: .4 }, { s: 'whoosh', t: .0, d: .8, g: .5 }, { s: 'chalk', t: 2.1, d: .6, g: .45 }],
   page(p, env, s) {
@@ -318,7 +319,7 @@ P.push({
       });
     }
     ctx.restore();
-    M.vignette(ctx, .35);
+    M.vignette(ctx, .15);
     M.grain(ctx, t, p.grana * .35, false);
   }
 });
@@ -332,7 +333,7 @@ P.push({
     { k: 'stile', label: 'Supporto', type: 'select', opts: ['Striscia di carta', 'Sul video', 'Foglio intero'], def: 'Striscia di carta' },
     { k: 'velocita', label: 'Lettere al secondo', type: 'range', min: 6, max: 30, step: 1, def: 16 },
     { k: 'posizione', label: 'Posizione', type: 'select', opts: ['Basso', 'Centro', 'Alto'], def: 'Basso' },
-    accentP(PAL.inchiostro), grainP(.3)
+    accentP(PAL.inchiostro), grainP()
   ],
   timing(p) {
     const r = M.rng(42); const tx = String(p.testo); const ts = []; let t = .45; const sp = 1 / (p.velocita || 16);
@@ -392,7 +393,7 @@ P.push({
     { k: 'parole', label: 'Battute (una per riga)', type: 'textarea', def: 'UNA SQUADRA.\nUNA CITTÀ.\nUNA LEGGENDA.' },
     { k: 'ritmo', label: 'Secondi per battuta', type: 'range', min: .3, max: 2, step: .05, def: .95 },
     { k: 'ultima', label: 'Ultima battuta in colore accento', type: 'bool', def: true },
-    bgP('Nero'), accentP(), grainP(.4)
+    bgP('Nero'), accentP(), grainP()
   ],
   sfx(p, D) { const ls = M.lines(p.parole); const c = [{ s: 'riser', t: 0, d: .55, g: .7 }]; ls.forEach((l, i) => c.push({ s: 'impact', t: .55 + i * p.ritmo, g: i === ls.length - 1 ? 1.1 : .85 })); c.push({ s: 'sub', t: .55 + (ls.length - 1) * p.ritmo, g: .7 }); return c; },
   draw(ctx, t, D, p, env) {
@@ -432,7 +433,7 @@ P.push({
     { k: 'variante', label: 'Stile', type: 'select', opts: ['Cinema', 'Archivio', 'Minimale', 'Televisivo'], def: 'Cinema' },
     { k: 'lato', label: 'Lato', type: 'select', opts: ['Sinistra', 'Destra'], def: 'Sinistra' },
     { k: 'fondino', label: 'Ombra di leggibilità', type: 'bool', def: true },
-    accentP(), grainP(.2)
+    accentP(), grainP()
   ],
   sfx: (p, D) => p.variante === 'Archivio' ? [{ s: 'whoosh', t: .05, d: .5, g: .35 }, { s: 'chalk', t: .55, d: .7, g: .35 }] : [{ s: 'whoosh', t: .05, d: .45, g: .35 }, { s: 'whoosh', t: D - .55, d: .45, g: .25 }],
   draw(ctx, t, D, p) {
@@ -511,7 +512,7 @@ P.push({
     { k: 'coord', label: 'Coordinate', type: 'text', def: '45.0803° N   7.7672° E' },
     { k: 'posizione', label: 'Posizione', type: 'select', opts: ['Basso sinistra', 'Alto sinistra', 'Centro'], def: 'Basso sinistra' },
     { k: 'fondino', label: 'Ombra di leggibilità', type: 'bool', def: true },
-    accentP(), grainP(.2)
+    accentP(), grainP()
   ],
   sfx: (p) => { const c = []; for (let i = 0; i < 18; i++) c.push({ s: 'tick', t: .3 + i * .045, g: .5 }); for (let i = 0; i < 10; i++) c.push({ s: 'tick', t: 1.2 + i * .06, g: .35 }); return c; },
   draw(ctx, t, D, p) {
@@ -554,7 +555,7 @@ P.push({
     { k: 'nato', label: 'Nascita', type: 'text', def: 'Cassano d\'Adda, 26 gennaio 1919' },
     { k: 'stat', label: 'Statistiche (Nome|valore per riga)', type: 'textarea', def: 'Presenze|195\nGol|118\nScudetti|5' },
     { k: 'tono', label: 'Tono foto', type: 'select', opts: M.TONES, def: 'Duotono verde' },
-    bgP('Verde campo'), accentP(), grainP(.3)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx: (p) => { const c = [{ s: 'whoosh', t: .1, d: .7, g: .5 }, { s: 'hit', t: .9, g: .6 }]; for (let i = 0; i < 14; i++) c.push({ s: 'tick', t: 2.2 + i * .07 * (1 + i * .08), g: .45 }); c.push({ s: 'hit', t: 3.7, g: .5 }); return c; },
   draw(ctx, t, D, p, env) {
@@ -608,7 +609,7 @@ P.push({
     { k: 'etichetta', label: 'Etichetta', type: 'text', def: 'GIORNI SENZA SCONFITTE IN CASA' },
     { k: 'nota', label: 'Nota', type: 'text', def: 'Stadio Filadelfia, 17 gennaio 1943 – 30 aprile 1949' },
     { k: 'stile', label: 'Animazione', type: 'select', opts: ['Contachilometri', 'Conteggio'], def: 'Contachilometri' },
-    bgP('Verde campo'), accentP(), grainP(.3)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx: () => { const c = []; let tt = .3; for (let i = 0; i < 22; i++) { c.push({ s: 'tick', t: tt, g: .4 }); tt += .04 + i * .006; } c.push({ s: 'impact', t: 2.45, g: .8 }); return c; },
   draw(ctx, t, D, p) {
@@ -669,7 +670,7 @@ P.push({
     { k: 'info', label: 'Competizione e luogo', type: 'text', def: 'Serie A 1945/46 · Stadio Filadelfia' },
     { k: 'passo', label: 'Passo gol (s)', type: 'range', min: .3, max: 2, step: .05, def: .6 },
     { k: 'stile', label: 'Stile', type: 'select', opts: ['Tabellone', 'Cartoncino d\'archivio'], def: 'Tabellone' },
-    grainP(.25)
+    grainP()
   ],
   sfx(p) { const c = [{ s: 'whoosh', t: .1, d: .6, g: .5 }]; M.rows(p.marcatori).forEach((r, i) => c.push({ s: 'hit', t: 1.8 + i * p.passo, g: .7 })); return c; },
   draw(ctx, t, D, p) {
@@ -721,7 +722,7 @@ P.push({
     { k: 'nome2', label: 'Lato destro', type: 'text', def: 'Giuseppe Meazza' },
     { k: 'sotto2', label: 'Sottotitolo destro', type: 'text', def: 'Inter 1927–40' },
     { k: 'righe', label: 'Righe (Statistica|sinistra|destra)', type: 'textarea', def: 'Presenze in A|195|239\nGol in A|118|197\nScudetti|5|3\nMedia gol|0,61|0,82' },
-    bgP('Verde campo'), accentP(), grainP(.25)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx(p) { const c = [{ s: 'whoosh', t: .1, d: .6, g: .5 }]; M.rows(p.righe, 3).forEach((r, i) => c.push({ s: 'whoosh', t: 1.2 + i * .35, d: .4, g: .25 })); return c; },
   draw(ctx, t, D, p) {
@@ -764,7 +765,7 @@ P.push({
     { k: 'nota', label: 'Nota', type: 'text', def: 'Classifica finale · 2 punti a vittoria' },
     { k: 'righe', label: 'Righe (Squadra|punti)', type: 'textarea', def: 'Torino|65\nMilan|49\nJuventus|49\nTriestina|49\nAtalanta|48\nModena|48' },
     { k: 'evidenzia', label: 'Riga in evidenza (numero)', type: 'range', min: 0, max: 10, step: 1, def: 1 },
-    bgP('Verde campo'), accentP(), grainP(.25)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx(p) { const c = [{ s: 'whoosh', t: .1, d: .6, g: .4 }]; M.rows(p.righe).forEach((r, i) => c.push({ s: 'tick', t: .7 + i * .12, g: .6 })); c.push({ s: 'hit', t: 2.2, g: .6 }); return c; },
   draw(ctx, t, D, p) {
@@ -799,7 +800,7 @@ P.push({
   tip: 'Ogni evento resta fermo circa (durata ÷ numero eventi) secondi: regola la durata sulla voce. Anni grandi e frasi brevi, massimo 6 parole.',
   params: [
     { k: 'eventi', label: 'Eventi (Anno|testo)', type: 'textarea', def: '1906|Nasce il Foot-Ball Club Torino\n1928|Il primo scudetto\n1943|Inizia il ciclo del Grande Torino\n1949|La tragedia di Superga\n1976|Lo scudetto di Radice' },
-    bgP('Verde campo'), accentP(), grainP(.3)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx(p, D) { const ev = M.rows(p.eventi); const seg = (D - 1.2) / ev.length; return ev.map((e, i) => ({ s: 'whoosh', t: .3 + i * seg, d: .7, g: .35 })).concat(ev.map((e, i) => ({ s: 'pop', t: .85 + i * seg, g: .5 }))); },
   draw(ctx, t, D, p) {
@@ -844,7 +845,7 @@ P.push({
     { k: 'serie', label: 'Dati (Etichetta|valore)', type: 'textarea', def: '42/43|68\n45/46|104\n46/47|104\n47/48|125\n48/49|78' },
     { k: 'nota', label: 'Nota sul massimo', type: 'text', def: 'Record della Serie A a girone unico' },
     { k: 'stile', label: 'Stile', type: 'select', opts: ['Pulito', 'Gesso'], def: 'Pulito' },
-    bgP('Verde campo'), accentP(), grainP(.25)
+    bgP('Verde campo'), accentP(), grainP()
   ],
   sfx(p, D) { const s = M.rows(p.serie); const c = [{ s: p.stile === 'Gesso' ? 'chalk' : 'whoosh', t: .9, d: 2.2, g: .35 }]; s.forEach((r, i) => c.push({ s: 'pop', t: .9 + 2.2 * i / Math.max(1, s.length - 1), g: .4 })); c.push({ s: 'chalk', t: 3.4, d: .6, g: .5 }); return c; },
   draw(ctx, t, D, p) {
@@ -883,7 +884,7 @@ P.push({
       else T(ctx, p.nota, Math.min(W - 80 - tw / 2, Math.max(80 + tw / 2, q[0])), q[1] - 110, { size: 40, fam: F.hand, color: ink, align: 'center' });
     });
     ctx.restore();
-    if (chalk) M.grain(ctx, t, .35, true);
+    if (chalk && p.grana > 0) M.grain(ctx, t, .35, true);
     finish(ctx, t, p);
   }
 });

@@ -15,6 +15,8 @@ const S = {
   fps: store.get('fps', 25), res: store.get('res', '1080p'), fmt: store.get('fmt', 'mp4'), outBg: store.get('outBg', 'Nero'), withAudio: store.get('withAudio', true)
 };
 const byId = id => PRE.find(p => p.id === id) || PRE[0];
+/* passaggio al look HD: azzera una volta sola grana, vignetta e polvere salvate in precedenza */
+try { if (!store.get('hd', false)) { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!/^moviola:v:/.test(k) || /:o-/.test(k)) continue; const v = JSON.parse(localStorage.getItem(k) || '{}'); if ('grana' in v) v.grana = 0; if ('vignetta' in v) v.vignetta = 0; if ('polvere' in v) v.polvere = false; localStorage.setItem(k, JSON.stringify(v)); } store.set('hd', true); } } catch (e) { }
 function defaults(p) { const v = { durata: p.dur }; p.params.forEach(q => { if (q.type !== 'info') v[q.k] = Array.isArray(q.def) ? q.def.slice() : q.def; }); return v; }
 function valsOf(p) { if (!S.vals[p.id]) S.vals[p.id] = Object.assign(defaults(p), store.get('v:' + p.id, {})); return S.vals[p.id]; }
 const cur = () => byId(S.id);
